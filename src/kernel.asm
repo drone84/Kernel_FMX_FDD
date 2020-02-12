@@ -41,6 +41,7 @@ TARGET_RAM = 2                ; The code is being assembled for RAM
 .include "keyboard.asm"       ; Include the keyboard reading code
 .include "uart.asm"           ; The code to handle the UART
 .include "joystick.asm"       ; Code for the joysticks and gamepads
+.include "FAT32.asm"          ; code to read write file
 
 * = $390400
 
@@ -90,7 +91,7 @@ CLEAR_MEM_LOOP
 
                 LDA #`CS_COLOR_MEM_PTR    ; Set the initial COLOR cursor position
                 STA COLORPOS+2
-                
+
                 setas
                 LDA #$00
                 STA KEYBOARD_SC_FLG     ; Clear the Keyboard Flag
@@ -119,19 +120,19 @@ CLEAR_MEM_LOOP
                 LDY #64
                 STY LINES_MAX
 
-                LDA #$ED                  ; Set the default text color to light gray on dark gray 
+                LDA #$ED                  ; Set the default text color to light gray on dark gray
                 STA CURCOLOR
 
                 ; Init CODEC
-                JSL INITCODEC
+                ;;;;;;;JSL INITCODEC
                 ; Init Suprt IO (Keyboard/Floppy/Etc...)
-                JSL INITSUPERIO
+                ;;;;;;;JSL INITSUPERIO
                 ; Init GAMMA Table
-                JSL INITGAMMATABLE
+                ;;;;;;;JSL INITGAMMATABLE
                 ; Init All the Graphic Mode Look-up Table (by default they are all Zero)
-                JSL INITALLLUT
+                ;;;;;;;JSL INITALLLUT
                 ; Initialize the Character Color Foreground/Background LUT First
-                JSL INITCHLUT
+                ;;;;;;;JSL INITCHLUT
 
                 JSL INITMOUSEPOINTER
                 ; Go Enable and Setup the Cursor's Position
@@ -174,8 +175,47 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
 
                 setdp 0
                 ; Init the Keyboard
-                JSL INITKEYBOARD ;
+                ;;;;;;;JSL INITKEYBOARD ;
 
+
+                ;---------------------------------------------------------------
+                ; FAT
+                ;LDA #$56
+                ;JSL IPRINT_HEX
+                ;JSL FOENIX_SD_INIT_READ
+                ;LDA #$0D
+                ;JSL IPUTC
+                ;LDA #$57
+                ;JSL IPRINT_HEX
+                ;JSL FOENIX_SD_INIT_READ
+                JSL ISD_INIT
+
+                LDA #$50
+                JSL IPRINT_HEX
+
+                LDA FAT32_SD
+                STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
+                LDA #$56
+                JSL IPRINT_HEX
+
+                ;JSL IFAT32_READ_MBR
+
+                JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
+                JSL FAT32_LS_CMD
+
+
+
+                LDA #$57
+                JSL IPRINT_HEX
+
+                LDA FAT32_SD
+                STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
+                JSL IFAT32_READ_MBR
+                ;JSl IFAT32_SD_READ_MBR
+                ;JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
+                ;JSL FAT32_LS_CMD
+                ;JSL FAT32_test
+test_end_loop   BRA test_end_loop
                 setas
                 setxl
                 LDA #$9F ; Channel Two - No Atteniation
@@ -223,7 +263,7 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
 
                 CMP #DIP_BOOT_SDCARD  ; DIP set for SD card?
                 BEQ BOOTSDC           ; Yes: try to boot from the SD card
-                
+
                 CMP #DIP_BOOT_FLOPPY  ; DIP set for floppy?
                 BEQ BOOTFLOPPY        ; Yes: try to boot from the floppy
 
@@ -364,7 +404,7 @@ IGETCHW         .proc
                 CMP #CHAN_COM1      ; Check to see if it's the COM1 port
                 BEQ getc_uart       ; Yes: handle reading from the UART
                 CMP #CHAN_COM2      ; Check to see if it's the COM2 port
-                BEQ getc_uart       ; Yes: handle reading from the UART                
+                BEQ getc_uart       ; Yes: handle reading from the UART
 
                 ; TODO: handle other devices
 
@@ -375,7 +415,7 @@ IGETCHW         .proc
 
 getc_uart       JSL UART_SELECT     ; Select the correct COM port
                 JSL UART_GETC       ; Get the charater from the COM port
-                BRA done            
+                BRA done
 
 getc_keyboard   JSL KBD_GETC        ; Get the character from the keyboard
 done            PLP
@@ -506,7 +546,7 @@ do_del          JSL SCRSHIFTLL      ; Shift the current line left one space into
 do_ins          JSL SCRSHIFTLR      ; Shift the current line right one space from the cursor
                 BRA done
 
-backspace       JSL ICSRLEFT  
+backspace       JSL ICSRLEFT
                 JSL SCRSHIFTLL      ; Shift the current line left one space into the cursor
                 BRA done
 
@@ -543,7 +583,7 @@ check_row       CPY LINES_VISIBLE   ; Check if we're still on the screen vertica
                 BCC do_locate       ; Yes: reposition the cursor
 
                 JSL ISCROLLUP       ; No: scroll the screen
-                DEY                 ; And set the row to the last one   
+                DEY                 ; And set the row to the last one
 
 do_locate       JSL ILOCATE         ; Set the cursor position
                 BRA done
@@ -717,7 +757,7 @@ ICSRRIGHT       PHX
                 JSL ISCROLLUP         ; But scroll the screen up
 
 icsrright_nowrap
-                JSL ILOCATE           ; Set the cursor position       
+                JSL ILOCATE           ; Set the cursor position
 
                 PLP
                 PLD
@@ -944,7 +984,7 @@ iprinth1        setas
                 PLA
                 PLP
                 RTL
-              
+
 ;
 ; IPRINTAH
 ; Prints hex value in A. Printed value is 2 wide if M flag is 1, 4 wide if M=0
@@ -2572,7 +2612,7 @@ MOUSE_POINTER_PTR     .text $00,$01,$01,$00,$00,$00,$00,$00,$01,$01,$01,$00,$00,
                       .text $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 
 
-            
+
 
 * = $3FF000
 FONT_4_BANK0

@@ -13,14 +13,14 @@ FAT32_Total_Sector_Count        .word 0; 2880 => 80 track of 18 sector on each 2
 FAT32_Sector_per_Fat            .dword 0
 FAT32_Sector_per_Track          .word 0
 FAT32_Nb_of_Head                .word 0
-FAT32_Total_Sector_Count_FAT32  .dword 0
+FAT32_Nb_Of_Sector_In_Partition .dword 0
 FAT32_Boot_Signature            .word 0
 FAT32_Volume_ID                 .dword 0
 FAT32_Volume_Label              .fill 11,0 ;0xB
 FAT32_File_System_Type          .word 0
 FAT32_Sector_loaded_in_ram      .dword 0; updated by any function readding Sector from FDD like : IFAT32_READ_BOOT_SECTOR / IFAT32_COMPUT_ROOT_DIR_POS
 
-FAT32_Root_Fat_Sector_offset    .word 0; hold the ofset in cluster of the first root dirrectory in the fat
+FAT32_Root_Sector_offset    .dword 0; hold the ofset in cluster of the first root dirrectory in the fat
 FAT32_Root_Base_Sector          .dword 0; hold the first sector containing the Root directory data
 FAT32_Root_Sector_loaded_in_ram .dword 0  ; store the actual Folder sector loades in ram
 FAT32_Root_entry_value          .fill 32,0 ; store the 32 byte of root entry
@@ -50,26 +50,8 @@ FAT32_init  ; init
               JSL IFAT32_READ_MBR             ; Init only
               JSL IFAT32_READ_BOOT_SECTOR     ; Init only
               JSL IFAT32_COMPUT_FAT_POS       ; Init only
-              JSL IFAT32_COMPUT_DATA_POS      ; Init only
               JSL IFAT32_COMPUT_ROOT_DIR_POS  ; Init only
-
-              LDA #$0D
-              JSL IPUTC
-              LDA FAT32_Root_Base_Sector
-              XBA
-              JSL IPRINT_HEX
-              XBA
-              JSL IPRINT_HEX
-              LDA #$0D
-              JSL IPUTC
-              LDA FAT32_Data_Base_Sector
-              XBA
-              JSL IPRINT_HEX
-              XBA
-              JSL IPRINT_HEX
-              LDA #$0D
-              JSL IPUTC
-
+              JSL IFAT32_COMPUT_DATA_POS      ; Init only IFAT32_COMPUT_ROOT_DIR_POS need to bew caled before !!!
               ; make sure the FAT sector stored in ram (missing befor init) is differant
               ; than the one we are requesting (at least the first tine the code is called)
               LDA #0
@@ -82,6 +64,9 @@ FAT32_init  ; init
               STA FAT32_FAT_Sector_loaded_in_ram+2
 
               JSL IFAT32_GET_ROOT_ENTRY
+
+              JSL FAT32_Print_FAT_STATE
+      fgsfgsfgsfgs        BRA fgsfgsfgsfgs
               LDA #5
               STA FAT32_FAT_Entry
               LDA #0
@@ -414,32 +399,20 @@ IFAT32_READ_BOOT_SECTOR
                   AND #$FF
                   STA FAT32_Nb_Of_FAT
 
-                  ;LDX #17 ;  not used on FAT 32
-                  ;LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-                  ;STA FAT32_Max_Root_Entry
-
-                  ;LDX #19 ; not used on FAT 32
-                  ;LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-                  ;STA FAT32_Total_Sector_Count
-
-                  ;LDX #22 ;; not used on FAT 32
-                  ;LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-                  ;STA FAT32_Sector_per_Fat
-
-                  LDX #24 ;
+                  LDX #$18 ;
                   LDA FAT32_DATA_ADDRESS_BUFFER_512,X
                   STA FAT32_Sector_per_Track
 
-                  LDX #26 ;
+                  LDX #$1A ;
                   LDA FAT32_DATA_ADDRESS_BUFFER_512,X
                   STA FAT32_Nb_of_Head
 
-                  ;LDX #$20; ;32
-                  ;LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-                  ;STA FAT32_Total_Sector_Count_FAT32
-                  ;LDX #34 ;
-                  ;LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-                  ;STA FAT32_Total_Sector_Count_FAT32+2
+                  LDX #$20 ;36 ;
+                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+                  STA FAT32_Nb_Of_Sector_In_Partition
+                  LDX #$22 ;36 ;
+                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+                  STA FAT32_Nb_Of_Sector_In_Partition+2
 
                   LDX #$24 ;36 ;
                   LDA FAT32_DATA_ADDRESS_BUFFER_512,X
@@ -450,9 +423,10 @@ IFAT32_READ_BOOT_SECTOR
 
                   LDX #$2C ;
                   LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-                  AND #$FF ; Byte balue
-                  STA FAT32_Root_Fat_Sector_offset
-
+                  STA FAT32_Root_Sector_offset
+                  LDX #$2E ;
+                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+                  STA FAT32_Root_Sector_offset+2
                   ;LDA #<>FAT32_DATA_ADDRESS_BUFFER_512
                   ;ADC #43
                   ;TAX
@@ -496,11 +470,16 @@ IFAT32_READ_BOOT_SECTOR
                   LDA FAT32_Sector_per_Fat
                   CMP #0
                   BEQ FAT32_ERROR_SECTOR_PER_FAT
+                  LDA FAT32_Sector_per_Fat+2
+                  CMP #0
+                  BEQ FAT32_ERROR_SECTOR_PER_FAT
 
-                  LDA FAT32_Root_Fat_Sector_offset
+                  LDA FAT32_Root_Sector_offset
                   CMP #2
                   BCC FAT32_ERROR_FAT_SECTOR_OFFSET
-
+                  LDA FAT32_Root_Sector_offset+2
+                  CMP #0
+                  BCC FAT32_ERROR_FAT_SECTOR_OFFSET
                   ;LDA FAT32_Boot_Signature
                   ;CMP #$29
                   ;BNE FAT32_ERROR_BOOT_SIGNATURE
@@ -547,23 +526,20 @@ RETURN_IFAT32_READ_BOOT_SECTOR
 
 IFAT32_COMPUT_DATA_POS
                   setaxl
-                  LDA FAT32_Nb_Of_FAT;
-                  TAX
-                  LDA FAT32_Sector_per_Fat
-FAT32_DATA_POS_ADD_ONE_FAT       DEC X
-                  CPX #0
-                  BEQ FAT32_DATA_POS_FDD_END_LOOP_FAT_SECTOR_USAGE
-                  CLC
-                  ADC FAT32_Sector_per_Fat
-                  BRA FAT32_DATA_POS_ADD_ONE_FAT
-FAT32_DATA_POS_FDD_END_LOOP_FAT_SECTOR_USAGE
-                  CLC
-                  ADC FAT32_Nb_Of_reserved_Cluster
-                  CLC
-                  ADC MBR_Partition_address; at this point we have the sector where the Root directory is starting
-                  CLC
-                  ADC FAT32_Root_Fat_Sector_offset ; ad the number of root directory sector
+                  LDA FAT32_Root_Base_Sector+2 ; load the MSB first to not mosify the value of the
+                  STA ADDER_A+2; result if a carry occure wnen loading the result in A or B
+                  LDA FAT32_Root_Base_Sector
+                  STA ADDER_A
+
+                  LDA FAT32_Root_Sector_offset
+                  STA ADDER_B
+                  LDA FAT32_Root_Sector_offset+2
+                  STA ADDER_B+2
+                  ;---------------------------------------
+                  LDA ADDER_R
                   STA FAT32_Data_Base_Sector
+                  LDA ADDER_R+2
+                  STA FAT32_Data_Base_Sector+2
                   RTL
 ;-------------------------------------------------------------------------------
 ;
@@ -572,21 +548,30 @@ FAT32_DATA_POS_FDD_END_LOOP_FAT_SECTOR_USAGE
 ;-------------------------------------------------------------------------------
 IFAT32_COMPUT_ROOT_DIR_POS
                   setaxl
-                  LDA FAT32_Nb_Of_FAT;
-                  TAX
-                  LDA FAT32_Sector_per_Fat
-FAT32_ADD_ONE_FAT:DEC X
-                  CPX #0
-                  BEQ FAT32_FDD_END_LOOP_FAT_SECTOR_USAGE
-                  CLC
-                  ADC FAT32_Sector_per_Fat
-                  BRA FAT32_ADD_ONE_FAT
-FAT32_FDD_END_LOOP_FAT_SECTOR_USAGE:
-                  CLC
-                  ADC FAT32_Nb_Of_reserved_Cluster
-                  CLC
-                  ADC MBR_Partition_address; at this point we have the sector where the Root directory is starting
+                  ;--------- Compute the size of the 2 FAT -------------
+                  ; first operand
+                  LDA FAT32_Nb_Of_FAT ; 16 bits number
+                  STA M0_OPERAND_A
+                  ; Second operand
+                  LDA FAT32_Sector_per_Fat ; 16 bits number
+                  STA M0_OPERAND_B
+                  ;------------ add it to the fat ofset -----------
+                  ; we have the total number of sector used by the FAT
+                  LDA M0_RESULT
+                  STA ADDER_A
+                  LDA M0_RESULT+2
+                  STA ADDER_A+2
+                  ; second operand
+                  LDA FAT32_FAT_Base_Sector ;  reserved sector + partition ofset (MBR_Partition_address)
+                  STA ADDER_B
+                  LDA FAT32_FAT_Base_Sector+2
+                  STA ADDER_B+2
+                  ;---------------------------------------
+                  ; we have the physical ofset (in cluster) of the firsr data block
+                  LDA ADDER_R
                   STA FAT32_Root_Base_Sector
+                  LDA ADDER_R+2
+                  STA FAT32_Root_Base_Sector+2
                   RTL
 ;-------------------------------------------------------------------------------
 IFAT32_GET_ROOT_FIRST_ENTRY
@@ -598,15 +583,30 @@ IFAT32_GET_ROOT_NEXT_ENTRY
                   RTL
 ;-------------------------------------------------------------------------------
 ;
-;
+; Get the number of reserved sector and ad it to Partition address(32 bits) to
+; comput the address of the first fat loation
 ;
 ;-------------------------------------------------------------------------------
 IFAT32_COMPUT_FAT_POS
                   setaxl
-                  LDA FAT32_Nb_Of_reserved_Cluster
-                  CLC
-                  ADC MBR_Partition_address;
+                  ;---------------------------------------
+                  ; first operand
+                  LDA FAT32_Nb_Of_reserved_Cluster ; 16 bite number
+                  STA ADDER_A
+                  LDA #0
+                  STA ADDER_A+2
+                  ; second operand
+                  LDA MBR_Partition_address ; 32 byte number
+                  STA ADDER_B
+                  LDA MBR_Partition_address+2
+                  STA ADDER_B+2
+                  ;---------------------------------------
+                  ; Get the result , don't really care about the overflow bit as
+                  ; it will NEVER (so somone will have the issue one day) happen
+                  LDA ADDER_R
                   STA FAT32_FAT_Base_Sector
+                  LDA ADDER_R+2
+                  STA FAT32_FAT_Base_Sector+2
                   RTL
 ;
 ;-------------------------------------------------------------------------------
@@ -1346,15 +1346,15 @@ FAT32_Print_FAT_STATE
                 JSL IPRINT_HEX
                 XBA
                 JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Total_Sector_Count_FAT32
-                LDA #`TEXT_FAT32___Total_Sector_Count_FAT32
+                LDX #<>TEXT_FAT32___Nb_Of_Sector_In_Partition
+                LDA #`TEXT_FAT32___Nb_Of_Sector_In_Partition
                 JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Total_Sector_Count_FAT32+2
+                LDA FAT32_Nb_Of_Sector_In_Partition+2
                 XBA
                 JSL IPRINT_HEX
                 XBA
                 JSL IPRINT_HEX
-                LDA FAT32_Total_Sector_Count_FAT32
+                LDA FAT32_Nb_Of_Sector_In_Partition
                 XBA
                 JSL IPRINT_HEX
                 XBA
@@ -1411,10 +1411,15 @@ PRINT_FAT32_Volume_Label:
                 JSL IPRINT_HEX
                 XBA
                 JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Root_Fat_Sector_offset
-                LDA #`TEXT_FAT32___Root_Fat_Sector_offset
+                LDX #<>TEXT_FAT32___Root_Sector_offset
+                LDA #`TEXT_FAT32___Root_Sector_offset
                 JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Root_Fat_Sector_offset
+                LDA FAT32_Root_Sector_offset+2
+                XBA
+                JSL IPRINT_HEX
+                XBA
+                JSL IPRINT_HEX
+                LDA FAT32_Root_Sector_offset
                 XBA
                 JSL IPRINT_HEX
                 XBA
@@ -1623,13 +1628,13 @@ TEXT_FAT32___Total_Sector_Count          .text   $0D, "FAT32 Total_Sector_Count 
 TEXT_FAT32___Sector_per_Fat              .text   $0D, "FAT32 Sector per Fat               ",0
 TEXT_FAT32___Sector_per_Track            .text   $0D, "FAT32 Sector per Track             ",0
 TEXT_FAT32___Nb_of_Head                  .text   $0D, "FAT32 Nb of Head                   ",0
-TEXT_FAT32___Total_Sector_Count_FAT32    .text   $0D, "FAT32 Total Sector Count FAT32     ",0
+TEXT_FAT32___Nb_Of_Sector_In_Partition   .text   $0D, "FAT32 Nb Of Sector In Partition    ",0
 TEXT_FAT32___Boot_Signature              .text   $0D, "FAT32 Boot Signature               ",0
 TEXT_FAT32___Volume_ID                   .text   $0D, "FAT32 Volume ID                    ",0
 TEXT_FAT32___Volume_Label                .text   $0D, "FAT32 Volume Label                 ",0
 TEXT_FAT32___File_System_Type            .text   $0D, "FAT32 File System Type             ",0
 TEXT_FAT32___Sector_loaded_in_ram        .text   $0D, "FAT32 Sector loaded in ram         ",0
-TEXT_FAT32___Root_Fat_Sector_offset      .text   $0D, "FAT32 Root Fat Sector offset       ",0
+TEXT_FAT32___Root_Sector_offset          .text   $0D, "FAT32 Root Sector offset           ",0
 TEXT_FAT32___Root_Base_Sector            .text   $0D, "FAT32 Root Base Sector             ",0
 TEXT_FAT32___Root_Sector_loaded_in_ram   .text   $0D, "FAT32 Root Sector loaded in ram    ",0
 TEXT_FAT32___Root_entry_value            .text   $0D, "FAT32 Root entry_value             ",0
@@ -1644,6 +1649,7 @@ TEXT_FAT32___Curent_File_base_cluster    .text   $0D, "FAT32 Curent File base cl
 TEXT_FAT32___Curent_File_curent_cluster  .text   $0D, "FAT32 Curent File curent cluster   ",0
 TEXT_FAT32___Sector_to_read              .text   $0D, "FAT32 Sector to read               ",0
 TEXT_FAT32___SD_FDD_HDD_Sell             .text   $0D, "FAT32 SD_FDD_HDD_Sell              ",0
+TEXT_____Fat_size                        .text   $0D, "Fat_size                           ",0
 
 * = $120000
 .include "HDD_row_TEXT_HEX.asm"

@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.54.1900 listing file
 ; 64tass --m65816 -D TARGET=2 --long-address --flat --intel-hex -o kernel.hex --list kernel_hex.lst --labels=kernel_hex.lbl src\kernel.asm
-; Thu Feb 13 20:31:00 2020
+; Thu Feb 13 23:52:49 2020
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -5111,1289 +5111,1298 @@
 >01080c	00 00 00 00			FAT32_Sector_per_Fat            .dword 0
 >010810	00 00				FAT32_Sector_per_Track          .word 0
 >010812	00 00				FAT32_Nb_of_Head                .word 0
->010814	00 00 00 00			FAT32_Total_Sector_Count_FAT32  .dword 0
+>010814	00 00 00 00			FAT32_Nb_Of_Sector_In_Partition .dword 0
 >010818	00 00				FAT32_Boot_Signature            .word 0
 >01081a	00 00 00 00			FAT32_Volume_ID                 .dword 0
 >01081e	00 00 00 00 00 00 00 00		FAT32_Volume_Label              .fill 11,0 ;0xB
 >010826	00 00 00
 >010829	00 00				FAT32_File_System_Type          .word 0
 >01082b	00 00 00 00			FAT32_Sector_loaded_in_ram      .dword 0; updated by any function readding Sector from FDD like : IFAT32_READ_BOOT_SECTOR / IFAT32_COMPUT_ROOT_DIR_POS
->01082f	00 00				FAT32_Root_Fat_Sector_offset    .word 0; hold the ofset in cluster of the first root dirrectory in the fat
->010831	00 00 00 00			FAT32_Root_Base_Sector          .dword 0; hold the first sector containing the Root directory data
->010835	00 00 00 00			FAT32_Root_Sector_loaded_in_ram .dword 0  ; store the actual Folder sector loades in ram
->010839	00 00 00 00 00 00 00 00		FAT32_Root_entry_value          .fill 32,0 ; store the 32 byte of root entry
->010841	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
->010851	00 00 00 00 00 00 00 00
->010859	00 00 00 00			FAT32_FAT_Base_Sector           .dword 0
->01085d	00 00 00 00			FAT32_FAT_Sector_loaded_in_ram  .dword 0  ; store the actual FAT sector loades in ram
->010861	00 00 00 00			FAT32_FAT_Entry                 .dword 0
->010865	00 00 00 00			FAT32_FAT_Next_Entry            .dword 0  ; store the next 32 bit FAT entry associated to the FAT entry in 'FAT32_FAT_Entry'
->010869	00 00 00 00			FAT32_FAT_Linked_Entry          .dword 0
->01086d	00 00 00 00			FAT32_Data_Base_Sector          .dword 0  ; contain the sector index of the first data in the FAT volume (that include the reserved cluster after the fat) => used to convert from cluster count to fat index
->010871	00 00 00 00			MBR_Partition_address           .dword 0
->010875	00 00 00 00			FAT32_Curent_File_base_cluster  .dword 0 ; Hold the first cluster from the FAT perspective => real cluster  = FAT32_Curent_File_base_cluster + FAT32_Data_Base_Sector
->010879	00 00 00 00			FAT32_Curent_File_curent_cluster  .dword 0
->01087d	00 00 00 00			FAT32_Sector_to_read            .dword 0
->010881	00 00				FAT32_SD_FDD_HDD_Sell           .word 0
->010883	54 45 58 54 5f 54 7e 31		file_to_load_f32    .text "TEXT_T~1TXT"
->01088b	54 58 54
-.01088e					FAT32_init
-.01088e	22 ef 0a 01	jsl $010aef	              JSL IFAT32_READ_MBR             ; Init only
-.010892	22 7e 0b 01	jsl $010b7e	              JSL IFAT32_READ_BOOT_SECTOR     ; Init only
-.010896	22 d1 0c 01	jsl $010cd1	              JSL IFAT32_COMPUT_FAT_POS       ; Init only
-.01089a	22 78 0c 01	jsl $010c78	              JSL IFAT32_COMPUT_DATA_POS      ; Init only
-.01089e	22 a4 0c 01	jsl $010ca4	              JSL IFAT32_COMPUT_ROOT_DIR_POS  ; Init only
-.0108a2	a9 0d 00	lda #$000d	              LDA #$0D
-.0108a5	22 91 06 39	jsl $390691	              JSL IPUTC
-.0108a9	af 31 08 01	lda $010831	              LDA FAT32_Root_Base_Sector
-.0108ad	eb		xba		              XBA
-.0108ae	22 e9 44 38	jsl $3844e9	              JSL IPRINT_HEX
-.0108b2	eb		xba		              XBA
-.0108b3	22 e9 44 38	jsl $3844e9	              JSL IPRINT_HEX
-.0108b7	a9 0d 00	lda #$000d	              LDA #$0D
-.0108ba	22 91 06 39	jsl $390691	              JSL IPUTC
-.0108be	af 6d 08 01	lda $01086d	              LDA FAT32_Data_Base_Sector
-.0108c2	eb		xba		              XBA
-.0108c3	22 e9 44 38	jsl $3844e9	              JSL IPRINT_HEX
-.0108c7	eb		xba		              XBA
-.0108c8	22 e9 44 38	jsl $3844e9	              JSL IPRINT_HEX
-.0108cc	a9 0d 00	lda #$000d	              LDA #$0D
-.0108cf	22 91 06 39	jsl $390691	              JSL IPUTC
+>01082f	00 00 00 00			FAT32_Root_Sector_offset    .dword 0; hold the ofset in cluster of the first root dirrectory in the fat
+>010833	00 00 00 00			FAT32_Root_Base_Sector          .dword 0; hold the first sector containing the Root directory data
+>010837	00 00 00 00			FAT32_Root_Sector_loaded_in_ram .dword 0  ; store the actual Folder sector loades in ram
+>01083b	00 00 00 00 00 00 00 00		FAT32_Root_entry_value          .fill 32,0 ; store the 32 byte of root entry
+>010843	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+>010853	00 00 00 00 00 00 00 00
+>01085b	00 00 00 00			FAT32_FAT_Base_Sector           .dword 0
+>01085f	00 00 00 00			FAT32_FAT_Sector_loaded_in_ram  .dword 0  ; store the actual FAT sector loades in ram
+>010863	00 00 00 00			FAT32_FAT_Entry                 .dword 0
+>010867	00 00 00 00			FAT32_FAT_Next_Entry            .dword 0  ; store the next 32 bit FAT entry associated to the FAT entry in 'FAT32_FAT_Entry'
+>01086b	00 00 00 00			FAT32_FAT_Linked_Entry          .dword 0
+>01086f	00 00 00 00			FAT32_Data_Base_Sector          .dword 0  ; contain the sector index of the first data in the FAT volume (that include the reserved cluster after the fat) => used to convert from cluster count to fat index
+>010873	00 00 00 00			MBR_Partition_address           .dword 0
+>010877	00 00 00 00			FAT32_Curent_File_base_cluster  .dword 0 ; Hold the first cluster from the FAT perspective => real cluster  = FAT32_Curent_File_base_cluster + FAT32_Data_Base_Sector
+>01087b	00 00 00 00			FAT32_Curent_File_curent_cluster  .dword 0
+>01087f	00 00 00 00			FAT32_Sector_to_read            .dword 0
+>010883	00 00				FAT32_SD_FDD_HDD_Sell           .word 0
+>010885	54 45 58 54 5f 54 7e 31		file_to_load_f32    .text "TEXT_T~1TXT"
+>01088d	54 58 54
+.010890					FAT32_init
+.010890	22 c6 0a 01	jsl $010ac6	              JSL IFAT32_READ_MBR             ; Init only
+.010894	22 55 0b 01	jsl $010b55	              JSL IFAT32_READ_BOOT_SECTOR     ; Init only
+.010898	22 fb 0c 01	jsl $010cfb	              JSL IFAT32_COMPUT_FAT_POS       ; Init only
+.01089c	22 b2 0c 01	jsl $010cb2	              JSL IFAT32_COMPUT_ROOT_DIR_POS  ; Init only
+.0108a0	22 7f 0c 01	jsl $010c7f	              JSL IFAT32_COMPUT_DATA_POS      ; Init only IFAT32_COMPUT_ROOT_DIR_POS need to bew caled before !!!
+.0108a4	a9 00 00	lda #$0000	              LDA #0
+.0108a7	8f 2b 08 01	sta $01082b	              STA FAT32_Sector_loaded_in_ram
+.0108ab	8f 37 08 01	sta $010837	              STA FAT32_Root_Sector_loaded_in_ram
+.0108af	8f 5f 08 01	sta $01085f	              STA FAT32_FAT_Sector_loaded_in_ram
+.0108b3	a9 00 00	lda #$0000	              LDA #0
+.0108b6	8f 2d 08 01	sta $01082d	              STA FAT32_Sector_loaded_in_ram+2
+.0108ba	8f 39 08 01	sta $010839	              STA FAT32_Root_Sector_loaded_in_ram+2
+.0108be	8f 61 08 01	sta $010861	              STA FAT32_FAT_Sector_loaded_in_ram+2
+.0108c2	22 a0 0d 01	jsl $010da0	              JSL IFAT32_GET_ROOT_ENTRY
+.0108c6	22 89 11 01	jsl $011189	              JSL FAT32_Print_FAT_STATE
+.0108ca	80 fe		bra $0108ca	      fgsfgsfgsfgs        BRA fgsfgsfgsfgs
+.0108cc	a9 05 00	lda #$0005	              LDA #5
+.0108cf	8f 63 08 01	sta $010863	              STA FAT32_FAT_Entry
 .0108d3	a9 00 00	lda #$0000	              LDA #0
-.0108d6	8f 2b 08 01	sta $01082b	              STA FAT32_Sector_loaded_in_ram
-.0108da	8f 35 08 01	sta $010835	              STA FAT32_Root_Sector_loaded_in_ram
-.0108de	8f 5d 08 01	sta $01085d	              STA FAT32_FAT_Sector_loaded_in_ram
-.0108e2	a9 00 00	lda #$0000	              LDA #0
-.0108e5	8f 2d 08 01	sta $01082d	              STA FAT32_Sector_loaded_in_ram+2
-.0108e9	8f 37 08 01	sta $010837	              STA FAT32_Root_Sector_loaded_in_ram+2
-.0108ed	8f 5f 08 01	sta $01085f	              STA FAT32_FAT_Sector_loaded_in_ram+2
-.0108f1	22 54 0d 01	jsl $010d54	              JSL IFAT32_GET_ROOT_ENTRY
-.0108f5	a9 05 00	lda #$0005	              LDA #5
-.0108f8	8f 61 08 01	sta $010861	              STA FAT32_FAT_Entry
-.0108fc	a9 00 00	lda #$0000	              LDA #0
-.0108ff	8f 63 08 01	sta $010863	              STA FAT32_FAT_Entry+2
-.010903	22 c9 0d 01	jsl $010dc9	              JSL FAT32_IFAT_GET_FAT_ENTRY
-.010907	6b		rtl		              RTL
-.010908					FAT32_test
-.010908	22 54 0d 01	jsl $010d54	              JSL IFAT32_GET_ROOT_ENTRY
-.01090c	a9 05 00	lda #$0005	              LDA #5
-.01090f	8f 61 08 01	sta $010861	              STA FAT32_FAT_Entry
-.010913	a9 00 00	lda #$0000	              LDA #0
-.010916	8f 63 08 01	sta $010863	              STA FAT32_FAT_Entry+2
-.01091a	22 c9 0d 01	jsl $010dc9	              JSL FAT32_IFAT_GET_FAT_ENTRY
-.01091e	a9 0d 00	lda #$000d	              LDA #$0D
-.010921	22 91 06 39	jsl $390691	              JSL IPUTC
-.010925	22 72 09 01	jsl $010972	              JSL FAT32_LS_CMD
-.010929	a9 0d 00	lda #$000d	              LDA #$0D
-.01092c	22 91 06 39	jsl $390691	              JSL IPUTC
-.010930	22 ab 09 01	jsl $0109ab	              JSL FAT32_Open_File
-.010934	c9 01 00	cmp #$0001	              CMP #1
-.010937	d0 08		bne $010941	              BNE FAT32_test__Faill_To_Find_file
-.010939	22 25 0a 01	jsl $010a25	              JSL FAT32_Read_File
-.01093d	22 42 09 01	jsl $010942	              JSL FAT32_Print_Cluster
-.010941					FAT32_test__Faill_To_Find_file
-.010941	6b		rtl		              RTL
-.010942					FAT32_Print_Cluster
-.010942	a9 0d 00	lda #$000d	              LDA #$0D
-.010945	22 91 06 39	jsl $390691	              JSL IPUTC
-.010949	a2 00 00	ldx #$0000	              LDX #0
-.01094c					FAT32_Print_Cluster_line
-.01094c	a0 00 00	ldy #$0000	              LDY #0
-.01094f					FAT32_Print_Cluster_Byte
-.01094f	bf 00 00 01	lda $010000,x	              LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010953	22 e9 44 38	jsl $3844e9	              JSL IPRINT_HEX
-.010957	a9 20 00	lda #$0020	              LDA #$20
-.01095a	22 91 06 39	jsl $390691	              JSL IPUTC
-.01095e	c8		iny		              INY
-.01095f	c0 10 00	cpy #$0010	              CPY #16
-.010962	d0 eb		bne $01094f	              BNE FAT32_Print_Cluster_Byte
-.010964	a9 0d 00	lda #$000d	              LDA #$0D
-.010967	22 91 06 39	jsl $390691	              JSL IPUTC
-.01096b	e8		inx		              INX
-.01096c	e0 00 02	cpx #$0200	              CPX #512
-.01096f	d0 db		bne $01094c	              BNE FAT32_Print_Cluster_line
-.010971	6b		rtl		              RTL
-.010972	a2 00 00	ldx #$0000	FAT32_LS_CMD   LDX #0 ; start by readding the first folder entry
-.010975					FAT32_LS_CMD__Read_Next_Folder_Entry
-.010975	8a		txa		                  TXA
-.010976	c9 20 00	cmp #$0020	                  CMP #32
-.010979	f0 2f		beq $0109aa	                  BEQ FAT32_LS_CMD__EXIT
-.01097b	22 54 0d 01	jsl $010d54	                  JSL IFAT32_GET_ROOT_ENTRY
-.01097f	e8		inx		                  INC X
-.010980	af 39 08 01	lda $010839	                  LDA FAT32_Root_entry_value
-.010984	29 ff 00	and #$00ff	                  AND #$00FF
-.010987	c9 e5 00	cmp #$00e5	                  CMP #$E5 ; test if the entry is deleted
-.01098a	f0 e9		beq $010975	                  BEQ FAT32_LS_CMD__Read_Next_Folder_Entry
-.01098c	af 44 08 01	lda $010844	                  LDA FAT32_Root_entry_value +11
-.010990	29 ff 00	and #$00ff	                  AND #$00FF
-.010993	c9 0f 00	cmp #$000f	                  CMP #$0F ; test if its a long name entry
-.010996	f0 dd		beq $010975	                  BEQ FAT32_LS_CMD__Read_Next_Folder_Entry
-.010998	c9 20 00	cmp #$0020	                  CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
-.01099b	d0 d8		bne $010975	                  BNE FAT32_LS_CMD__Read_Next_Folder_Entry
-.01099d	22 8f 0a 01	jsl $010a8f	                  JSL FAT32_Print_File_Name
-.0109a1	a9 0d 00	lda #$000d	                  LDA #$0D
-.0109a4	22 91 06 39	jsl $390691	                  JSL IPUTC
-.0109a8	80 cb		bra $010975	                  BRA FAT32_LS_CMD__Read_Next_Folder_Entry
-.0109aa					FAT32_LS_CMD__EXIT
-.0109aa	6b		rtl		                  RTL
-.0109ab	a2 00 00	ldx #$0000	FAT32_Open_File   LDX #0 ; start by readding the first folder entry
-.0109ae					FAT32_Open_File_Read_Next_Folder_Entry
-.0109ae	8a		txa		                  TXA
-.0109af	c9 20 00	cmp #$0020	                  CMP #32
-.0109b2	f0 70		beq $010a24	                  BEQ FAT32_Open_File__EXIT
-.0109b4	22 54 0d 01	jsl $010d54	                  JSL IFAT32_GET_ROOT_ENTRY
-.0109b8	e8		inx		                  INC X
-.0109b9	af 39 08 01	lda $010839	                  LDA FAT32_Root_entry_value
-.0109bd	29 ff 00	and #$00ff	                  AND #$00FF
-.0109c0	c9 e5 00	cmp #$00e5	                  CMP #$E5 ; test if the entry is deleted
-.0109c3	f0 e9		beq $0109ae	                  BEQ FAT32_Open_File_Read_Next_Folder_Entry
-.0109c5	af 44 08 01	lda $010844	                  LDA FAT32_Root_entry_value +11 ; read the flags
-.0109c9	29 ff 00	and #$00ff	                  AND #$00FF
-.0109cc	c9 0f 00	cmp #$000f	                  CMP #$0F ; test if it's a long name entry
-.0109cf	f0 dd		beq $0109ae	                  BEQ FAT32_Open_File_Read_Next_Folder_Entry
-.0109d1	c9 20 00	cmp #$0020	                  CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
-.0109d4	d0 d8		bne $0109ae	                  BNE FAT32_Open_File_Read_Next_Folder_Entry
-.0109d6	22 8f 0a 01	jsl $010a8f	                  JSL FAT32_Print_File_Name
-.0109da	a9 0d 00	lda #$000d	                  LDA #$0D
-.0109dd	22 91 06 39	jsl $390691	                  JSL IPUTC
-.0109e1	da		phx		                  PHX
-.0109e2	a2 ff ff	ldx #$ffff	                  LDX #-1
-.0109e5	e2 20		sep #$20	                SEP #$20        ; set A short
-.0109e7					FAT32_Open_File__CHAR_MATCHING
-.0109e7	e8		inx		                  INC X
-.0109e8	e0 0b 00	cpx #$000b	                  CPX #11 ; FAT12 file or folder size
-.0109eb	f0 13		beq $010a00	                  BEQ FAT32_Open_File__STRING_MATCHED
-.0109ed	bf 39 08 01	lda $010839,x	                  LDA FAT32_Root_entry_value,X
-.0109f1	bf 83 08 01	lda $010883,x	                  LDA file_to_load_f32,X
-.0109f5	df 39 08 01	cmp $010839,x	                  CMP FAT32_Root_entry_value,X
-.0109f9	f0 ec		beq $0109e7	                  BEQ FAT32_Open_File__CHAR_MATCHING
-.0109fb	fa		plx		                  PLX
-.0109fc	c2 20		rep #$20	                REP #$20        ; set A long
-.0109fe	80 ae		bra $0109ae	                  BRA FAT32_Open_File_Read_Next_Folder_Entry
-.010a00					FAT32_Open_File__STRING_MATCHED
-.010a00	fa		plx		                  PLX
-.010a01	c2 20		rep #$20	                REP #$20        ; set A long
-.010a03	af 53 08 01	lda $010853	                  LDA FAT32_Root_entry_value + $1A ; Low two bytes of first cluster
-.010a07	8f 75 08 01	sta $010875	                  STA FAT32_Curent_File_base_cluster
-.010a0b	a9 00 00	lda #$0000	                  LDA #0
-.010a0e	8f 79 08 01	sta $010879	                  STA FAT32_Curent_File_curent_cluster
-.010a12	af 55 08 01	lda $010855	                  LDA FAT32_Root_entry_value + $1C ; High two bytes of first cluster
-.010a16	8f 77 08 01	sta $010877	                  STA FAT32_Curent_File_base_cluster + 2
-.010a1a	a9 00 00	lda #$0000	                  LDA #0
-.010a1d	8f 7b 08 01	sta $01087b	                  STA FAT32_Curent_File_curent_cluster + 2
-.010a21	a9 01 00	lda #$0001	                  LDA #1
-.010a24					FAT32_Open_File__EXIT
-.010a24	6b		rtl		                  RTL
-.010a25					FAT32_Read_File
-.010a25	af 79 08 01	lda $010879	                  LDA FAT32_Curent_File_curent_cluster
-.010a29	c9 00 00	cmp #$0000	                  CMP #0
-.010a2c	d0 23		bne $010a51	                  BNE FAT32_Read_File___Get_Next_Sector
-.010a2e	af 7b 08 01	lda $01087b	                  LDA FAT32_Curent_File_curent_cluster+2
-.010a32	c9 00 00	cmp #$0000	                  CMP #0
-.010a35	d0 1a		bne $010a51	                  BNE FAT32_Read_File___Get_Next_Sector
-.010a37	af 75 08 01	lda $010875	                  LDA FAT32_Curent_File_base_cluster
-.010a3b	8f 79 08 01	sta $010879	                  STA FAT32_Curent_File_curent_cluster
-.010a3f	8f 61 08 01	sta $010861	                  STA FAT32_FAT_Entry
-.010a43	af 77 08 01	lda $010877	                  LDA FAT32_Curent_File_base_cluster+2
-.010a47	8f 7b 08 01	sta $01087b	                  STA FAT32_Curent_File_curent_cluster+2
-.010a4b	8f 63 08 01	sta $010863	                  STA FAT32_FAT_Entry+2
-.010a4f	80 12		bra $010a63	                  BRA FAT32_Read_File___Read_Sector
-.010a51					FAT32_Read_File___Get_Next_Sector
-.010a51	22 c9 0d 01	jsl $010dc9	                  JSL FAT32_IFAT_GET_FAT_ENTRY
-.010a55	22 6f 0e 01	jsl $010e6f	                  JSL FAT32_Test_Fat_Entry_Validity
-.010a59	c9 ff ff	cmp #$ffff	                  CMP #-1
-.010a5c	f0 30		beq $010a8e	                  BEQ FAT32_Read_File___End_OF_File
-.010a5e	c9 00 00	cmp #$0000	                  CMP #0
-.010a61	d0 2b		bne $010a8e	                  BNE FAT32_Read_File___Reserved_Or_Bad_Sector
-.010a63					FAT32_Read_File___Read_Sector
-.010a63	af 75 08 01	lda $010875	                  LDA FAT32_Curent_File_base_cluster
-.010a67	18		clc		                  CLC
-.010a68	6f 6d 08 01	adc $01086d	                  ADC FAT32_Data_Base_Sector
-.010a6c	8f 7d 08 01	sta $01087d	                  STA FAT32_Sector_to_read
-.010a70	af 77 08 01	lda $010877	                  LDA FAT32_Curent_File_base_cluster+2
-.010a74	6f 6f 08 01	adc $01086f	                  ADC FAT32_Data_Base_Sector + 2
-.010a78	8f 7f 08 01	sta $01087f	                  STA FAT32_Sector_to_read + 2
-.010a7c	a9 01 00	lda #$0001	                  LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
-.010a7f	48		pha		                  PHA
-.010a80	a9 00 00	lda #$0000	                  LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
-.010a83	48		pha		                  PHA
-.010a84	af 7d 08 01	lda $01087d	                  LDA FAT32_Sector_to_read
-.010a88	22 2b 10 01	jsl $01102b	                  JSL IFAT_READ_SECTOR
-.010a8c	68		pla		                  PLA
-.010a8d	68		pla		                  PLA
-.010a8e					FAT32_Read_File___End_OF_File
-.010a8e					FAT32_Read_File___Reserved_Or_Bad_Sector
-.010a8e	6b		rtl		                  RTL
-.010a8f					FAT32_Print_File_Name
-.010a8f	af 39 08 01	lda $010839	                LDA FAT32_Root_entry_value
-.010a93	22 91 06 39	jsl $390691	                JSL IPUTC
-.010a97	af 3a 08 01	lda $01083a	                LDA FAT32_Root_entry_value +1
-.010a9b	22 91 06 39	jsl $390691	                JSL IPUTC
-.010a9f	af 3b 08 01	lda $01083b	                LDA FAT32_Root_entry_value +2
-.010aa3	22 91 06 39	jsl $390691	                JSL IPUTC
-.010aa7	af 3c 08 01	lda $01083c	                LDA FAT32_Root_entry_value +3
-.010aab	22 91 06 39	jsl $390691	                JSL IPUTC
-.010aaf	af 3d 08 01	lda $01083d	                LDA FAT32_Root_entry_value +4
-.010ab3	22 91 06 39	jsl $390691	                JSL IPUTC
-.010ab7	af 3e 08 01	lda $01083e	                LDA FAT32_Root_entry_value +5
-.010abb	22 91 06 39	jsl $390691	                JSL IPUTC
-.010abf	af 3f 08 01	lda $01083f	                LDA FAT32_Root_entry_value +6
-.010ac3	22 91 06 39	jsl $390691	                JSL IPUTC
-.010ac7	af 40 08 01	lda $010840	                LDA FAT32_Root_entry_value +7
-.010acb	22 91 06 39	jsl $390691	                JSL IPUTC
-.010acf	a9 2e 00	lda #$002e	                LDA #'.'
-.010ad2	22 91 06 39	jsl $390691	                JSL IPUTC
-.010ad6	af 41 08 01	lda $010841	                LDA FAT32_Root_entry_value +8
-.010ada	22 91 06 39	jsl $390691	                JSL IPUTC
-.010ade	af 42 08 01	lda $010842	                LDA FAT32_Root_entry_value +9
-.010ae2	22 91 06 39	jsl $390691	                JSL IPUTC
-.010ae6	af 43 08 01	lda $010843	                LDA FAT32_Root_entry_value +10
-.010aea	22 91 06 39	jsl $390691	                JSL IPUTC
-.010aee	6b		rtl		                RTL
-.010aef					IFAT32_READ_MBR
-.010aef	c2 20		rep #$20	                REP #$20        ; set A long
-.010af1	a9 01 00	lda #$0001	                  LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
-.010af4	48		pha		                  PHA
-.010af5	a9 00 00	lda #$0000	                  LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
-.010af8	48		pha		                  PHA
-.010af9	a9 00 00	lda #$0000	                  LDA #0 ; read sector 0 (where the MBR sector is stored)
-.010afc	22 2b 10 01	jsl $01102b	                  JSL IFAT_READ_SECTOR
-.010b00	fa		plx		                  PLX
-.010b01	fa		plx		                  PLX
-.010b02	a2 be 01	ldx #$01be	                  LDX #MBR_Partition_Entry
-.010b05					READ_MBR_Scan:
-.010b05	bf 08 00 01	lda $010008,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8
-.010b09	c9 00 00	cmp #$0000	                  CMP #0
-.010b0c	f0 03		beq $010b11	                  BEQ READ_MBR_Partition_Entry_LSB_Null
-.010b0e	a0 01 00	ldy #$0001	                  LDY #1
-.010b11					READ_MBR_Partition_Entry_LSB_Null:
-.010b11	8f 71 08 01	sta $010871	                  STA MBR_Partition_address
-.010b15	bf 0a 00 01	lda $01000a,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8+2
-.010b19	c9 00 00	cmp #$0000	                  CMP #0
-.010b1c	f0 03		beq $010b21	                  BEQ READ_MBR_Partition_Entry_MSB_Null
-.010b1e	a0 01 00	ldy #$0001	                  LDY #1
-.010b21					READ_MBR_Partition_Entry_MSB_Null:
-.010b21	8f 73 08 01	sta $010873	                  STA MBR_Partition_address+2
-.010b25	c0 01 00	cpy #$0001	                  CPY #1 ; curent MBR entry not nul (sector location)
-.010b28	f0 0c		beq $010b36	                  BEQ READ_MBR_Partition_valid_address
-.010b2a	e0 fe 01	cpx #$01fe	                  CPX #$1FE
-.010b2d	f0 4b		beq $010b7a	                  BEQ READ_MBR_End_Scan_no_partition
-.010b2f	8a		txa		                  TXA ; Conput the next NBR entry position
-.010b30	69 10 00	adc #$0010	                  ADC #MBR_Partition_Entry_size
-.010b33	aa		tax		                  TAX
-.010b34	80 cf		bra $010b05	                  BRA READ_MBR_Scan
-.010b36					READ_MBR_Partition_valid_address:
-.010b36	a2 25 04	ldx #$0425	                  LDX #<>Partition_ofset_text
-.010b39	a9 02 00	lda #$0002	                  LDA #`Partition_ofset_text
-.010b3c	22 cc 44 38	jsl $3844cc	                  JSL IPUTS_ABS       ; print the first line
-.010b40	a9 30 00	lda #$0030	                  LDA #'0'
-.010b43	22 91 06 39	jsl $390691	                  JSL IPUTC
-.010b47	a9 78 00	lda #$0078	                  LDA #'x'
-.010b4a	22 91 06 39	jsl $390691	                  JSL IPUTC
-.010b4e	af 74 08 01	lda $010874	                  LDA MBR_Partition_address +3
-.010b52	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
-.010b56	af 73 08 01	lda $010873	                  LDA MBR_Partition_address +2
-.010b5a	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
-.010b5e	af 72 08 01	lda $010872	                  LDA MBR_Partition_address +1
-.010b62	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
-.010b66	af 71 08 01	lda $010871	                  LDA MBR_Partition_address
-.010b6a	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
-.010b6e	a9 0d 00	lda #$000d	                  LDA #$0D
-.010b71	22 91 06 39	jsl $390691	                  JSL IPUTC
-.010b75	a9 01 00	lda #$0001	                  LDA #1 ; success
-.010b78	80 03		bra $010b7d	                  BRA READ_MBR_End
-.010b7a					READ_MBR_End_Scan_no_partition:
-.010b7a	a9 ff ff	lda #$ffff	                  LDA #-1
-.010b7d					READ_MBR_End:
-.010b7d	6b		rtl		                  RTL
-.010b7e					IFAT32_READ_BOOT_SECTOR
-.010b7e	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010b80	a9 01 00	lda #$0001	                  LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
-.010b83	48		pha		                  PHA
-.010b84	a9 00 00	lda #$0000	                  LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
-.010b87	48		pha		                  PHA
-.010b88	af 73 08 01	lda $010873	                  LDA MBR_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
-.010b8c	aa		tax		                  TAX
-.010b8d	af 71 08 01	lda $010871	                  LDA MBR_Partition_address
-.010b91	22 2b 10 01	jsl $01102b	                  JSL IFAT_READ_SECTOR
-.010b95	fa		plx		                  PLX
-.010b96	fa		plx		                  PLX;
-.010b97	8f 2b 08 01	sta $01082b	                  STA FAT32_Sector_loaded_in_ram
-.010b9b	a2 0b 00	ldx #$000b	                  LDX #$B ;11
-.010b9e	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010ba2	8f 00 08 01	sta $010800	                  STA FAT32_Byte_Per_Sector
-.010ba6	a2 0d 00	ldx #$000d	                  LDX #$0D ;13
-.010ba9	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010bad	29 ff 00	and #$00ff	                  AND #$FF
-.010bb0	8f 02 08 01	sta $010802	                  STA FAT32_Sector_Per_Cluster
-.010bb4	a2 0e 00	ldx #$000e	                  LDX #$0E ;14
-.010bb7	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010bbb	8f 04 08 01	sta $010804	                  STA FAT32_Nb_Of_reserved_Cluster
-.010bbf	a2 10 00	ldx #$0010	                  LDX #$10 ;16
-.010bc2	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010bc6	29 ff 00	and #$00ff	                  AND #$FF
-.010bc9	8f 06 08 01	sta $010806	                  STA FAT32_Nb_Of_FAT
-.010bcd	a2 18 00	ldx #$0018	                  LDX #24 ;
-.010bd0	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010bd4	8f 10 08 01	sta $010810	                  STA FAT32_Sector_per_Track
-.010bd8	a2 1a 00	ldx #$001a	                  LDX #26 ;
-.010bdb	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010bdf	8f 12 08 01	sta $010812	                  STA FAT32_Nb_of_Head
-.010be3	a2 24 00	ldx #$0024	                  LDX #$24 ;36 ;
-.010be6	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010bea	8f 0c 08 01	sta $01080c	                  STA FAT32_Sector_per_Fat
-.010bee	a2 26 00	ldx #$0026	                  LDX #$26 ;36 ;
-.010bf1	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010bf5	8f 0e 08 01	sta $01080e	                  STA FAT32_Sector_per_Fat+2
-.010bf9	a2 2c 00	ldx #$002c	                  LDX #$2C ;
-.010bfc	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-.010c00	29 ff 00	and #$00ff	                  AND #$FF ; Byte balue
-.010c03	8f 2f 08 01	sta $01082f	                  STA FAT32_Root_Fat_Sector_offset
-.010c07	af 00 08 01	lda $010800	                  LDA FAT32_Byte_Per_Sector
-.010c0b	c9 00 02	cmp #$0200	                  CMP #512
-.010c0e	d0 32		bne $010c42	                  BNE FAT32_ERROR_BLOCK_SEIZE
-.010c10	af 02 08 01	lda $010802	                  LDA FAT32_Sector_Per_Cluster
-.010c14	c9 01 00	cmp #$0001	                  CMP #1
-.010c17	d0 2e		bne $010c47	                  BNE FAT32_ERROR_SECTOR_PER_CLUSTER
-.010c19	af 04 08 01	lda $010804	                  LDA FAT32_Nb_Of_reserved_Cluster
-.010c1d	c9 01 00	cmp #$0001	                  CMP #1
-.010c20	90 2a		bcc $010c4c	                  BCC FAT32_ERROR_RESERVED_SECTOR
-.010c22	af 06 08 01	lda $010806	                  LDA FAT32_Nb_Of_FAT
-.010c26	c9 01 00	cmp #$0001	                  CMP #1
-.010c29	90 26		bcc $010c51	                  BCC FAT32_ERROR_NB_FAT
-.010c2b	af 0c 08 01	lda $01080c	                  LDA FAT32_Sector_per_Fat
-.010c2f	c9 00 00	cmp #$0000	                  CMP #0
-.010c32	f0 2c		beq $010c60	                  BEQ FAT32_ERROR_SECTOR_PER_FAT
-.010c34	af 2f 08 01	lda $01082f	                  LDA FAT32_Root_Fat_Sector_offset
-.010c38	c9 02 00	cmp #$0002	                  CMP #2
-.010c3b	90 28		bcc $010c65	                  BCC FAT32_ERROR_FAT_SECTOR_OFFSET
-.010c3d	a9 01 00	lda #$0001	                  LDA #1
-.010c40	80 35		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c42	a9 ff ff	lda #$ffff	FAT32_ERROR_BLOCK_SEIZE LDA #-1
-.010c45	80 30		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c47					FAT32_ERROR_SECTOR_PER_CLUSTER
-.010c47	a9 fe ff	lda #$fffe	                  LDA #-2
-.010c4a	80 2b		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c4c					FAT32_ERROR_RESERVED_SECTOR
-.010c4c	a9 fd ff	lda #$fffd	                  LDA #-3
-.010c4f	80 26		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c51	a9 fc ff	lda #$fffc	FAT32_ERROR_NB_FAT      LDA #-4
-.010c54	80 21		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c56					FAT32_ERROR_NB_ROOT_ENTRY
-.010c56	a9 fb ff	lda #$fffb	                  LDA #-5
-.010c59	80 1c		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c5b					FAT32_ERROR_NB_TOTAL_SECTOR_COUNT
-.010c5b	a9 fa ff	lda #$fffa	                  LDA #-6
-.010c5e	80 17		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c60					FAT32_ERROR_SECTOR_PER_FAT
-.010c60	a9 f9 ff	lda #$fff9	                  LDA #-7
-.010c63	80 12		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c65					FAT32_ERROR_FAT_SECTOR_OFFSET
-.010c65	a9 f5 ff	lda #$fff5	                  LDA #-11
-.010c68	80 0d		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c6a					FAT32_ERROR_SECTOR_PER_TRACK
-.010c6a	a9 f8 ff	lda #$fff8	                  LDA #-8
-.010c6d	80 08		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c6f					FAT32_ERROR_NB_HEAD_NULL
-.010c6f	a9 f7 ff	lda #$fff7	                  LDA #-9
-.010c72	80 03		bra $010c77	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
-.010c74					FAT32_ERROR_BOOT_SIGNATURE
-.010c74	a9 f6 ff	lda #$fff6	                  LDA #-10
-.010c77					RETURN_IFAT32_READ_BOOT_SECTOR
-.010c77	6b		rtl		                  RTL
-.010c78					IFAT32_COMPUT_DATA_POS
-.010c78	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010c7a	af 06 08 01	lda $010806	                  LDA FAT32_Nb_Of_FAT;
-.010c7e	aa		tax		                  TAX
-.010c7f	af 0c 08 01	lda $01080c	                  LDA FAT32_Sector_per_Fat
-.010c83	ca		dex		FAT32_DATA_POS_ADD_ONE_FAT       DEC X
-.010c84	e0 00 00	cpx #$0000	                  CPX #0
-.010c87	f0 07		beq $010c90	                  BEQ FAT32_DATA_POS_FDD_END_LOOP_FAT_SECTOR_USAGE
-.010c89	18		clc		                  CLC
-.010c8a	6f 0c 08 01	adc $01080c	                  ADC FAT32_Sector_per_Fat
-.010c8e	80 f3		bra $010c83	                  BRA FAT32_DATA_POS_ADD_ONE_FAT
-.010c90					FAT32_DATA_POS_FDD_END_LOOP_FAT_SECTOR_USAGE
-.010c90	18		clc		                  CLC
-.010c91	6f 04 08 01	adc $010804	                  ADC FAT32_Nb_Of_reserved_Cluster
-.010c95	18		clc		                  CLC
-.010c96	6f 71 08 01	adc $010871	                  ADC MBR_Partition_address; at this point we have the sector where the Root directory is starting
-.010c9a	18		clc		                  CLC
-.010c9b	6f 2f 08 01	adc $01082f	                  ADC FAT32_Root_Fat_Sector_offset ; ad the number of root directory sector
-.010c9f	8f 6d 08 01	sta $01086d	                  STA FAT32_Data_Base_Sector
-.010ca3	6b		rtl		                  RTL
-.010ca4					IFAT32_COMPUT_ROOT_DIR_POS
-.010ca4	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010ca6	af 06 08 01	lda $010806	                  LDA FAT32_Nb_Of_FAT;
-.010caa	aa		tax		                  TAX
-.010cab	af 0c 08 01	lda $01080c	                  LDA FAT32_Sector_per_Fat
-.010caf	ca		dex		FAT32_ADD_ONE_FAT:DEC X
-.010cb0	e0 00 00	cpx #$0000	                  CPX #0
-.010cb3	f0 07		beq $010cbc	                  BEQ FAT32_FDD_END_LOOP_FAT_SECTOR_USAGE
-.010cb5	18		clc		                  CLC
-.010cb6	6f 0c 08 01	adc $01080c	                  ADC FAT32_Sector_per_Fat
-.010cba	80 f3		bra $010caf	                  BRA FAT32_ADD_ONE_FAT
-.010cbc					FAT32_FDD_END_LOOP_FAT_SECTOR_USAGE:
-.010cbc	18		clc		                  CLC
-.010cbd	6f 04 08 01	adc $010804	                  ADC FAT32_Nb_Of_reserved_Cluster
-.010cc1	18		clc		                  CLC
-.010cc2	6f 71 08 01	adc $010871	                  ADC MBR_Partition_address; at this point we have the sector where the Root directory is starting
-.010cc6	8f 31 08 01	sta $010831	                  STA FAT32_Root_Base_Sector
-.010cca	6b		rtl		                  RTL
-.010ccb					IFAT32_GET_ROOT_FIRST_ENTRY
-.010ccb	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010ccd	6b		rtl		                  RTL
-.010cce					IFAT32_GET_ROOT_NEXT_ENTRY
-.010cce	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010cd0	6b		rtl		                  RTL
-.010cd1					IFAT32_COMPUT_FAT_POS
-.010cd1	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010cd3	af 04 08 01	lda $010804	                  LDA FAT32_Nb_Of_reserved_Cluster
-.010cd7	18		clc		                  CLC
-.010cd8	6f 71 08 01	adc $010871	                  ADC MBR_Partition_address;
-.010cdc	8f 59 08 01	sta $010859	                  STA FAT32_FAT_Base_Sector
-.010ce0	6b		rtl		                  RTL
-.010ce1					IFAT32_READ_LIKED_FAT_ENTRY
-.010ce1	da		phx		                  PHX
-.010ce2					  IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
-.010ce2	22 c9 0d 01	jsl $010dc9	                  JSL FAT32_IFAT_GET_FAT_ENTRY
-.010ce6	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry +2 ; test for EOC (End Of Cluster)
-.010cea	29 ff 0f	and #$0fff	                  AND #$0FFF ; the 4 MSB are not used in the FAT32
-.010ced	c9 ff 0f	cmp #$0fff	                  CMP #$0FFF
-.010cf0	d0 30		bne $010d22	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
-.010cf2	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
-.010cf6	29 f0 ff	and #$fff0	                  AND #$FFF0
-.010cf9	c9 f0 ff	cmp #$fff0	                  CMP #$FFF0
-.010cfc	d0 24		bne $010d22	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
-.010cfe	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; the cluster entry is not usable or its the last in the chaine
-.010d02	29 0f 00	and #$000f	                  AND #$000F
-.010d05	c9 08 00	cmp #$0008	                  CMP #8
-.010d08	30 05		bmi $010d0f	                  BMI IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED_OR_BAD
-.010d0a	a9 ff ff	lda #$ffff	                  LDA #-1 ; end of the file
-.010d0d	80 43		bra $010d52	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EOC
-.010d0f					IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED_OR_BAD
-.010d0f	c9 07 00	cmp #$0007	                  CMP #7
-.010d12	d0 05		bne $010d19	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED
-.010d14	a9 fe ff	lda #$fffe	                  LDA #-2 ; Bad sector
-.010d17	80 39		bra $010d52	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
-.010d19					IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED
-.010d19	a9 fd ff	lda #$fffd	                  LDA #-3 ; reserved sector
-.010d1c	80 34		bra $010d52	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
-.010d1e	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
-.010d22					IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
-.010d22	c9 00 00	cmp #$0000	                  CMP #0
-.010d25	d0 0e		bne $010d35	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
-.010d27	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry + 2 ; test for EOC (End Of Cluster)
-.010d2b	c9 00 00	cmp #$0000	                  CMP #0
-.010d2e	d0 05		bne $010d35	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
-.010d30	a9 fc ff	lda #$fffc	                  LDA #-4 ; empty sector
-.010d33	80 1d		bra $010d52	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
-.010d35					IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
-.010d35	af 69 08 01	lda $010869	                  LDA FAT32_FAT_Linked_Entry
-.010d39	3a		dec a		                  DEC A
-.010d3a	30 06		bmi $010d42	                  BMI IFAT32_READ_LIKED_FAT_ENTRY___UNDERFLOW
-.010d3c	8f 61 08 01	sta $010861	                  STA FAT32_FAT_Entry ; update the low part the the fat entry we want to read
-.010d40	80 a0		bra $010ce2	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
-.010d42					IFAT32_READ_LIKED_FAT_ENTRY___UNDERFLOW
-.010d42	af 6b 08 01	lda $01086b	                  LDA FAT32_FAT_Linked_Entry+2
-.010d46	3a		dec a		                  DEC A
-.010d47	30 06		bmi $010d4f	                  BMI IFAT32_READ_LIKED_FAT_ENTRY___WENT_THRW_ALL_FAT_LINKED
-.010d49	8f 63 08 01	sta $010863	                  STA FAT32_FAT_Entry+2
-.010d4d	80 93		bra $010ce2	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
-.010d4f					IFAT32_READ_LIKED_FAT_ENTRY___WENT_THRW_ALL_FAT_LINKED
-.010d4f	a9 01 00	lda #$0001	                  LDA #1
-.010d52					IFAT32_READ_LIKED_FAT_ENTRY___EOC
-.010d52					IFAT32_READ_LIKED_FAT_ENTRY___EXIT
-.010d52	fa		plx		                  PLX
-.010d53	6b		rtl		                  RTL
-.010d54					IFAT32_GET_ROOT_ENTRY
-.010d54	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010d56	da		phx		                  PHX
-.010d57	48		pha		                  PHA ; Save the root entry index we want to read
-.010d58	a2 00 00	ldx #$0000	                  LDX #0 ; compute in witch sector the desired root entry is, 16 entry per sector so we just need to divid the sector size by 16
-.010d5b					FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX
-.010d5b	4a		lsr a		                  LSR
-.010d5c	e8		inx		                  INC X
-.010d5d	e0 04 00	cpx #$0004	                  CPX #4 ; divide by 16
-.010d60	d0 f9		bne $010d5b	                  BNE FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX
-.010d62	c9 00 00	cmp #$0000	                  CMP #0
-.010d65	f0 24		beq $010d8b	                  BEQ IFAT32_GET_ROOT_ENTRY__Load_first_sector
-.010d67	8f 69 08 01	sta $010869	                  STA FAT32_FAT_Linked_Entry
-.010d6b	a9 00 00	lda #$0000	                  LDA #0
-.010d6e	8f 6b 08 01	sta $01086b	                  STA FAT32_FAT_Linked_Entry+2
-.010d72	af 31 08 01	lda $010831	                  LDA FAT32_Root_Base_Sector
-.010d76	8f 61 08 01	sta $010861	                  STA FAT32_FAT_Entry
-.010d7a	af 33 08 01	lda $010833	                  LDA FAT32_Root_Base_Sector +2
-.010d7e	8f 63 08 01	sta $010863	                  STA FAT32_FAT_Entry + 2
-.010d82	22 e1 0c 01	jsl $010ce1	                  JSL IFAT32_READ_LIKED_FAT_ENTRY
-.010d86	c9 00 00	cmp #$0000	                  CMP #0
-.010d89	30 3b		bmi $010dc6	                  BMI IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED
-.010d8b					IFAT32_GET_ROOT_ENTRY__Load_first_sector
-.010d8b	18		clc		                  CLC ; reset the carry flag potencialy set by CPX
-.010d8c	6f 31 08 01	adc $010831	                  ADC FAT32_Root_Base_Sector ; add the relative sector position of the root entry to the start root entry position shoud be 19 (0 based index)
-.010d90	cf 35 08 01	cmp $010835	                  CMP FAT32_Root_Sector_loaded_in_ram
-.010d94	f0 16		beq $010dac	                  BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
-.010d96	8f 35 08 01	sta $010835	                  STA FAT32_Root_Sector_loaded_in_ram ; save the new sector loaded
-.010d9a	a9 01 00	lda #$0001	                  LDA #`FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
-.010d9d	48		pha		                  PHA
-.010d9e	a9 00 04	lda #$0400	                  LDA #<>FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
-.010da1	48		pha		                  PHA
-.010da2	af 35 08 01	lda $010835	                  LDA FAT32_Root_Sector_loaded_in_ram ; Get the ROOT directory sector saved rearlyer
-.010da6	22 2b 10 01	jsl $01102b	                  JSL IFAT_READ_SECTOR
-.010daa	fa		plx		                  PLX
-.010dab	fa		plx		                  PLX
-.010dac					FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
-.010dac	68		pla		                  PLA ; GET the root entry FDD_INDEX
-.010dad	29 0f 00	and #$000f	                  AND #$0F ; get only the 4 first byte to get the 16 value ofset in the root entry sector loades in ram (16 entry per sector)
-.010db0	0a		asl a		                  ASL
-.010db1	0a		asl a		                  ASL
-.010db2	0a		asl a		                  ASL
-.010db3	0a		asl a		                  ASL
-.010db4	0a		asl a		                  ASL ; now A contain the ofset to read the root entry from
-.010db5	18		clc		                  CLC
-.010db6	69 00 04	adc #$0400	                  ADC #<>FAT32_FOLDER_ADDRESS_BUFFER_512
-.010db9	aa		tax		                  TAX
-.010dba	a9 39 08	lda #$0839	                  LDA #<>FAT32_Root_entry_value
-.010dbd	a8		tay		                  TAY
-.010dbe	a9 1f 00	lda #$001f	                  LDA #31
-.010dc1	54 01 01	mvn $01,$01	                  MVN `FAT32_Root_entry_value, `FAT32_FOLDER_ADDRESS_BUFFER_512
-.010dc4	80 01		bra $010dc7	                  BRA IFAT32_GET_ROOT_ENTRY___EXIT_OK
-.010dc6					IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED
-.010dc6	fa		plx		                  PLX
-.010dc7					IFAT32_GET_ROOT_ENTRY___EXIT_OK
-.010dc7	fa		plx		                  PLX
-.010dc8	6b		rtl		                  RTL
-.010dc9					FAT32_IFAT_GET_FAT_ENTRY
-.010dc9	48		pha		                  PHA
-.010dca	da		phx		                  PHX
-.010dcb	5a		phy		                  PHY
-.010dcc	af 63 08 01	lda $010863	                  LDA FAT32_FAT_Entry+2
-.010dd0	c9 00 00	cmp #$0000	                  CMP #0
-.010dd3	d0 13		bne $010de8	                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER ; the FAT entry is definitly not in the first FAT cluster
-.010dd5	af 61 08 01	lda $010861	                  LDA FAT32_FAT_Entry
-.010dd9	4a		lsr a		                  LSR A
-.010dda	4a		lsr a		                  LSR A
-.010ddb	4a		lsr a		                  LSR A
-.010ddc	4a		lsr a		                  LSR A
-.010ddd	8f 65 08 01	sta $010865	                  STA FAT32_FAT_Next_Entry
-.010de1	c9 00 00	cmp #$0000	                  CMP #0
-.010de4	d0 02		bne $010de8	                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER
-.010de6	80 36		bra $010e1e	                  BRA FAT32_ENTRY_SECTOR_LOCATION_FIND ; if this part of the code is riched, its mean that the FAT entry requested is with in the first FAT clustrer (entry smaller than 16)
-.010de8					FAT32_FAT_ENTRY_FIND_THE_CLUSTER
-.010de8	af 63 08 01	lda $010863	                  LDA FAT32_FAT_Entry+2
-.010dec	4a		lsr a		                  LSR A
-.010ded	4a		lsr a		                  LSR A
-.010dee	4a		lsr a		                  LSR A
-.010def	4a		lsr a		                  LSR A ; comput the high part divided by 16
-.010df0	8f 67 08 01	sta $010867	                  STA FAT32_FAT_Next_Entry+2 ; use FAT32_FAT_Next_Entry as a temporary variable
-.010df4	af 63 08 01	lda $010863	                  LDA FAT32_FAT_Entry+2 ;extract the 4 bits of the HIGHT part of FAT32_FAT_Entry to casrry them in the LOW part
-.010df8	29 0f 00	and #$000f	                  AND #$F
-.010dfb	0a		asl a		                  ASL A
-.010dfc	0a		asl a		                  ASL A
-.010dfd	0a		asl a		                  ASL A
-.010dfe	0a		asl a		                  ASL A
-.010dff	0a		asl a		                  ASL A
-.010e00	0a		asl a		                  ASL A
-.010e01	0a		asl a		                  ASL A
-.010e02	0a		asl a		                  ASL A
-.010e03	0a		asl a		                  ASL A
-.010e04	0a		asl a		                  ASL A
-.010e05	0a		asl a		                  ASL A
-.010e06	0a		asl a		                  ASL A ; get the 4 bit in the right position to be added to the LOW part
-.010e07	8f 65 08 01	sta $010865	                  STA FAT32_FAT_Next_Entry
-.010e0b	af 61 08 01	lda $010861	                  LDA FAT32_FAT_Entry
-.010e0f	4a		lsr a		                  LSR A
-.010e10	4a		lsr a		                  LSR A
-.010e11	4a		lsr a		                  LSR A
-.010e12	4a		lsr a		                  LSR A ; divide the high part of the FAT entry requested by 16  because there is 16 FAt entry per sector
-.010e13	29 ff 0f	and #$0fff	                  AND #$0FFF
-.010e16	0f 65 08 01	ora $010865	                  ORA FAT32_FAT_Next_Entry
-.010e1a	8f 65 08 01	sta $010865	                  STA FAT32_FAT_Next_Entry ; Now contain the 32 bit FAT Cluster to load
-.010e1e					FAT32_ENTRY_SECTOR_LOCATION_FIND
-.010e1e	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry
-.010e22	18		clc		                  CLC
-.010e23	6f 59 08 01	adc $010859	                  ADC FAT32_FAT_Base_Sector
-.010e27	cf 5d 08 01	cmp $01085d	                  CMP FAT32_FAT_Sector_loaded_in_ram
-.010e2b	f0 16		beq $010e43	                  BEQ FAT32_COMPUTED_OFSET_IN_CLUSTER ; dont need to load the fat sector because it's alreaddy loaded
-.010e2d	8f 5d 08 01	sta $01085d	                  STA FAT32_FAT_Sector_loaded_in_ram  ; update the cluster value
-.010e31	a9 01 00	lda #$0001	                  LDA #`FAT32_FAT_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
-.010e34	48		pha		                  PHA
-.010e35	a9 00 02	lda #$0200	                  LDA #<>FAT32_FAT_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
-.010e38	48		pha		                  PHA
-.010e39	af 5d 08 01	lda $01085d	                  LDA FAT32_FAT_Sector_loaded_in_ram ; read the ROOT directory sector saved at the begining of the function
-.010e3d	22 2b 10 01	jsl $01102b	                  JSL IFAT_READ_SECTOR
-.010e41	fa		plx		                  PLX
-.010e42	fa		plx		                  PLX
-.010e43					FAT32_COMPUTED_OFSET_IN_CLUSTER
-.010e43	af 61 08 01	lda $010861	                  LDA FAT32_FAT_Entry
-.010e47	29 0f 00	and #$000f	                  AND #$0F ; get only the 7 first byte to get the ofset in the curent FAT cluster loades
-.010e4a	0a		asl a		                  ASL
-.010e4b	0a		asl a		                  ASL ; *4 to point to the FAT entry 32 byte
-.010e4c	18		clc		                  CLC
-.010e4d	69 00 02	adc #$0200	                  ADC #<>FAT32_FAT_ADDRESS_BUFFER_512
-.010e50	aa		tax		                  TAX
-.010e51	a9 65 08	lda #$0865	                  LDA #<>FAT32_FAT_Next_Entry
-.010e54	a8		tay		                  TAY
-.010e55	a9 03 00	lda #$0003	                  LDA #3 ; read 4 byte
-.010e58	54 01 01	mvn $01,$01	                  MVN `FAT32_FAT_Next_Entry,`FAT32_FAT_ADDRESS_BUFFER_512
-.010e5b	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry    ; FOR DEBUG
-.010e5f	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry+2  ; FOR DEBUG
-.010e63	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry    ; FOR DEBUG
-.010e67	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry+2  ; FOR DEBUG
-.010e6b	7a		ply		                  PLY
-.010e6c	fa		plx		                  PLX
-.010e6d	68		pla		                  PLA
-.010e6e	6b		rtl		                  RTL
-.010e6f					FAT32_Test_Fat_Entry_Validity
-.010e6f	68		pla		                  PLA
-.010e70	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry +2 ; test for EOC (End Of Cluster)
-.010e74	29 ff 0f	and #$0fff	                  AND #$0FFF ; the 4 MSB are not used in the FAT32
-.010e77	c9 ff 0f	cmp #$0fff	                  CMP #$0FFF
-.010e7a	d0 30		bne $010eac	                  BNE FAT32_Test_Fat_Entry_Validity___TEST_NULL_VALUE
-.010e7c	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
-.010e80	29 f0 ff	and #$fff0	                  AND #$FFF0
-.010e83	c9 f0 ff	cmp #$fff0	                  CMP #$FFF0
-.010e86	d0 24		bne $010eac	                  BNE FAT32_Test_Fat_Entry_Validity___TEST_NULL_VALUE
-.010e88	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; the cluster entry is not usable or its the last in the chaine
-.010e8c	29 0f 00	and #$000f	                  AND #$000F
-.010e8f	c9 08 00	cmp #$0008	                  CMP #8
-.010e92	30 05		bmi $010e99	                  BMI FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED_OR_BAD
-.010e94	a9 ff ff	lda #$ffff	                  LDA #-1 ; end of the file
-.010e97	80 24		bra $010ebd	                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
-.010e99					FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED_OR_BAD
-.010e99	c9 07 00	cmp #$0007	                  CMP #7
-.010e9c	d0 05		bne $010ea3	                  BNE FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED
-.010e9e	a9 fe ff	lda #$fffe	                  LDA #-2 ; Bad sector
-.010ea1	80 1a		bra $010ebd	                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
-.010ea3					FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED
-.010ea3	a9 fd ff	lda #$fffd	                  LDA #-3 ; reserved sector
-.010ea6	80 15		bra $010ebd	                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
-.010ea8	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
-.010eac					FAT32_Test_Fat_Entry_Validity___TEST_NULL_VALUE
-.010eac	c9 00 00	cmp #$0000	                  CMP #0
-.010eaf	d0 0c		bne $010ebd	                  BNE FAT32_Test_Fat_Entry_Validity___EXIT
-.010eb1	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry + 2 ; test for EOC (End Of Cluster)
-.010eb5	c9 00 00	cmp #$0000	                  CMP #0
-.010eb8	d0 03		bne $010ebd	                  BNE FAT32_Test_Fat_Entry_Validity___EXIT
-.010eba	a9 fc ff	lda #$fffc	                  LDA #-4 ; empty sector
-.010ebd					FAT32_Test_Fat_Entry_Validity___EXIT
-.010ebd	48		pha		                  PHA
-.010ebe	6b		rtl		                  RTL
-.010ebf					FAT32_ILOAD_FILE
-.010ebf	22 7e 0b 01	jsl $010b7e	                  JSL IFAT32_READ_BOOT_SECTOR
-.010ec3	c9 01 00	cmp #$0001	                  CMP #$0001
-.010ec6	f0 05		beq $010ecd	                  BEQ ILOAD_FILE_FAT_32_BOOT_SECTOR_PARSING_OK
-.010ec8	a9 ff ff	lda #$ffff	                  LDA #-1
-.010ecb	80 4b		bra $010f18	                  BRA FAT32_ILOAD_FILE_RETURN_ERROR_temp
-.010ecd					ILOAD_FILE_FAT_32_BOOT_SECTOR_PARSING_OK
-.010ecd	22 a4 0c 01	jsl $010ca4	                  JSL IFAT32_COMPUT_ROOT_DIR_POS
-.010ed1	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010ed3	a9 00 00	lda #$0000	                  LDA #$00 ; sellect the first entry
-.010ed6	48		pha		                  PHA
-.010ed7					FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY
-.010ed7	22 54 0d 01	jsl $010d54	                  JSL IFAT32_GET_ROOT_ENTRY
-.010edb	af 44 08 01	lda $010844	                  LDA FAT32_Root_entry_value + 11 ; get the flag Byte to test if it a file or a directory
-.010edf	29 10 00	and #$0010	                  AND #$10
-.010ee2	c9 10 00	cmp #$0010	                  CMP #$10
-.010ee5	d0 0b		bne $010ef2	                  BNE FAT32_ILOAD_FILE_ENTRY ; if equal we read a directory so just read the next one
-.010ee7	68		pla		                  PLA   ; get the actual root entry
-.010ee8	cf 08 08 01	cmp $010808	                  CMP FAT32_Max_Root_Entry ; prevent to loop forever so exit
-.010eec	f0 26		beq $010f14	                  BEQ FAT32_ILOAD_FILE_NO_FILE_MATCHED
-.010eee	1a		inc a		                  INC A ; sellect the next root entry
-.010eef	48		pha		                  PHA   ; save the next root entry to read
-.010ef0	80 e5		bra $010ed7	                  BRA FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY
-.010ef2					FAT32_ILOAD_FILE_ENTRY
-.010ef2	c2 30		rep #$30	                REP #$30        ; set A&X long
-.010ef4	68		pla		                  PLA   ; get the actual root entry
-.010ef5	cf 08 08 01	cmp $010808	                  CMP FAT32_Max_Root_Entry ; prevent to loop forever so exit
-.010ef9	f0 19		beq $010f14	                  BEQ FAT32_ILOAD_FILE_NO_FILE_MATCHED
-.010efb	1a		inc a		                  INC A ; sellect the next root entry in case the file name is wrong
-.010efc	48		pha		                  PHA   ; save the next root entry to read
-.010efd	a2 ff ff	ldx #$ffff	                  LDX #-1
-.010f00	a0 ff ff	ldy #$ffff	                  LDY #-1
-.010f03					FAT32_ILOAD_FILE_CHAR_MATCHING
-.010f03	e8		inx		                  INC X
-.010f04	c8		iny		                  INC Y
-.010f05	e0 0b 00	cpx #$000b	                  CPX #11 ; FAT12 file or folder size
-.010f08	f0 10		beq $010f1a	                  BEQ FAT32_ILOAD_FILE_STRING_MATCHED
-.010f0a	b3 06		lda ($06,s),y	                  LDA (6,S),Y ; load the "y" char file name we want to read
-.010f0c	df 39 08 01	cmp $010839,x	                  CMP FAT32_Root_entry_value,X
-.010f10	f0 f1		beq $010f03	                  BEQ FAT32_ILOAD_FILE_CHAR_MATCHING
-.010f12	80 c3		bra $010ed7	                  BRA FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY ;;; FAT32_ILOAD_FILE_STRING_NOT_MATCHED    emoved as we still need to test what type of entry it is befor trying to compare the file name
-.010f14					FAT32_ILOAD_FILE_NO_FILE_MATCHED
-.010f14	68		pla		                  PLA
-.010f15	a9 fe ff	lda #$fffe	                  LDA #-2
-.010f18					FAT32_ILOAD_FILE_RETURN_ERROR_temp
-.010f18	80 60		bra $010f7a	                  BRA FAT32_ILOAD_FILE_RETURN_ERROR
-.010f1a					FAT32_ILOAD_FILE_STRING_MATCHED
-.010f1a	68		pla		                  PLA
-.010f1b	af 53 08 01	lda $010853	                  LDA FAT32_Root_entry_value + 26 ; get the first fat entry for the fil from the root directory entry we matched
-.010f1f	8f 65 08 01	sta $010865	                  STA FAT32_FAT_Next_Entry
-.010f23					FAT32_ILOAD_FILE_Read_next_sector
-.010f23	a3 0a		lda $0a,s	                  LDA 10,S ; load the byte nb 3 (bank byte)
-.010f25	48		pha		                  PHA
-.010f26	a3 0c		lda $0c,s	                  LDA 12,S ; load the low world part of the buffer address
-.010f28	48		pha		                  PHA
-.010f29	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; sector to read
-.010f2d	69 21 00	adc #$0021	                  ADC #1+9+9+14 ; skip the reserved sector(MBR?) ,  the 2 fat and the root sector that will need to be computed  acording to the fat position if several partition are in the same hardrive, it for now hardcoded as one partition
-.010f30	22 2b 10 01	jsl $01102b	                  JSL IFAT_READ_SECTOR
-.010f34	fa		plx		                  PLX
-.010f35	fa		plx		                  PLX
-.010f36	a3 0c		lda $0c,s	                  LDA 12,S ; load the low world part of the buffer address
-.010f38	18		clc		                  CLC
-.010f39	a9 00 00	lda #$0000	                  LDA #0
-.010f3c	48		pha		                  PHA ; save the cpt vale
-.010f3d	48		pha		                  PHA ; save the
-.010f3e					FAT32_ILOAD_FILE_Add_More_Sector_Per_Cluster
-.010f3e	a3 04		lda $04,s	                  LDA 4,S ; load the Byte per cluster value
-.010f40	6f 00 08 01	adc $010800	                  ADC FAT32_Byte_Per_Sector
-.010f44	83 04		sta $04,s	                  STA 4,S
-.010f46	af 02 08 01	lda $010802	                  LDA FAT32_Sector_Per_Cluster
-.010f4a	c3 02		cmp $02,s	                  CMP 2,S
-.010f4c	f0 07		beq $010f55	                  BEQ FAT32_ILOAD_FILE_Read_Next_Data
-.010f4e	a3 02		lda $02,s	                  LDA 2,S
-.010f50	1a		inc a		                  INC A
-.010f51	83 02		sta $02,s	                  STA 2,S
-.010f53	80 e9		bra $010f3e	                  BRA FAT32_ILOAD_FILE_Add_More_Sector_Per_Cluster
-.010f55					FAT32_ILOAD_FILE_Read_Next_Data
-.010f55	fa		plx		                  PLX ; removing the compter valuer from the stack
-.010f56	a3 0e		lda $0e,s	                  LDA 14,S ; load the low world part of the buffer address
-.010f58	18		clc		                  CLC
-.010f59	63 02		adc $02,s	                  ADC 2,S
-.010f5b	90 09		bcc $010f66	                  BCC FAT32_ILOAD_FILE_New_Buffer_Address_computed
-.010f5d	83 0e		sta $0e,s	                  STA 14,S ; Save the low world part of the buffer address
-.010f5f	a3 0c		lda $0c,s	                  LDA 12,S ; load the byte nb 3 (bank byte)
-.010f61	69 01 00	adc #$0001	                  ADC #1
-.010f64	83 0c		sta $0c,s	                  STA 12,S ; Save the byte nb 3 (bank byte)
-.010f66					FAT32_ILOAD_FILE_New_Buffer_Address_computed
-.010f66	fa		plx		                  PLX ; get the Byte per cluster count out of the stack
-.010f67	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry ; sector to read
-.010f6b	22 c9 0d 01	jsl $010dc9	                  JSL FAT32_IFAT_GET_FAT_ENTRY
-.010f6f	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Next_Entry
-.010f73	c9 fe 0f	cmp #$0ffe	                  CMP #$FFE
-.010f76	b0 02		bcs $010f7a	                  BCS FAT32_ILOAD_FILE_END_OF_FILE
-.010f78	80 a9		bra $010f23	                  BRA FAT32_ILOAD_FILE_Read_next_sector
-.010f7a					FAT32_ILOAD_FILE_END_OF_FILE
-.010f7a					FAT32_ILOAD_FILE_RETURN_ERROR
-.010f7a	6b		rtl		                  RTL
-.010f7b					FOENIX_SD_INIT_READ
-.010f7b	a9 01 00	lda #$0001	                LDA #$01
-.010f7e	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG  ; Set Init SD
-.010f82	a9 01 00	lda #$0001	                LDA #$01
-.010f85	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG ; Let's Start the Process
-.010f89					SDC_NOT_FINISHED
-.010f89	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG
-.010f8d	29 01 00	and #$0001	                AND #SDC_TRANS_BUSY
-.010f90	c9 01 00	cmp #$0001	                CMP #SDC_TRANS_BUSY
-.010f93	f0 f4		beq $010f89	                BEQ SDC_NOT_FINISHED
-.010f95	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG
-.010f99	8f 00 10 00	sta $001000	                STA $001000
-.010f9d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.010fa1	c9 00 00	cmp #$0000	                CMP #$00
-.010fa4	d0 0f		bne $010fb5	                BNE SDISREADY
-.010fa6	af 80 e8 af	lda $afe880	                LDA GABE_MSTR_CTRL
-.010faa	29 fd ff	and #$fffd	                AND #~GABE_CTRL_SDC_LED
-.010fad	0f 02 00 00	ora $000002	                ORA GABE_CTRL_SDC_LED
-.010fb1	8f 80 e8 af	sta $afe880	                STA GABE_MSTR_CTRL
-.010fb5					SDISREADY
-.010fb5	a9 00 00	lda #$0000	                LDA #$00
-.010fb8	8f 07 ea af	sta $afea07	                STA SDC_SD_ADDR_7_0_REG
-.010fbc	a9 00 00	lda #$0000	                LDA #$00
-.010fbf	8f 08 ea af	sta $afea08	                STA SDC_SD_ADDR_15_8_REG
-.010fc3	a9 00 00	lda #$0000	                LDA #$00
-.010fc6	8f 09 ea af	sta $afea09	                STA SDC_SD_ADDR_23_16_REG
-.010fca	a9 00 00	lda #$0000	                LDA #$00
-.010fcd	8f 0a ea af	sta $afea0a	                STA SDC_SD_ADDR_31_24_REG
-.010fd1	a9 02 00	lda #$0002	                LDA #SDC_TRANS_READ_BLK
-.010fd4	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG
-.010fd8	a9 01 00	lda #$0001	                LDA #$01
-.010fdb	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG ; Let's Start the Process
-.010fdf					SDC_NOT_FINISHED2
-.010fdf	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG
-.010fe3	29 01 00	and #$0001	                AND #SDC_TRANS_BUSY
-.010fe6	c9 01 00	cmp #$0001	                CMP #SDC_TRANS_BUSY
-.010fe9	f0 f4		beq $010fdf	                BEQ SDC_NOT_FINISHED2
-.010feb	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG
-.010fef	8f 01 10 00	sta $001001	                STA $001001
-.010ff3	af 13 ea af	lda $afea13	                LDA SDC_RX_FIFO_DATA_CNT_LO
-.010ff7	8f 02 10 00	sta $001002	                STA $001002
-.010ffb	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.010fff	af 12 ea af	lda $afea12	                LDA SDC_RX_FIFO_DATA_CNT_HI
-.011003	8f 03 10 00	sta $001003	                STA $001003
-.011007	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01100b	a9 0d 00	lda #$000d	                LDA #$0D
-.01100e	22 91 06 39	jsl $390691	                JSL IPUTC
-.011012	a2 00 00	ldx #$0000	                LDX #$0000
-.011015	a9 0d 00	lda #$000d	                LDA #$0D
-.011018	22 91 06 39	jsl $390691	                JSL IPUTC
-.01101c					SDC_LOAD_BLOCK
-.01101c	af 10 ea af	lda $afea10	                LDA SDC_RX_FIFO_DATA_REG
-.011020	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011024	e8		inx		                INX
-.011025	e0 00 02	cpx #$0200	                CPX #$0200
-.011028	d0 f2		bne $01101c	                BNE SDC_LOAD_BLOCK
-.01102a	6b		rtl		                RTL
-.01102b					IFAT_READ_SECTOR
-.01102b	48		pha		                PHA
-.01102c	af 81 08 01	lda $010881	                LDA FAT32_SD_FDD_HDD_SELL
-.011030	c9 02 00	cmp #$0002	                CMP FAT32_HDD
-.011033	f0 0b		beq $011040	                BEQ IFAT_READ_SECTOR__HDD
-.011035	c9 02 00	cmp #$0002	                CMP FAT32_HDD
-.011038	f0 0c		beq $011046	                BEQ IFAT_READ_SECTOR__FDD
-.01103a					IFAT_READ_SECTOR_SD:
-.01103a	68		pla		                PLA ; get the sector to read back
-.01103b	22 93 10 01	jsl $011093	                JSL ISD_READ
-.01103f	6b		rtl		                RTL
-.011040					IFAT_READ_SECTOR__HDD:
-.011040	68		pla		                PLA ; get the sector to read back
-.011041	22 48 10 01	jsl $011048	                JSL IHDD_READ
-.011045	6b		rtl		                RTL
-.011046					IFAT_READ_SECTOR__FDD:
-.011046	68		pla		                PLA ; get the sector to read back
-.011047	6b		rtl		                RTL
-.011048					IHDD_READ
-.011048	c2 30		rep #$30	                REP #$30        ; set A&X long
-.01104a	48		pha		                PHA ; save the sector to read
-.01104b	a3 08		lda $08,s	                LDA 8,S
-.01104d	a8		tay		                TAY
-.01104e	a3 06		lda $06,s	                LDA 6,S
-.011050	a8		tay		                TAY
-.011051	68		pla		                PLA
-.011052	48		pha		                PHA ; save the sector read for the return value
-.011053	0a		asl a		                ASL A ; convert the sector number into byte count
-.011054	0a		asl a		                ASL A
-.011055	0a		asl a		                ASL A
-.011056	0a		asl a		                ASL A
-.011057	0a		asl a		                ASL A
-.011058	0a		asl a		                ASL A
-.011059	0a		asl a		                ASL A
-.01105a	0a		asl a		                ASL A
-.01105b	0a		asl a		                ASL A
-.01105c	69 00 00	adc #$0000	                ADC #<>data_hard_drive
-.01105f	aa		tax		                TAX
-.011060	e2 20		sep #$20	                SEP #$20        ; set A short
-.011062	a3 08		lda $08,s	                LDA 8,S
-.011064	8f 6e 10 01	sta $01106e	                STA HDD_MVN_INSTRUCTION_ADDRESS + 1 ; rewrite the second parameter of the instruction in RAM
-.011068	c2 30		rep #$30	                REP #$30        ; set A&X long
-.01106a	a9 ff 01	lda #$01ff	                LDA #511
-.01106d	54 01 12	mvn $12,$01	HDD_MVN_INSTRUCTION_ADDRESS  MVN `data_hard_drive,`FAT32_DATA_ADDRESS_BUFFER_512
-.011070	68		pla		                PLA
-.011071	6b		rtl		                RTL
-.011072					ISD_INIT
-.011072	c2 30		rep #$30	                REP #$30        ; set A&X long
-.011074	a9 01 00	lda #$0001	                LDA #SDC_TRANS_INIT_SD
-.011077	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG;
-.01107b	a9 01 00	lda #$0001	                LDA #SDC_TRANS_START
-.01107e	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG;
-.011082					ISD_INIT_TEST_SD_INIT_FLAG:
-.011082	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG  ; read the bussy state flag : 1 busy / 0 finished
-.011086	29 01 00	and #$0001	                AND #SDC_TRANS_BUSY
-.011089	c9 01 00	cmp #$0001	                CMP #SDC_TRANS_BUSY
-.01108c	f0 f4		beq $011082	                BEQ ISD_INIT_TEST_SD_INIT_FLAG
-.01108e	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG ; read the error status
-.011092	6b		rtl		                RTL
-.011093					ISD_READ
-.011093	eb		xba		                XBA
-.011094	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX ; print the sector
-.011098	eb		xba		                XBA
-.011099	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX ; print the sector
-.01109d	0a		asl a		                ASL ;get the 512 byte ofset from the sector index
-.01109e	e2 20		sep #$20	                SEP #$20        ; set A short
-.0110a0	8f 08 ea af	sta $afea08	                STA SDC_SD_ADDR_15_8_REG
-.0110a4	eb		xba		                XBA ; get the other part of the 16 byte A register
-.0110a5	8f 09 ea af	sta $afea09	                STA SDC_SD_ADDR_23_16_REG
-.0110a9	a9 00		lda #$00	                LDA #0
-.0110ab	8f 07 ea af	sta $afea07	                STA SDC_SD_ADDR_7_0_REG
-.0110af	8f 0a ea af	sta $afea0a	                STA SDC_SD_ADDR_31_24_REG
-.0110b3	a9 01		lda #$01	                LDA #1
-.0110b5	8f 14 ea af	sta $afea14	                STA SDC_RX_FIFO_CTRL_REG ; Clear the RX FIFO
-.0110b9	a9 02		lda #$02	                LDA #SDC_TRANS_READ_BLK
-.0110bb	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG;
-.0110bf	a9 01		lda #$01	                LDA #SDC_TRANS_START
-.0110c1	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG;
-.0110c5					ISD_READ_TEST_SD_INIT_FLAG:
-.0110c5	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG  ; read the bussy state flag : 1 busy / 0 finished
-.0110c9	29 01		and #$01	                AND #SDC_TRANS_BUSY
-.0110cb	c9 01		cmp #$01	                CMP #SDC_TRANS_BUSY
-.0110cd	f0 f6		beq $0110c5	                BEQ ISD_READ_TEST_SD_INIT_FLAG
-.0110cf	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG ; read the error status
-.0110d3	48		pha		                PHA
-.0110d4	a9 20		lda #$20	                LDA #' '
-.0110d6	22 91 06 39	jsl $390691	                JSL IPUTC
-.0110da	a9 45		lda #$45	                LDA #'E'
-.0110dc	22 91 06 39	jsl $390691	                JSL IPUTC
-.0110e0	68		pla		                PLA
-.0110e1	48		pha		                PHA
-.0110e2	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0110e6	a9 20		lda #$20	                LDA #' '
-.0110e8	22 91 06 39	jsl $390691	                JSL IPUTC
-.0110ec	a9 42		lda #$42	                LDA #'B'
-.0110ee	22 91 06 39	jsl $390691	                JSL IPUTC
-.0110f2	a9 20		lda #$20	                LDA #' '
-.0110f4	22 91 06 39	jsl $390691	                JSL IPUTC
-.0110f8	68		pla		                PLA
-.0110f9	c9 00		cmp #$00	                CMP #0
-.0110fb	d0 2b		bne $011128	                BNE ISD_READ__INIT_RETURN
-.0110fd					ISD_READ_GET_BYTE_COUNT:
-.0110fd	af 12 ea af	lda $afea12	                LDA SDC_RX_FIFO_DATA_CNT_HI ; get the number of byte in the fifo
-.011101	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011105	af 13 ea af	lda $afea13	                LDA SDC_RX_FIFO_DATA_CNT_LO ; get the number of byte in the fifo
-.011109	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01110d	a9 0d		lda #$0d	                LDA #$0D
-.01110f	22 91 06 39	jsl $390691	                JSL IPUTC
-.011113	a2 00 00	ldx #$0000	                LDX #0
-.011116					ISD_READ__READ_LOOP_BYTE:
-.011116	af 10 ea af	lda $afea10	                LDA SDC_RX_FIFO_DATA_REG
-.01111a	9f 00 00 01	sta $010000,x	                STA @l FAT32_DATA_ADDRESS_BUFFER_512,x
-.01111e	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011122	e8		inx		                INX
-.011123	e0 00 02	cpx #$0200	                CPX #$200
-.011126	d0 ee		bne $011116	                BNE ISD_READ__READ_LOOP_BYTE
-.011128					ISD_READ__INIT_RETURN:
-.011128	a9 01		lda #$01	                LDA #1
-.01112a	8f 14 ea af	sta $afea14	                STA SDC_RX_FIFO_CTRL_REG ; discard all possible other byt
-.01112e	a9 0d		lda #$0d	                LDA #$0D
-.011130	22 91 06 39	jsl $390691	                JSL IPUTC
-.011134	a9 2d		lda #$2d	                LDA #'-'
-.011136	22 91 06 39	jsl $390691	                JSL IPUTC
-.01113a	c2 30		rep #$30	                REP #$30        ; set A&X long
-.01113c	6b		rtl		                RTL
-.01113d					FAT32_Print_FAT_STATE
-.01113d	a2 45 04	ldx #$0445	                LDX #<>TEXT_FAT32___Byte_Per_Sector
-.011140	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Byte_Per_Sector
-.011143	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011147	af 00 08 01	lda $010800	                LDA FAT32_Byte_Per_Sector
-.01114b	eb		xba		                XBA
-.01114c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011150	eb		xba		                XBA
-.011151	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011155	a2 6b 04	ldx #$046b	                LDX #<>TEXT_FAT32___Sector_Per_Cluster
-.011158	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_Per_Cluster
-.01115b	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.01115f	af 02 08 01	lda $010802	                LDA FAT32_Sector_Per_Cluster
-.011163	eb		xba		                XBA
-.011164	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011168	eb		xba		                XBA
-.011169	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01116d	a2 90 04	ldx #$0490	                LDX #<>TEXT_FAT32___Nb_Of_reserved_Cluster
-.011170	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Nb_Of_reserved_Cluster
-.011173	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011177	af 04 08 01	lda $010804	                LDA FAT32_Nb_Of_reserved_Cluster
-.01117b	eb		xba		                XBA
-.01117c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011180	eb		xba		                XBA
-.011181	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011185	a2 b5 04	ldx #$04b5	                LDX #<>TEXT_FAT32___Nb_Of_FAT
-.011188	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Nb_Of_FAT
-.01118b	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.01118f	af 06 08 01	lda $010806	                LDA FAT32_Nb_Of_FAT
-.011193	eb		xba		                XBA
-.011194	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011198	eb		xba		                XBA
-.011199	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01119d	a2 da 04	ldx #$04da	                LDX #<>TEXT_FAT32___Max_Root_Entry
-.0111a0	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Max_Root_Entry
-.0111a3	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0111a7	af 08 08 01	lda $010808	                LDA FAT32_Max_Root_Entry
-.0111ab	eb		xba		                XBA
-.0111ac	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111b0	eb		xba		                XBA
-.0111b1	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111b5	a2 ff 04	ldx #$04ff	                LDX #<>TEXT_FAT32___Total_Sector_Count
-.0111b8	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Total_Sector_Count
-.0111bb	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0111bf	af 0a 08 01	lda $01080a	                LDA FAT32_Total_Sector_Count
-.0111c3	eb		xba		                XBA
-.0111c4	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111c8	eb		xba		                XBA
-.0111c9	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111cd	a2 24 05	ldx #$0524	                LDX #<>TEXT_FAT32___Sector_per_Fat
-.0111d0	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_per_Fat
-.0111d3	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0111d7	af 0e 08 01	lda $01080e	                LDA FAT32_Sector_per_Fat+2
-.0111db	eb		xba		                XBA
-.0111dc	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111e0	eb		xba		                XBA
-.0111e1	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111e5	af 0c 08 01	lda $01080c	                LDA FAT32_Sector_per_Fat
-.0111e9	eb		xba		                XBA
-.0111ea	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111ee	eb		xba		                XBA
-.0111ef	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0111f3	a2 49 05	ldx #$0549	                LDX #<>TEXT_FAT32___Sector_per_Track
-.0111f6	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_per_Track
-.0111f9	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0111fd	af 10 08 01	lda $010810	                LDA FAT32_Sector_per_Track
-.011201	eb		xba		                XBA
-.011202	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011206	eb		xba		                XBA
-.011207	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01120b	a2 6e 05	ldx #$056e	                LDX #<>TEXT_FAT32___Nb_of_Head
-.01120e	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Nb_of_Head
-.011211	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011215	af 12 08 01	lda $010812	                LDA FAT32_Nb_of_Head
-.011219	eb		xba		                XBA
-.01121a	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01121e	eb		xba		                XBA
-.01121f	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011223	a2 93 05	ldx #$0593	                LDX #<>TEXT_FAT32___Total_Sector_Count_FAT32
-.011226	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Total_Sector_Count_FAT32
-.011229	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.01122d	af 16 08 01	lda $010816	                LDA FAT32_Total_Sector_Count_FAT32+2
-.011231	eb		xba		                XBA
-.011232	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011236	eb		xba		                XBA
-.011237	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01123b	af 14 08 01	lda $010814	                LDA FAT32_Total_Sector_Count_FAT32
-.01123f	eb		xba		                XBA
-.011240	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011244	eb		xba		                XBA
-.011245	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011249	a2 b8 05	ldx #$05b8	                LDX #<>TEXT_FAT32___Boot_Signature
-.01124c	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Boot_Signature
-.01124f	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011253	af 18 08 01	lda $010818	                LDA FAT32_Boot_Signature
-.011257	eb		xba		                XBA
-.011258	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01125c	eb		xba		                XBA
-.01125d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011261	a2 dd 05	ldx #$05dd	                LDX #<>TEXT_FAT32___Volume_ID
-.011264	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Volume_ID
-.011267	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.01126b	af 1c 08 01	lda $01081c	                LDA FAT32_Volume_ID+2
-.01126f	eb		xba		                XBA
-.011270	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011274	eb		xba		                XBA
-.011275	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011279	af 1a 08 01	lda $01081a	                LDA FAT32_Volume_ID
+.0108d6	8f 65 08 01	sta $010865	              STA FAT32_FAT_Entry+2
+.0108da	22 15 0e 01	jsl $010e15	              JSL FAT32_IFAT_GET_FAT_ENTRY
+.0108de	6b		rtl		              RTL
+.0108df					FAT32_test
+.0108df	22 a0 0d 01	jsl $010da0	              JSL IFAT32_GET_ROOT_ENTRY
+.0108e3	a9 05 00	lda #$0005	              LDA #5
+.0108e6	8f 63 08 01	sta $010863	              STA FAT32_FAT_Entry
+.0108ea	a9 00 00	lda #$0000	              LDA #0
+.0108ed	8f 65 08 01	sta $010865	              STA FAT32_FAT_Entry+2
+.0108f1	22 15 0e 01	jsl $010e15	              JSL FAT32_IFAT_GET_FAT_ENTRY
+.0108f5	a9 0d 00	lda #$000d	              LDA #$0D
+.0108f8	22 91 06 39	jsl $390691	              JSL IPUTC
+.0108fc	22 49 09 01	jsl $010949	              JSL FAT32_LS_CMD
+.010900	a9 0d 00	lda #$000d	              LDA #$0D
+.010903	22 91 06 39	jsl $390691	              JSL IPUTC
+.010907	22 82 09 01	jsl $010982	              JSL FAT32_Open_File
+.01090b	c9 01 00	cmp #$0001	              CMP #1
+.01090e	d0 08		bne $010918	              BNE FAT32_test__Faill_To_Find_file
+.010910	22 fc 09 01	jsl $0109fc	              JSL FAT32_Read_File
+.010914	22 19 09 01	jsl $010919	              JSL FAT32_Print_Cluster
+.010918					FAT32_test__Faill_To_Find_file
+.010918	6b		rtl		              RTL
+.010919					FAT32_Print_Cluster
+.010919	a9 0d 00	lda #$000d	              LDA #$0D
+.01091c	22 91 06 39	jsl $390691	              JSL IPUTC
+.010920	a2 00 00	ldx #$0000	              LDX #0
+.010923					FAT32_Print_Cluster_line
+.010923	a0 00 00	ldy #$0000	              LDY #0
+.010926					FAT32_Print_Cluster_Byte
+.010926	bf 00 00 01	lda $010000,x	              LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.01092a	22 e9 44 38	jsl $3844e9	              JSL IPRINT_HEX
+.01092e	a9 20 00	lda #$0020	              LDA #$20
+.010931	22 91 06 39	jsl $390691	              JSL IPUTC
+.010935	c8		iny		              INY
+.010936	c0 10 00	cpy #$0010	              CPY #16
+.010939	d0 eb		bne $010926	              BNE FAT32_Print_Cluster_Byte
+.01093b	a9 0d 00	lda #$000d	              LDA #$0D
+.01093e	22 91 06 39	jsl $390691	              JSL IPUTC
+.010942	e8		inx		              INX
+.010943	e0 00 02	cpx #$0200	              CPX #512
+.010946	d0 db		bne $010923	              BNE FAT32_Print_Cluster_line
+.010948	6b		rtl		              RTL
+.010949	a2 00 00	ldx #$0000	FAT32_LS_CMD   LDX #0 ; start by readding the first folder entry
+.01094c					FAT32_LS_CMD__Read_Next_Folder_Entry
+.01094c	8a		txa		                  TXA
+.01094d	c9 20 00	cmp #$0020	                  CMP #32
+.010950	f0 2f		beq $010981	                  BEQ FAT32_LS_CMD__EXIT
+.010952	22 a0 0d 01	jsl $010da0	                  JSL IFAT32_GET_ROOT_ENTRY
+.010956	e8		inx		                  INC X
+.010957	af 3b 08 01	lda $01083b	                  LDA FAT32_Root_entry_value
+.01095b	29 ff 00	and #$00ff	                  AND #$00FF
+.01095e	c9 e5 00	cmp #$00e5	                  CMP #$E5 ; test if the entry is deleted
+.010961	f0 e9		beq $01094c	                  BEQ FAT32_LS_CMD__Read_Next_Folder_Entry
+.010963	af 46 08 01	lda $010846	                  LDA FAT32_Root_entry_value +11
+.010967	29 ff 00	and #$00ff	                  AND #$00FF
+.01096a	c9 0f 00	cmp #$000f	                  CMP #$0F ; test if its a long name entry
+.01096d	f0 dd		beq $01094c	                  BEQ FAT32_LS_CMD__Read_Next_Folder_Entry
+.01096f	c9 20 00	cmp #$0020	                  CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
+.010972	d0 d8		bne $01094c	                  BNE FAT32_LS_CMD__Read_Next_Folder_Entry
+.010974	22 66 0a 01	jsl $010a66	                  JSL FAT32_Print_File_Name
+.010978	a9 0d 00	lda #$000d	                  LDA #$0D
+.01097b	22 91 06 39	jsl $390691	                  JSL IPUTC
+.01097f	80 cb		bra $01094c	                  BRA FAT32_LS_CMD__Read_Next_Folder_Entry
+.010981					FAT32_LS_CMD__EXIT
+.010981	6b		rtl		                  RTL
+.010982	a2 00 00	ldx #$0000	FAT32_Open_File   LDX #0 ; start by readding the first folder entry
+.010985					FAT32_Open_File_Read_Next_Folder_Entry
+.010985	8a		txa		                  TXA
+.010986	c9 20 00	cmp #$0020	                  CMP #32
+.010989	f0 70		beq $0109fb	                  BEQ FAT32_Open_File__EXIT
+.01098b	22 a0 0d 01	jsl $010da0	                  JSL IFAT32_GET_ROOT_ENTRY
+.01098f	e8		inx		                  INC X
+.010990	af 3b 08 01	lda $01083b	                  LDA FAT32_Root_entry_value
+.010994	29 ff 00	and #$00ff	                  AND #$00FF
+.010997	c9 e5 00	cmp #$00e5	                  CMP #$E5 ; test if the entry is deleted
+.01099a	f0 e9		beq $010985	                  BEQ FAT32_Open_File_Read_Next_Folder_Entry
+.01099c	af 46 08 01	lda $010846	                  LDA FAT32_Root_entry_value +11 ; read the flags
+.0109a0	29 ff 00	and #$00ff	                  AND #$00FF
+.0109a3	c9 0f 00	cmp #$000f	                  CMP #$0F ; test if it's a long name entry
+.0109a6	f0 dd		beq $010985	                  BEQ FAT32_Open_File_Read_Next_Folder_Entry
+.0109a8	c9 20 00	cmp #$0020	                  CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
+.0109ab	d0 d8		bne $010985	                  BNE FAT32_Open_File_Read_Next_Folder_Entry
+.0109ad	22 66 0a 01	jsl $010a66	                  JSL FAT32_Print_File_Name
+.0109b1	a9 0d 00	lda #$000d	                  LDA #$0D
+.0109b4	22 91 06 39	jsl $390691	                  JSL IPUTC
+.0109b8	da		phx		                  PHX
+.0109b9	a2 ff ff	ldx #$ffff	                  LDX #-1
+.0109bc	e2 20		sep #$20	                SEP #$20        ; set A short
+.0109be					FAT32_Open_File__CHAR_MATCHING
+.0109be	e8		inx		                  INC X
+.0109bf	e0 0b 00	cpx #$000b	                  CPX #11 ; FAT12 file or folder size
+.0109c2	f0 13		beq $0109d7	                  BEQ FAT32_Open_File__STRING_MATCHED
+.0109c4	bf 3b 08 01	lda $01083b,x	                  LDA FAT32_Root_entry_value,X
+.0109c8	bf 85 08 01	lda $010885,x	                  LDA file_to_load_f32,X
+.0109cc	df 3b 08 01	cmp $01083b,x	                  CMP FAT32_Root_entry_value,X
+.0109d0	f0 ec		beq $0109be	                  BEQ FAT32_Open_File__CHAR_MATCHING
+.0109d2	fa		plx		                  PLX
+.0109d3	c2 20		rep #$20	                REP #$20        ; set A long
+.0109d5	80 ae		bra $010985	                  BRA FAT32_Open_File_Read_Next_Folder_Entry
+.0109d7					FAT32_Open_File__STRING_MATCHED
+.0109d7	fa		plx		                  PLX
+.0109d8	c2 20		rep #$20	                REP #$20        ; set A long
+.0109da	af 55 08 01	lda $010855	                  LDA FAT32_Root_entry_value + $1A ; Low two bytes of first cluster
+.0109de	8f 77 08 01	sta $010877	                  STA FAT32_Curent_File_base_cluster
+.0109e2	a9 00 00	lda #$0000	                  LDA #0
+.0109e5	8f 7b 08 01	sta $01087b	                  STA FAT32_Curent_File_curent_cluster
+.0109e9	af 57 08 01	lda $010857	                  LDA FAT32_Root_entry_value + $1C ; High two bytes of first cluster
+.0109ed	8f 79 08 01	sta $010879	                  STA FAT32_Curent_File_base_cluster + 2
+.0109f1	a9 00 00	lda #$0000	                  LDA #0
+.0109f4	8f 7d 08 01	sta $01087d	                  STA FAT32_Curent_File_curent_cluster + 2
+.0109f8	a9 01 00	lda #$0001	                  LDA #1
+.0109fb					FAT32_Open_File__EXIT
+.0109fb	6b		rtl		                  RTL
+.0109fc					FAT32_Read_File
+.0109fc	af 7b 08 01	lda $01087b	                  LDA FAT32_Curent_File_curent_cluster
+.010a00	c9 00 00	cmp #$0000	                  CMP #0
+.010a03	d0 23		bne $010a28	                  BNE FAT32_Read_File___Get_Next_Sector
+.010a05	af 7d 08 01	lda $01087d	                  LDA FAT32_Curent_File_curent_cluster+2
+.010a09	c9 00 00	cmp #$0000	                  CMP #0
+.010a0c	d0 1a		bne $010a28	                  BNE FAT32_Read_File___Get_Next_Sector
+.010a0e	af 77 08 01	lda $010877	                  LDA FAT32_Curent_File_base_cluster
+.010a12	8f 7b 08 01	sta $01087b	                  STA FAT32_Curent_File_curent_cluster
+.010a16	8f 63 08 01	sta $010863	                  STA FAT32_FAT_Entry
+.010a1a	af 79 08 01	lda $010879	                  LDA FAT32_Curent_File_base_cluster+2
+.010a1e	8f 7d 08 01	sta $01087d	                  STA FAT32_Curent_File_curent_cluster+2
+.010a22	8f 65 08 01	sta $010865	                  STA FAT32_FAT_Entry+2
+.010a26	80 12		bra $010a3a	                  BRA FAT32_Read_File___Read_Sector
+.010a28					FAT32_Read_File___Get_Next_Sector
+.010a28	22 15 0e 01	jsl $010e15	                  JSL FAT32_IFAT_GET_FAT_ENTRY
+.010a2c	22 bb 0e 01	jsl $010ebb	                  JSL FAT32_Test_Fat_Entry_Validity
+.010a30	c9 ff ff	cmp #$ffff	                  CMP #-1
+.010a33	f0 30		beq $010a65	                  BEQ FAT32_Read_File___End_OF_File
+.010a35	c9 00 00	cmp #$0000	                  CMP #0
+.010a38	d0 2b		bne $010a65	                  BNE FAT32_Read_File___Reserved_Or_Bad_Sector
+.010a3a					FAT32_Read_File___Read_Sector
+.010a3a	af 77 08 01	lda $010877	                  LDA FAT32_Curent_File_base_cluster
+.010a3e	18		clc		                  CLC
+.010a3f	6f 6f 08 01	adc $01086f	                  ADC FAT32_Data_Base_Sector
+.010a43	8f 7f 08 01	sta $01087f	                  STA FAT32_Sector_to_read
+.010a47	af 79 08 01	lda $010879	                  LDA FAT32_Curent_File_base_cluster+2
+.010a4b	6f 71 08 01	adc $010871	                  ADC FAT32_Data_Base_Sector + 2
+.010a4f	8f 81 08 01	sta $010881	                  STA FAT32_Sector_to_read + 2
+.010a53	a9 01 00	lda #$0001	                  LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+.010a56	48		pha		                  PHA
+.010a57	a9 00 00	lda #$0000	                  LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+.010a5a	48		pha		                  PHA
+.010a5b	af 7f 08 01	lda $01087f	                  LDA FAT32_Sector_to_read
+.010a5f	22 77 10 01	jsl $011077	                  JSL IFAT_READ_SECTOR
+.010a63	68		pla		                  PLA
+.010a64	68		pla		                  PLA
+.010a65					FAT32_Read_File___End_OF_File
+.010a65					FAT32_Read_File___Reserved_Or_Bad_Sector
+.010a65	6b		rtl		                  RTL
+.010a66					FAT32_Print_File_Name
+.010a66	af 3b 08 01	lda $01083b	                LDA FAT32_Root_entry_value
+.010a6a	22 91 06 39	jsl $390691	                JSL IPUTC
+.010a6e	af 3c 08 01	lda $01083c	                LDA FAT32_Root_entry_value +1
+.010a72	22 91 06 39	jsl $390691	                JSL IPUTC
+.010a76	af 3d 08 01	lda $01083d	                LDA FAT32_Root_entry_value +2
+.010a7a	22 91 06 39	jsl $390691	                JSL IPUTC
+.010a7e	af 3e 08 01	lda $01083e	                LDA FAT32_Root_entry_value +3
+.010a82	22 91 06 39	jsl $390691	                JSL IPUTC
+.010a86	af 3f 08 01	lda $01083f	                LDA FAT32_Root_entry_value +4
+.010a8a	22 91 06 39	jsl $390691	                JSL IPUTC
+.010a8e	af 40 08 01	lda $010840	                LDA FAT32_Root_entry_value +5
+.010a92	22 91 06 39	jsl $390691	                JSL IPUTC
+.010a96	af 41 08 01	lda $010841	                LDA FAT32_Root_entry_value +6
+.010a9a	22 91 06 39	jsl $390691	                JSL IPUTC
+.010a9e	af 42 08 01	lda $010842	                LDA FAT32_Root_entry_value +7
+.010aa2	22 91 06 39	jsl $390691	                JSL IPUTC
+.010aa6	a9 2e 00	lda #$002e	                LDA #'.'
+.010aa9	22 91 06 39	jsl $390691	                JSL IPUTC
+.010aad	af 43 08 01	lda $010843	                LDA FAT32_Root_entry_value +8
+.010ab1	22 91 06 39	jsl $390691	                JSL IPUTC
+.010ab5	af 44 08 01	lda $010844	                LDA FAT32_Root_entry_value +9
+.010ab9	22 91 06 39	jsl $390691	                JSL IPUTC
+.010abd	af 45 08 01	lda $010845	                LDA FAT32_Root_entry_value +10
+.010ac1	22 91 06 39	jsl $390691	                JSL IPUTC
+.010ac5	6b		rtl		                RTL
+.010ac6					IFAT32_READ_MBR
+.010ac6	c2 20		rep #$20	                REP #$20        ; set A long
+.010ac8	a9 01 00	lda #$0001	                  LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+.010acb	48		pha		                  PHA
+.010acc	a9 00 00	lda #$0000	                  LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+.010acf	48		pha		                  PHA
+.010ad0	a9 00 00	lda #$0000	                  LDA #0 ; read sector 0 (where the MBR sector is stored)
+.010ad3	22 77 10 01	jsl $011077	                  JSL IFAT_READ_SECTOR
+.010ad7	fa		plx		                  PLX
+.010ad8	fa		plx		                  PLX
+.010ad9	a2 be 01	ldx #$01be	                  LDX #MBR_Partition_Entry
+.010adc					READ_MBR_Scan:
+.010adc	bf 08 00 01	lda $010008,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8
+.010ae0	c9 00 00	cmp #$0000	                  CMP #0
+.010ae3	f0 03		beq $010ae8	                  BEQ READ_MBR_Partition_Entry_LSB_Null
+.010ae5	a0 01 00	ldy #$0001	                  LDY #1
+.010ae8					READ_MBR_Partition_Entry_LSB_Null:
+.010ae8	8f 73 08 01	sta $010873	                  STA MBR_Partition_address
+.010aec	bf 0a 00 01	lda $01000a,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8+2
+.010af0	c9 00 00	cmp #$0000	                  CMP #0
+.010af3	f0 03		beq $010af8	                  BEQ READ_MBR_Partition_Entry_MSB_Null
+.010af5	a0 01 00	ldy #$0001	                  LDY #1
+.010af8					READ_MBR_Partition_Entry_MSB_Null:
+.010af8	8f 75 08 01	sta $010875	                  STA MBR_Partition_address+2
+.010afc	c0 01 00	cpy #$0001	                  CPY #1 ; curent MBR entry not nul (sector location)
+.010aff	f0 0c		beq $010b0d	                  BEQ READ_MBR_Partition_valid_address
+.010b01	e0 fe 01	cpx #$01fe	                  CPX #$1FE
+.010b04	f0 4b		beq $010b51	                  BEQ READ_MBR_End_Scan_no_partition
+.010b06	8a		txa		                  TXA ; Conput the next NBR entry position
+.010b07	69 10 00	adc #$0010	                  ADC #MBR_Partition_Entry_size
+.010b0a	aa		tax		                  TAX
+.010b0b	80 cf		bra $010adc	                  BRA READ_MBR_Scan
+.010b0d					READ_MBR_Partition_valid_address:
+.010b0d	a2 25 04	ldx #$0425	                  LDX #<>Partition_ofset_text
+.010b10	a9 02 00	lda #$0002	                  LDA #`Partition_ofset_text
+.010b13	22 cc 44 38	jsl $3844cc	                  JSL IPUTS_ABS       ; print the first line
+.010b17	a9 30 00	lda #$0030	                  LDA #'0'
+.010b1a	22 91 06 39	jsl $390691	                  JSL IPUTC
+.010b1e	a9 78 00	lda #$0078	                  LDA #'x'
+.010b21	22 91 06 39	jsl $390691	                  JSL IPUTC
+.010b25	af 76 08 01	lda $010876	                  LDA MBR_Partition_address +3
+.010b29	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
+.010b2d	af 75 08 01	lda $010875	                  LDA MBR_Partition_address +2
+.010b31	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
+.010b35	af 74 08 01	lda $010874	                  LDA MBR_Partition_address +1
+.010b39	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
+.010b3d	af 73 08 01	lda $010873	                  LDA MBR_Partition_address
+.010b41	22 e9 44 38	jsl $3844e9	                  JSL IPRINT_HEX
+.010b45	a9 0d 00	lda #$000d	                  LDA #$0D
+.010b48	22 91 06 39	jsl $390691	                  JSL IPUTC
+.010b4c	a9 01 00	lda #$0001	                  LDA #1 ; success
+.010b4f	80 03		bra $010b54	                  BRA READ_MBR_End
+.010b51					READ_MBR_End_Scan_no_partition:
+.010b51	a9 ff ff	lda #$ffff	                  LDA #-1
+.010b54					READ_MBR_End:
+.010b54	6b		rtl		                  RTL
+.010b55					IFAT32_READ_BOOT_SECTOR
+.010b55	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010b57	a9 01 00	lda #$0001	                  LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+.010b5a	48		pha		                  PHA
+.010b5b	a9 00 00	lda #$0000	                  LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+.010b5e	48		pha		                  PHA
+.010b5f	af 75 08 01	lda $010875	                  LDA MBR_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
+.010b63	aa		tax		                  TAX
+.010b64	af 73 08 01	lda $010873	                  LDA MBR_Partition_address
+.010b68	22 77 10 01	jsl $011077	                  JSL IFAT_READ_SECTOR
+.010b6c	fa		plx		                  PLX
+.010b6d	fa		plx		                  PLX;
+.010b6e	8f 2b 08 01	sta $01082b	                  STA FAT32_Sector_loaded_in_ram
+.010b72	a2 0b 00	ldx #$000b	                  LDX #$B ;11
+.010b75	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010b79	8f 00 08 01	sta $010800	                  STA FAT32_Byte_Per_Sector
+.010b7d	a2 0d 00	ldx #$000d	                  LDX #$0D ;13
+.010b80	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010b84	29 ff 00	and #$00ff	                  AND #$FF
+.010b87	8f 02 08 01	sta $010802	                  STA FAT32_Sector_Per_Cluster
+.010b8b	a2 0e 00	ldx #$000e	                  LDX #$0E ;14
+.010b8e	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010b92	8f 04 08 01	sta $010804	                  STA FAT32_Nb_Of_reserved_Cluster
+.010b96	a2 10 00	ldx #$0010	                  LDX #$10 ;16
+.010b99	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010b9d	29 ff 00	and #$00ff	                  AND #$FF
+.010ba0	8f 06 08 01	sta $010806	                  STA FAT32_Nb_Of_FAT
+.010ba4	a2 18 00	ldx #$0018	                  LDX #$18 ;
+.010ba7	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010bab	8f 10 08 01	sta $010810	                  STA FAT32_Sector_per_Track
+.010baf	a2 1a 00	ldx #$001a	                  LDX #$1A ;
+.010bb2	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010bb6	8f 12 08 01	sta $010812	                  STA FAT32_Nb_of_Head
+.010bba	a2 20 00	ldx #$0020	                  LDX #$20 ;36 ;
+.010bbd	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010bc1	8f 14 08 01	sta $010814	                  STA FAT32_Nb_Of_Sector_In_Partition
+.010bc5	a2 22 00	ldx #$0022	                  LDX #$22 ;36 ;
+.010bc8	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010bcc	8f 16 08 01	sta $010816	                  STA FAT32_Nb_Of_Sector_In_Partition+2
+.010bd0	a2 24 00	ldx #$0024	                  LDX #$24 ;36 ;
+.010bd3	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010bd7	8f 0c 08 01	sta $01080c	                  STA FAT32_Sector_per_Fat
+.010bdb	a2 26 00	ldx #$0026	                  LDX #$26 ;36 ;
+.010bde	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010be2	8f 0e 08 01	sta $01080e	                  STA FAT32_Sector_per_Fat+2
+.010be6	a2 2c 00	ldx #$002c	                  LDX #$2C ;
+.010be9	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010bed	8f 2f 08 01	sta $01082f	                  STA FAT32_Root_Sector_offset
+.010bf1	a2 2e 00	ldx #$002e	                  LDX #$2E ;
+.010bf4	bf 00 00 01	lda $010000,x	                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X
+.010bf8	8f 31 08 01	sta $010831	                  STA FAT32_Root_Sector_offset+2
+.010bfc	af 00 08 01	lda $010800	                  LDA FAT32_Byte_Per_Sector
+.010c00	c9 00 02	cmp #$0200	                  CMP #512
+.010c03	d0 44		bne $010c49	                  BNE FAT32_ERROR_BLOCK_SEIZE
+.010c05	af 02 08 01	lda $010802	                  LDA FAT32_Sector_Per_Cluster
+.010c09	c9 01 00	cmp #$0001	                  CMP #1
+.010c0c	d0 40		bne $010c4e	                  BNE FAT32_ERROR_SECTOR_PER_CLUSTER
+.010c0e	af 04 08 01	lda $010804	                  LDA FAT32_Nb_Of_reserved_Cluster
+.010c12	c9 01 00	cmp #$0001	                  CMP #1
+.010c15	90 3c		bcc $010c53	                  BCC FAT32_ERROR_RESERVED_SECTOR
+.010c17	af 06 08 01	lda $010806	                  LDA FAT32_Nb_Of_FAT
+.010c1b	c9 01 00	cmp #$0001	                  CMP #1
+.010c1e	90 38		bcc $010c58	                  BCC FAT32_ERROR_NB_FAT
+.010c20	af 0c 08 01	lda $01080c	                  LDA FAT32_Sector_per_Fat
+.010c24	c9 00 00	cmp #$0000	                  CMP #0
+.010c27	f0 3e		beq $010c67	                  BEQ FAT32_ERROR_SECTOR_PER_FAT
+.010c29	af 0e 08 01	lda $01080e	                  LDA FAT32_Sector_per_Fat+2
+.010c2d	c9 00 00	cmp #$0000	                  CMP #0
+.010c30	f0 35		beq $010c67	                  BEQ FAT32_ERROR_SECTOR_PER_FAT
+.010c32	af 2f 08 01	lda $01082f	                  LDA FAT32_Root_Sector_offset
+.010c36	c9 02 00	cmp #$0002	                  CMP #2
+.010c39	90 31		bcc $010c6c	                  BCC FAT32_ERROR_FAT_SECTOR_OFFSET
+.010c3b	af 31 08 01	lda $010831	                  LDA FAT32_Root_Sector_offset+2
+.010c3f	c9 00 00	cmp #$0000	                  CMP #0
+.010c42	90 28		bcc $010c6c	                  BCC FAT32_ERROR_FAT_SECTOR_OFFSET
+.010c44	a9 01 00	lda #$0001	                  LDA #1
+.010c47	80 35		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c49	a9 ff ff	lda #$ffff	FAT32_ERROR_BLOCK_SEIZE LDA #-1
+.010c4c	80 30		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c4e					FAT32_ERROR_SECTOR_PER_CLUSTER
+.010c4e	a9 fe ff	lda #$fffe	                  LDA #-2
+.010c51	80 2b		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c53					FAT32_ERROR_RESERVED_SECTOR
+.010c53	a9 fd ff	lda #$fffd	                  LDA #-3
+.010c56	80 26		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c58	a9 fc ff	lda #$fffc	FAT32_ERROR_NB_FAT      LDA #-4
+.010c5b	80 21		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c5d					FAT32_ERROR_NB_ROOT_ENTRY
+.010c5d	a9 fb ff	lda #$fffb	                  LDA #-5
+.010c60	80 1c		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c62					FAT32_ERROR_NB_TOTAL_SECTOR_COUNT
+.010c62	a9 fa ff	lda #$fffa	                  LDA #-6
+.010c65	80 17		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c67					FAT32_ERROR_SECTOR_PER_FAT
+.010c67	a9 f9 ff	lda #$fff9	                  LDA #-7
+.010c6a	80 12		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c6c					FAT32_ERROR_FAT_SECTOR_OFFSET
+.010c6c	a9 f5 ff	lda #$fff5	                  LDA #-11
+.010c6f	80 0d		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c71					FAT32_ERROR_SECTOR_PER_TRACK
+.010c71	a9 f8 ff	lda #$fff8	                  LDA #-8
+.010c74	80 08		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c76					FAT32_ERROR_NB_HEAD_NULL
+.010c76	a9 f7 ff	lda #$fff7	                  LDA #-9
+.010c79	80 03		bra $010c7e	                  BRA RETURN_IFAT32_READ_BOOT_SECTOR
+.010c7b					FAT32_ERROR_BOOT_SIGNATURE
+.010c7b	a9 f6 ff	lda #$fff6	                  LDA #-10
+.010c7e					RETURN_IFAT32_READ_BOOT_SECTOR
+.010c7e	6b		rtl		                  RTL
+.010c7f					IFAT32_COMPUT_DATA_POS
+.010c7f	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010c81	af 35 08 01	lda $010835	                  LDA FAT32_Root_Base_Sector+2 ; load the MSB first to not mosify the value of the
+.010c85	8f 22 01 00	sta $000122	                  STA ADDER_A+2; result if a carry occure wnen loading the result in A or B
+.010c89	af 33 08 01	lda $010833	                  LDA FAT32_Root_Base_Sector
+.010c8d	8f 20 01 00	sta $000120	                  STA ADDER_A
+.010c91	af 2f 08 01	lda $01082f	                  LDA FAT32_Root_Sector_offset
+.010c95	8f 24 01 00	sta $000124	                  STA ADDER_B
+.010c99	af 31 08 01	lda $010831	                  LDA FAT32_Root_Sector_offset+2
+.010c9d	8f 26 01 00	sta $000126	                  STA ADDER_B+2
+.010ca1	af 28 01 00	lda $000128	                  LDA ADDER_R
+.010ca5	8f 6f 08 01	sta $01086f	                  STA FAT32_Data_Base_Sector
+.010ca9	af 2a 01 00	lda $00012a	                  LDA ADDER_R+2
+.010cad	8f 71 08 01	sta $010871	                  STA FAT32_Data_Base_Sector+2
+.010cb1	6b		rtl		                  RTL
+.010cb2					IFAT32_COMPUT_ROOT_DIR_POS
+.010cb2	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010cb4	af 06 08 01	lda $010806	                  LDA FAT32_Nb_Of_FAT ; 16 bits number
+.010cb8	8f 00 01 00	sta $000100	                  STA M0_OPERAND_A
+.010cbc	af 0c 08 01	lda $01080c	                  LDA FAT32_Sector_per_Fat ; 16 bits number
+.010cc0	8f 02 01 00	sta $000102	                  STA M0_OPERAND_B
+.010cc4	af 04 01 00	lda $000104	                  LDA M0_RESULT
+.010cc8	8f 20 01 00	sta $000120	                  STA ADDER_A
+.010ccc	af 06 01 00	lda $000106	                  LDA M0_RESULT+2
+.010cd0	8f 22 01 00	sta $000122	                  STA ADDER_A+2
+.010cd4	af 5b 08 01	lda $01085b	                  LDA FAT32_FAT_Base_Sector ;  reserved sector + partition ofset (MBR_Partition_address)
+.010cd8	8f 24 01 00	sta $000124	                  STA ADDER_B
+.010cdc	af 5d 08 01	lda $01085d	                  LDA FAT32_FAT_Base_Sector+2
+.010ce0	8f 26 01 00	sta $000126	                  STA ADDER_B+2
+.010ce4	af 28 01 00	lda $000128	                  LDA ADDER_R
+.010ce8	8f 33 08 01	sta $010833	                  STA FAT32_Root_Base_Sector
+.010cec	af 2a 01 00	lda $00012a	                  LDA ADDER_R+2
+.010cf0	8f 35 08 01	sta $010835	                  STA FAT32_Root_Base_Sector+2
+.010cf4	6b		rtl		                  RTL
+.010cf5					IFAT32_GET_ROOT_FIRST_ENTRY
+.010cf5	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010cf7	6b		rtl		                  RTL
+.010cf8					IFAT32_GET_ROOT_NEXT_ENTRY
+.010cf8	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010cfa	6b		rtl		                  RTL
+.010cfb					IFAT32_COMPUT_FAT_POS
+.010cfb	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010cfd	af 04 08 01	lda $010804	                  LDA FAT32_Nb_Of_reserved_Cluster ; 16 bite number
+.010d01	8f 20 01 00	sta $000120	                  STA ADDER_A
+.010d05	a9 00 00	lda #$0000	                  LDA #0
+.010d08	8f 22 01 00	sta $000122	                  STA ADDER_A+2
+.010d0c	af 73 08 01	lda $010873	                  LDA MBR_Partition_address ; 32 byte number
+.010d10	8f 24 01 00	sta $000124	                  STA ADDER_B
+.010d14	af 75 08 01	lda $010875	                  LDA MBR_Partition_address+2
+.010d18	8f 26 01 00	sta $000126	                  STA ADDER_B+2
+.010d1c	af 28 01 00	lda $000128	                  LDA ADDER_R
+.010d20	8f 5b 08 01	sta $01085b	                  STA FAT32_FAT_Base_Sector
+.010d24	af 2a 01 00	lda $00012a	                  LDA ADDER_R+2
+.010d28	8f 5d 08 01	sta $01085d	                  STA FAT32_FAT_Base_Sector+2
+.010d2c	6b		rtl		                  RTL
+.010d2d					IFAT32_READ_LIKED_FAT_ENTRY
+.010d2d	da		phx		                  PHX
+.010d2e					  IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
+.010d2e	22 15 0e 01	jsl $010e15	                  JSL FAT32_IFAT_GET_FAT_ENTRY
+.010d32	af 69 08 01	lda $010869	                  LDA FAT32_FAT_Next_Entry +2 ; test for EOC (End Of Cluster)
+.010d36	29 ff 0f	and #$0fff	                  AND #$0FFF ; the 4 MSB are not used in the FAT32
+.010d39	c9 ff 0f	cmp #$0fff	                  CMP #$0FFF
+.010d3c	d0 30		bne $010d6e	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
+.010d3e	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
+.010d42	29 f0 ff	and #$fff0	                  AND #$FFF0
+.010d45	c9 f0 ff	cmp #$fff0	                  CMP #$FFF0
+.010d48	d0 24		bne $010d6e	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
+.010d4a	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; the cluster entry is not usable or its the last in the chaine
+.010d4e	29 0f 00	and #$000f	                  AND #$000F
+.010d51	c9 08 00	cmp #$0008	                  CMP #8
+.010d54	30 05		bmi $010d5b	                  BMI IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED_OR_BAD
+.010d56	a9 ff ff	lda #$ffff	                  LDA #-1 ; end of the file
+.010d59	80 43		bra $010d9e	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EOC
+.010d5b					IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED_OR_BAD
+.010d5b	c9 07 00	cmp #$0007	                  CMP #7
+.010d5e	d0 05		bne $010d65	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED
+.010d60	a9 fe ff	lda #$fffe	                  LDA #-2 ; Bad sector
+.010d63	80 39		bra $010d9e	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
+.010d65					IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED
+.010d65	a9 fd ff	lda #$fffd	                  LDA #-3 ; reserved sector
+.010d68	80 34		bra $010d9e	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
+.010d6a	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
+.010d6e					IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
+.010d6e	c9 00 00	cmp #$0000	                  CMP #0
+.010d71	d0 0e		bne $010d81	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
+.010d73	af 69 08 01	lda $010869	                  LDA FAT32_FAT_Next_Entry + 2 ; test for EOC (End Of Cluster)
+.010d77	c9 00 00	cmp #$0000	                  CMP #0
+.010d7a	d0 05		bne $010d81	                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
+.010d7c	a9 fc ff	lda #$fffc	                  LDA #-4 ; empty sector
+.010d7f	80 1d		bra $010d9e	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
+.010d81					IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
+.010d81	af 6b 08 01	lda $01086b	                  LDA FAT32_FAT_Linked_Entry
+.010d85	3a		dec a		                  DEC A
+.010d86	30 06		bmi $010d8e	                  BMI IFAT32_READ_LIKED_FAT_ENTRY___UNDERFLOW
+.010d88	8f 63 08 01	sta $010863	                  STA FAT32_FAT_Entry ; update the low part the the fat entry we want to read
+.010d8c	80 a0		bra $010d2e	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
+.010d8e					IFAT32_READ_LIKED_FAT_ENTRY___UNDERFLOW
+.010d8e	af 6d 08 01	lda $01086d	                  LDA FAT32_FAT_Linked_Entry+2
+.010d92	3a		dec a		                  DEC A
+.010d93	30 06		bmi $010d9b	                  BMI IFAT32_READ_LIKED_FAT_ENTRY___WENT_THRW_ALL_FAT_LINKED
+.010d95	8f 65 08 01	sta $010865	                  STA FAT32_FAT_Entry+2
+.010d99	80 93		bra $010d2e	                  BRA IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
+.010d9b					IFAT32_READ_LIKED_FAT_ENTRY___WENT_THRW_ALL_FAT_LINKED
+.010d9b	a9 01 00	lda #$0001	                  LDA #1
+.010d9e					IFAT32_READ_LIKED_FAT_ENTRY___EOC
+.010d9e					IFAT32_READ_LIKED_FAT_ENTRY___EXIT
+.010d9e	fa		plx		                  PLX
+.010d9f	6b		rtl		                  RTL
+.010da0					IFAT32_GET_ROOT_ENTRY
+.010da0	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010da2	da		phx		                  PHX
+.010da3	48		pha		                  PHA ; Save the root entry index we want to read
+.010da4	a2 00 00	ldx #$0000	                  LDX #0 ; compute in witch sector the desired root entry is, 16 entry per sector so we just need to divid the sector size by 16
+.010da7					FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX
+.010da7	4a		lsr a		                  LSR
+.010da8	e8		inx		                  INC X
+.010da9	e0 04 00	cpx #$0004	                  CPX #4 ; divide by 16
+.010dac	d0 f9		bne $010da7	                  BNE FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX
+.010dae	c9 00 00	cmp #$0000	                  CMP #0
+.010db1	f0 24		beq $010dd7	                  BEQ IFAT32_GET_ROOT_ENTRY__Load_first_sector
+.010db3	8f 6b 08 01	sta $01086b	                  STA FAT32_FAT_Linked_Entry
+.010db7	a9 00 00	lda #$0000	                  LDA #0
+.010dba	8f 6d 08 01	sta $01086d	                  STA FAT32_FAT_Linked_Entry+2
+.010dbe	af 33 08 01	lda $010833	                  LDA FAT32_Root_Base_Sector
+.010dc2	8f 63 08 01	sta $010863	                  STA FAT32_FAT_Entry
+.010dc6	af 35 08 01	lda $010835	                  LDA FAT32_Root_Base_Sector +2
+.010dca	8f 65 08 01	sta $010865	                  STA FAT32_FAT_Entry + 2
+.010dce	22 2d 0d 01	jsl $010d2d	                  JSL IFAT32_READ_LIKED_FAT_ENTRY
+.010dd2	c9 00 00	cmp #$0000	                  CMP #0
+.010dd5	30 3b		bmi $010e12	                  BMI IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED
+.010dd7					IFAT32_GET_ROOT_ENTRY__Load_first_sector
+.010dd7	18		clc		                  CLC ; reset the carry flag potencialy set by CPX
+.010dd8	6f 33 08 01	adc $010833	                  ADC FAT32_Root_Base_Sector ; add the relative sector position of the root entry to the start root entry position shoud be 19 (0 based index)
+.010ddc	cf 37 08 01	cmp $010837	                  CMP FAT32_Root_Sector_loaded_in_ram
+.010de0	f0 16		beq $010df8	                  BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
+.010de2	8f 37 08 01	sta $010837	                  STA FAT32_Root_Sector_loaded_in_ram ; save the new sector loaded
+.010de6	a9 01 00	lda #$0001	                  LDA #`FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+.010de9	48		pha		                  PHA
+.010dea	a9 00 04	lda #$0400	                  LDA #<>FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+.010ded	48		pha		                  PHA
+.010dee	af 37 08 01	lda $010837	                  LDA FAT32_Root_Sector_loaded_in_ram ; Get the ROOT directory sector saved rearlyer
+.010df2	22 77 10 01	jsl $011077	                  JSL IFAT_READ_SECTOR
+.010df6	fa		plx		                  PLX
+.010df7	fa		plx		                  PLX
+.010df8					FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
+.010df8	68		pla		                  PLA ; GET the root entry FDD_INDEX
+.010df9	29 0f 00	and #$000f	                  AND #$0F ; get only the 4 first byte to get the 16 value ofset in the root entry sector loades in ram (16 entry per sector)
+.010dfc	0a		asl a		                  ASL
+.010dfd	0a		asl a		                  ASL
+.010dfe	0a		asl a		                  ASL
+.010dff	0a		asl a		                  ASL
+.010e00	0a		asl a		                  ASL ; now A contain the ofset to read the root entry from
+.010e01	18		clc		                  CLC
+.010e02	69 00 04	adc #$0400	                  ADC #<>FAT32_FOLDER_ADDRESS_BUFFER_512
+.010e05	aa		tax		                  TAX
+.010e06	a9 3b 08	lda #$083b	                  LDA #<>FAT32_Root_entry_value
+.010e09	a8		tay		                  TAY
+.010e0a	a9 1f 00	lda #$001f	                  LDA #31
+.010e0d	54 01 01	mvn $01,$01	                  MVN `FAT32_Root_entry_value, `FAT32_FOLDER_ADDRESS_BUFFER_512
+.010e10	80 01		bra $010e13	                  BRA IFAT32_GET_ROOT_ENTRY___EXIT_OK
+.010e12					IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED
+.010e12	fa		plx		                  PLX
+.010e13					IFAT32_GET_ROOT_ENTRY___EXIT_OK
+.010e13	fa		plx		                  PLX
+.010e14	6b		rtl		                  RTL
+.010e15					FAT32_IFAT_GET_FAT_ENTRY
+.010e15	48		pha		                  PHA
+.010e16	da		phx		                  PHX
+.010e17	5a		phy		                  PHY
+.010e18	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Entry+2
+.010e1c	c9 00 00	cmp #$0000	                  CMP #0
+.010e1f	d0 13		bne $010e34	                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER ; the FAT entry is definitly not in the first FAT cluster
+.010e21	af 63 08 01	lda $010863	                  LDA FAT32_FAT_Entry
+.010e25	4a		lsr a		                  LSR A
+.010e26	4a		lsr a		                  LSR A
+.010e27	4a		lsr a		                  LSR A
+.010e28	4a		lsr a		                  LSR A
+.010e29	8f 67 08 01	sta $010867	                  STA FAT32_FAT_Next_Entry
+.010e2d	c9 00 00	cmp #$0000	                  CMP #0
+.010e30	d0 02		bne $010e34	                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER
+.010e32	80 36		bra $010e6a	                  BRA FAT32_ENTRY_SECTOR_LOCATION_FIND ; if this part of the code is riched, its mean that the FAT entry requested is with in the first FAT clustrer (entry smaller than 16)
+.010e34					FAT32_FAT_ENTRY_FIND_THE_CLUSTER
+.010e34	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Entry+2
+.010e38	4a		lsr a		                  LSR A
+.010e39	4a		lsr a		                  LSR A
+.010e3a	4a		lsr a		                  LSR A
+.010e3b	4a		lsr a		                  LSR A ; comput the high part divided by 16
+.010e3c	8f 69 08 01	sta $010869	                  STA FAT32_FAT_Next_Entry+2 ; use FAT32_FAT_Next_Entry as a temporary variable
+.010e40	af 65 08 01	lda $010865	                  LDA FAT32_FAT_Entry+2 ;extract the 4 bits of the HIGHT part of FAT32_FAT_Entry to casrry them in the LOW part
+.010e44	29 0f 00	and #$000f	                  AND #$F
+.010e47	0a		asl a		                  ASL A
+.010e48	0a		asl a		                  ASL A
+.010e49	0a		asl a		                  ASL A
+.010e4a	0a		asl a		                  ASL A
+.010e4b	0a		asl a		                  ASL A
+.010e4c	0a		asl a		                  ASL A
+.010e4d	0a		asl a		                  ASL A
+.010e4e	0a		asl a		                  ASL A
+.010e4f	0a		asl a		                  ASL A
+.010e50	0a		asl a		                  ASL A
+.010e51	0a		asl a		                  ASL A
+.010e52	0a		asl a		                  ASL A ; get the 4 bit in the right position to be added to the LOW part
+.010e53	8f 67 08 01	sta $010867	                  STA FAT32_FAT_Next_Entry
+.010e57	af 63 08 01	lda $010863	                  LDA FAT32_FAT_Entry
+.010e5b	4a		lsr a		                  LSR A
+.010e5c	4a		lsr a		                  LSR A
+.010e5d	4a		lsr a		                  LSR A
+.010e5e	4a		lsr a		                  LSR A ; divide the high part of the FAT entry requested by 16  because there is 16 FAt entry per sector
+.010e5f	29 ff 0f	and #$0fff	                  AND #$0FFF
+.010e62	0f 67 08 01	ora $010867	                  ORA FAT32_FAT_Next_Entry
+.010e66	8f 67 08 01	sta $010867	                  STA FAT32_FAT_Next_Entry ; Now contain the 32 bit FAT Cluster to load
+.010e6a					FAT32_ENTRY_SECTOR_LOCATION_FIND
+.010e6a	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry
+.010e6e	18		clc		                  CLC
+.010e6f	6f 5b 08 01	adc $01085b	                  ADC FAT32_FAT_Base_Sector
+.010e73	cf 5f 08 01	cmp $01085f	                  CMP FAT32_FAT_Sector_loaded_in_ram
+.010e77	f0 16		beq $010e8f	                  BEQ FAT32_COMPUTED_OFSET_IN_CLUSTER ; dont need to load the fat sector because it's alreaddy loaded
+.010e79	8f 5f 08 01	sta $01085f	                  STA FAT32_FAT_Sector_loaded_in_ram  ; update the cluster value
+.010e7d	a9 01 00	lda #$0001	                  LDA #`FAT32_FAT_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+.010e80	48		pha		                  PHA
+.010e81	a9 00 02	lda #$0200	                  LDA #<>FAT32_FAT_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+.010e84	48		pha		                  PHA
+.010e85	af 5f 08 01	lda $01085f	                  LDA FAT32_FAT_Sector_loaded_in_ram ; read the ROOT directory sector saved at the begining of the function
+.010e89	22 77 10 01	jsl $011077	                  JSL IFAT_READ_SECTOR
+.010e8d	fa		plx		                  PLX
+.010e8e	fa		plx		                  PLX
+.010e8f					FAT32_COMPUTED_OFSET_IN_CLUSTER
+.010e8f	af 63 08 01	lda $010863	                  LDA FAT32_FAT_Entry
+.010e93	29 0f 00	and #$000f	                  AND #$0F ; get only the 7 first byte to get the ofset in the curent FAT cluster loades
+.010e96	0a		asl a		                  ASL
+.010e97	0a		asl a		                  ASL ; *4 to point to the FAT entry 32 byte
+.010e98	18		clc		                  CLC
+.010e99	69 00 02	adc #$0200	                  ADC #<>FAT32_FAT_ADDRESS_BUFFER_512
+.010e9c	aa		tax		                  TAX
+.010e9d	a9 67 08	lda #$0867	                  LDA #<>FAT32_FAT_Next_Entry
+.010ea0	a8		tay		                  TAY
+.010ea1	a9 03 00	lda #$0003	                  LDA #3 ; read 4 byte
+.010ea4	54 01 01	mvn $01,$01	                  MVN `FAT32_FAT_Next_Entry,`FAT32_FAT_ADDRESS_BUFFER_512
+.010ea7	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry    ; FOR DEBUG
+.010eab	af 69 08 01	lda $010869	                  LDA FAT32_FAT_Next_Entry+2  ; FOR DEBUG
+.010eaf	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry    ; FOR DEBUG
+.010eb3	af 69 08 01	lda $010869	                  LDA FAT32_FAT_Next_Entry+2  ; FOR DEBUG
+.010eb7	7a		ply		                  PLY
+.010eb8	fa		plx		                  PLX
+.010eb9	68		pla		                  PLA
+.010eba	6b		rtl		                  RTL
+.010ebb					FAT32_Test_Fat_Entry_Validity
+.010ebb	68		pla		                  PLA
+.010ebc	af 69 08 01	lda $010869	                  LDA FAT32_FAT_Next_Entry +2 ; test for EOC (End Of Cluster)
+.010ec0	29 ff 0f	and #$0fff	                  AND #$0FFF ; the 4 MSB are not used in the FAT32
+.010ec3	c9 ff 0f	cmp #$0fff	                  CMP #$0FFF
+.010ec6	d0 30		bne $010ef8	                  BNE FAT32_Test_Fat_Entry_Validity___TEST_NULL_VALUE
+.010ec8	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
+.010ecc	29 f0 ff	and #$fff0	                  AND #$FFF0
+.010ecf	c9 f0 ff	cmp #$fff0	                  CMP #$FFF0
+.010ed2	d0 24		bne $010ef8	                  BNE FAT32_Test_Fat_Entry_Validity___TEST_NULL_VALUE
+.010ed4	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; the cluster entry is not usable or its the last in the chaine
+.010ed8	29 0f 00	and #$000f	                  AND #$000F
+.010edb	c9 08 00	cmp #$0008	                  CMP #8
+.010ede	30 05		bmi $010ee5	                  BMI FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED_OR_BAD
+.010ee0	a9 ff ff	lda #$ffff	                  LDA #-1 ; end of the file
+.010ee3	80 24		bra $010f09	                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
+.010ee5					FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED_OR_BAD
+.010ee5	c9 07 00	cmp #$0007	                  CMP #7
+.010ee8	d0 05		bne $010eef	                  BNE FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED
+.010eea	a9 fe ff	lda #$fffe	                  LDA #-2 ; Bad sector
+.010eed	80 1a		bra $010f09	                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
+.010eef					FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED
+.010eef	a9 fd ff	lda #$fffd	                  LDA #-3 ; reserved sector
+.010ef2	80 15		bra $010f09	                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
+.010ef4	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
+.010ef8					FAT32_Test_Fat_Entry_Validity___TEST_NULL_VALUE
+.010ef8	c9 00 00	cmp #$0000	                  CMP #0
+.010efb	d0 0c		bne $010f09	                  BNE FAT32_Test_Fat_Entry_Validity___EXIT
+.010efd	af 69 08 01	lda $010869	                  LDA FAT32_FAT_Next_Entry + 2 ; test for EOC (End Of Cluster)
+.010f01	c9 00 00	cmp #$0000	                  CMP #0
+.010f04	d0 03		bne $010f09	                  BNE FAT32_Test_Fat_Entry_Validity___EXIT
+.010f06	a9 fc ff	lda #$fffc	                  LDA #-4 ; empty sector
+.010f09					FAT32_Test_Fat_Entry_Validity___EXIT
+.010f09	48		pha		                  PHA
+.010f0a	6b		rtl		                  RTL
+.010f0b					FAT32_ILOAD_FILE
+.010f0b	22 55 0b 01	jsl $010b55	                  JSL IFAT32_READ_BOOT_SECTOR
+.010f0f	c9 01 00	cmp #$0001	                  CMP #$0001
+.010f12	f0 05		beq $010f19	                  BEQ ILOAD_FILE_FAT_32_BOOT_SECTOR_PARSING_OK
+.010f14	a9 ff ff	lda #$ffff	                  LDA #-1
+.010f17	80 4b		bra $010f64	                  BRA FAT32_ILOAD_FILE_RETURN_ERROR_temp
+.010f19					ILOAD_FILE_FAT_32_BOOT_SECTOR_PARSING_OK
+.010f19	22 b2 0c 01	jsl $010cb2	                  JSL IFAT32_COMPUT_ROOT_DIR_POS
+.010f1d	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010f1f	a9 00 00	lda #$0000	                  LDA #$00 ; sellect the first entry
+.010f22	48		pha		                  PHA
+.010f23					FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY
+.010f23	22 a0 0d 01	jsl $010da0	                  JSL IFAT32_GET_ROOT_ENTRY
+.010f27	af 46 08 01	lda $010846	                  LDA FAT32_Root_entry_value + 11 ; get the flag Byte to test if it a file or a directory
+.010f2b	29 10 00	and #$0010	                  AND #$10
+.010f2e	c9 10 00	cmp #$0010	                  CMP #$10
+.010f31	d0 0b		bne $010f3e	                  BNE FAT32_ILOAD_FILE_ENTRY ; if equal we read a directory so just read the next one
+.010f33	68		pla		                  PLA   ; get the actual root entry
+.010f34	cf 08 08 01	cmp $010808	                  CMP FAT32_Max_Root_Entry ; prevent to loop forever so exit
+.010f38	f0 26		beq $010f60	                  BEQ FAT32_ILOAD_FILE_NO_FILE_MATCHED
+.010f3a	1a		inc a		                  INC A ; sellect the next root entry
+.010f3b	48		pha		                  PHA   ; save the next root entry to read
+.010f3c	80 e5		bra $010f23	                  BRA FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY
+.010f3e					FAT32_ILOAD_FILE_ENTRY
+.010f3e	c2 30		rep #$30	                REP #$30        ; set A&X long
+.010f40	68		pla		                  PLA   ; get the actual root entry
+.010f41	cf 08 08 01	cmp $010808	                  CMP FAT32_Max_Root_Entry ; prevent to loop forever so exit
+.010f45	f0 19		beq $010f60	                  BEQ FAT32_ILOAD_FILE_NO_FILE_MATCHED
+.010f47	1a		inc a		                  INC A ; sellect the next root entry in case the file name is wrong
+.010f48	48		pha		                  PHA   ; save the next root entry to read
+.010f49	a2 ff ff	ldx #$ffff	                  LDX #-1
+.010f4c	a0 ff ff	ldy #$ffff	                  LDY #-1
+.010f4f					FAT32_ILOAD_FILE_CHAR_MATCHING
+.010f4f	e8		inx		                  INC X
+.010f50	c8		iny		                  INC Y
+.010f51	e0 0b 00	cpx #$000b	                  CPX #11 ; FAT12 file or folder size
+.010f54	f0 10		beq $010f66	                  BEQ FAT32_ILOAD_FILE_STRING_MATCHED
+.010f56	b3 06		lda ($06,s),y	                  LDA (6,S),Y ; load the "y" char file name we want to read
+.010f58	df 3b 08 01	cmp $01083b,x	                  CMP FAT32_Root_entry_value,X
+.010f5c	f0 f1		beq $010f4f	                  BEQ FAT32_ILOAD_FILE_CHAR_MATCHING
+.010f5e	80 c3		bra $010f23	                  BRA FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY ;;; FAT32_ILOAD_FILE_STRING_NOT_MATCHED    emoved as we still need to test what type of entry it is befor trying to compare the file name
+.010f60					FAT32_ILOAD_FILE_NO_FILE_MATCHED
+.010f60	68		pla		                  PLA
+.010f61	a9 fe ff	lda #$fffe	                  LDA #-2
+.010f64					FAT32_ILOAD_FILE_RETURN_ERROR_temp
+.010f64	80 60		bra $010fc6	                  BRA FAT32_ILOAD_FILE_RETURN_ERROR
+.010f66					FAT32_ILOAD_FILE_STRING_MATCHED
+.010f66	68		pla		                  PLA
+.010f67	af 55 08 01	lda $010855	                  LDA FAT32_Root_entry_value + 26 ; get the first fat entry for the fil from the root directory entry we matched
+.010f6b	8f 67 08 01	sta $010867	                  STA FAT32_FAT_Next_Entry
+.010f6f					FAT32_ILOAD_FILE_Read_next_sector
+.010f6f	a3 0a		lda $0a,s	                  LDA 10,S ; load the byte nb 3 (bank byte)
+.010f71	48		pha		                  PHA
+.010f72	a3 0c		lda $0c,s	                  LDA 12,S ; load the low world part of the buffer address
+.010f74	48		pha		                  PHA
+.010f75	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; sector to read
+.010f79	69 21 00	adc #$0021	                  ADC #1+9+9+14 ; skip the reserved sector(MBR?) ,  the 2 fat and the root sector that will need to be computed  acording to the fat position if several partition are in the same hardrive, it for now hardcoded as one partition
+.010f7c	22 77 10 01	jsl $011077	                  JSL IFAT_READ_SECTOR
+.010f80	fa		plx		                  PLX
+.010f81	fa		plx		                  PLX
+.010f82	a3 0c		lda $0c,s	                  LDA 12,S ; load the low world part of the buffer address
+.010f84	18		clc		                  CLC
+.010f85	a9 00 00	lda #$0000	                  LDA #0
+.010f88	48		pha		                  PHA ; save the cpt vale
+.010f89	48		pha		                  PHA ; save the
+.010f8a					FAT32_ILOAD_FILE_Add_More_Sector_Per_Cluster
+.010f8a	a3 04		lda $04,s	                  LDA 4,S ; load the Byte per cluster value
+.010f8c	6f 00 08 01	adc $010800	                  ADC FAT32_Byte_Per_Sector
+.010f90	83 04		sta $04,s	                  STA 4,S
+.010f92	af 02 08 01	lda $010802	                  LDA FAT32_Sector_Per_Cluster
+.010f96	c3 02		cmp $02,s	                  CMP 2,S
+.010f98	f0 07		beq $010fa1	                  BEQ FAT32_ILOAD_FILE_Read_Next_Data
+.010f9a	a3 02		lda $02,s	                  LDA 2,S
+.010f9c	1a		inc a		                  INC A
+.010f9d	83 02		sta $02,s	                  STA 2,S
+.010f9f	80 e9		bra $010f8a	                  BRA FAT32_ILOAD_FILE_Add_More_Sector_Per_Cluster
+.010fa1					FAT32_ILOAD_FILE_Read_Next_Data
+.010fa1	fa		plx		                  PLX ; removing the compter valuer from the stack
+.010fa2	a3 0e		lda $0e,s	                  LDA 14,S ; load the low world part of the buffer address
+.010fa4	18		clc		                  CLC
+.010fa5	63 02		adc $02,s	                  ADC 2,S
+.010fa7	90 09		bcc $010fb2	                  BCC FAT32_ILOAD_FILE_New_Buffer_Address_computed
+.010fa9	83 0e		sta $0e,s	                  STA 14,S ; Save the low world part of the buffer address
+.010fab	a3 0c		lda $0c,s	                  LDA 12,S ; load the byte nb 3 (bank byte)
+.010fad	69 01 00	adc #$0001	                  ADC #1
+.010fb0	83 0c		sta $0c,s	                  STA 12,S ; Save the byte nb 3 (bank byte)
+.010fb2					FAT32_ILOAD_FILE_New_Buffer_Address_computed
+.010fb2	fa		plx		                  PLX ; get the Byte per cluster count out of the stack
+.010fb3	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry ; sector to read
+.010fb7	22 15 0e 01	jsl $010e15	                  JSL FAT32_IFAT_GET_FAT_ENTRY
+.010fbb	af 67 08 01	lda $010867	                  LDA FAT32_FAT_Next_Entry
+.010fbf	c9 fe 0f	cmp #$0ffe	                  CMP #$FFE
+.010fc2	b0 02		bcs $010fc6	                  BCS FAT32_ILOAD_FILE_END_OF_FILE
+.010fc4	80 a9		bra $010f6f	                  BRA FAT32_ILOAD_FILE_Read_next_sector
+.010fc6					FAT32_ILOAD_FILE_END_OF_FILE
+.010fc6					FAT32_ILOAD_FILE_RETURN_ERROR
+.010fc6	6b		rtl		                  RTL
+.010fc7					FOENIX_SD_INIT_READ
+.010fc7	a9 01 00	lda #$0001	                LDA #$01
+.010fca	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG  ; Set Init SD
+.010fce	a9 01 00	lda #$0001	                LDA #$01
+.010fd1	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG ; Let's Start the Process
+.010fd5					SDC_NOT_FINISHED
+.010fd5	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG
+.010fd9	29 01 00	and #$0001	                AND #SDC_TRANS_BUSY
+.010fdc	c9 01 00	cmp #$0001	                CMP #SDC_TRANS_BUSY
+.010fdf	f0 f4		beq $010fd5	                BEQ SDC_NOT_FINISHED
+.010fe1	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG
+.010fe5	8f 00 10 00	sta $001000	                STA $001000
+.010fe9	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.010fed	c9 00 00	cmp #$0000	                CMP #$00
+.010ff0	d0 0f		bne $011001	                BNE SDISREADY
+.010ff2	af 80 e8 af	lda $afe880	                LDA GABE_MSTR_CTRL
+.010ff6	29 fd ff	and #$fffd	                AND #~GABE_CTRL_SDC_LED
+.010ff9	0f 02 00 00	ora $000002	                ORA GABE_CTRL_SDC_LED
+.010ffd	8f 80 e8 af	sta $afe880	                STA GABE_MSTR_CTRL
+.011001					SDISREADY
+.011001	a9 00 00	lda #$0000	                LDA #$00
+.011004	8f 07 ea af	sta $afea07	                STA SDC_SD_ADDR_7_0_REG
+.011008	a9 00 00	lda #$0000	                LDA #$00
+.01100b	8f 08 ea af	sta $afea08	                STA SDC_SD_ADDR_15_8_REG
+.01100f	a9 00 00	lda #$0000	                LDA #$00
+.011012	8f 09 ea af	sta $afea09	                STA SDC_SD_ADDR_23_16_REG
+.011016	a9 00 00	lda #$0000	                LDA #$00
+.011019	8f 0a ea af	sta $afea0a	                STA SDC_SD_ADDR_31_24_REG
+.01101d	a9 02 00	lda #$0002	                LDA #SDC_TRANS_READ_BLK
+.011020	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG
+.011024	a9 01 00	lda #$0001	                LDA #$01
+.011027	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG ; Let's Start the Process
+.01102b					SDC_NOT_FINISHED2
+.01102b	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG
+.01102f	29 01 00	and #$0001	                AND #SDC_TRANS_BUSY
+.011032	c9 01 00	cmp #$0001	                CMP #SDC_TRANS_BUSY
+.011035	f0 f4		beq $01102b	                BEQ SDC_NOT_FINISHED2
+.011037	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG
+.01103b	8f 01 10 00	sta $001001	                STA $001001
+.01103f	af 13 ea af	lda $afea13	                LDA SDC_RX_FIFO_DATA_CNT_LO
+.011043	8f 02 10 00	sta $001002	                STA $001002
+.011047	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01104b	af 12 ea af	lda $afea12	                LDA SDC_RX_FIFO_DATA_CNT_HI
+.01104f	8f 03 10 00	sta $001003	                STA $001003
+.011053	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011057	a9 0d 00	lda #$000d	                LDA #$0D
+.01105a	22 91 06 39	jsl $390691	                JSL IPUTC
+.01105e	a2 00 00	ldx #$0000	                LDX #$0000
+.011061	a9 0d 00	lda #$000d	                LDA #$0D
+.011064	22 91 06 39	jsl $390691	                JSL IPUTC
+.011068					SDC_LOAD_BLOCK
+.011068	af 10 ea af	lda $afea10	                LDA SDC_RX_FIFO_DATA_REG
+.01106c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011070	e8		inx		                INX
+.011071	e0 00 02	cpx #$0200	                CPX #$0200
+.011074	d0 f2		bne $011068	                BNE SDC_LOAD_BLOCK
+.011076	6b		rtl		                RTL
+.011077					IFAT_READ_SECTOR
+.011077	48		pha		                PHA
+.011078	af 83 08 01	lda $010883	                LDA FAT32_SD_FDD_HDD_SELL
+.01107c	c9 02 00	cmp #$0002	                CMP FAT32_HDD
+.01107f	f0 0b		beq $01108c	                BEQ IFAT_READ_SECTOR__HDD
+.011081	c9 02 00	cmp #$0002	                CMP FAT32_HDD
+.011084	f0 0c		beq $011092	                BEQ IFAT_READ_SECTOR__FDD
+.011086					IFAT_READ_SECTOR_SD:
+.011086	68		pla		                PLA ; get the sector to read back
+.011087	22 df 10 01	jsl $0110df	                JSL ISD_READ
+.01108b	6b		rtl		                RTL
+.01108c					IFAT_READ_SECTOR__HDD:
+.01108c	68		pla		                PLA ; get the sector to read back
+.01108d	22 94 10 01	jsl $011094	                JSL IHDD_READ
+.011091	6b		rtl		                RTL
+.011092					IFAT_READ_SECTOR__FDD:
+.011092	68		pla		                PLA ; get the sector to read back
+.011093	6b		rtl		                RTL
+.011094					IHDD_READ
+.011094	c2 30		rep #$30	                REP #$30        ; set A&X long
+.011096	48		pha		                PHA ; save the sector to read
+.011097	a3 08		lda $08,s	                LDA 8,S
+.011099	a8		tay		                TAY
+.01109a	a3 06		lda $06,s	                LDA 6,S
+.01109c	a8		tay		                TAY
+.01109d	68		pla		                PLA
+.01109e	48		pha		                PHA ; save the sector read for the return value
+.01109f	0a		asl a		                ASL A ; convert the sector number into byte count
+.0110a0	0a		asl a		                ASL A
+.0110a1	0a		asl a		                ASL A
+.0110a2	0a		asl a		                ASL A
+.0110a3	0a		asl a		                ASL A
+.0110a4	0a		asl a		                ASL A
+.0110a5	0a		asl a		                ASL A
+.0110a6	0a		asl a		                ASL A
+.0110a7	0a		asl a		                ASL A
+.0110a8	69 00 00	adc #$0000	                ADC #<>data_hard_drive
+.0110ab	aa		tax		                TAX
+.0110ac	e2 20		sep #$20	                SEP #$20        ; set A short
+.0110ae	a3 08		lda $08,s	                LDA 8,S
+.0110b0	8f ba 10 01	sta $0110ba	                STA HDD_MVN_INSTRUCTION_ADDRESS + 1 ; rewrite the second parameter of the instruction in RAM
+.0110b4	c2 30		rep #$30	                REP #$30        ; set A&X long
+.0110b6	a9 ff 01	lda #$01ff	                LDA #511
+.0110b9	54 01 12	mvn $12,$01	HDD_MVN_INSTRUCTION_ADDRESS  MVN `data_hard_drive,`FAT32_DATA_ADDRESS_BUFFER_512
+.0110bc	68		pla		                PLA
+.0110bd	6b		rtl		                RTL
+.0110be					ISD_INIT
+.0110be	c2 30		rep #$30	                REP #$30        ; set A&X long
+.0110c0	a9 01 00	lda #$0001	                LDA #SDC_TRANS_INIT_SD
+.0110c3	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG;
+.0110c7	a9 01 00	lda #$0001	                LDA #SDC_TRANS_START
+.0110ca	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG;
+.0110ce					ISD_INIT_TEST_SD_INIT_FLAG:
+.0110ce	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG  ; read the bussy state flag : 1 busy / 0 finished
+.0110d2	29 01 00	and #$0001	                AND #SDC_TRANS_BUSY
+.0110d5	c9 01 00	cmp #$0001	                CMP #SDC_TRANS_BUSY
+.0110d8	f0 f4		beq $0110ce	                BEQ ISD_INIT_TEST_SD_INIT_FLAG
+.0110da	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG ; read the error status
+.0110de	6b		rtl		                RTL
+.0110df					ISD_READ
+.0110df	eb		xba		                XBA
+.0110e0	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX ; print the sector
+.0110e4	eb		xba		                XBA
+.0110e5	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX ; print the sector
+.0110e9	0a		asl a		                ASL ;get the 512 byte ofset from the sector index
+.0110ea	e2 20		sep #$20	                SEP #$20        ; set A short
+.0110ec	8f 08 ea af	sta $afea08	                STA SDC_SD_ADDR_15_8_REG
+.0110f0	eb		xba		                XBA ; get the other part of the 16 byte A register
+.0110f1	8f 09 ea af	sta $afea09	                STA SDC_SD_ADDR_23_16_REG
+.0110f5	a9 00		lda #$00	                LDA #0
+.0110f7	8f 07 ea af	sta $afea07	                STA SDC_SD_ADDR_7_0_REG
+.0110fb	8f 0a ea af	sta $afea0a	                STA SDC_SD_ADDR_31_24_REG
+.0110ff	a9 01		lda #$01	                LDA #1
+.011101	8f 14 ea af	sta $afea14	                STA SDC_RX_FIFO_CTRL_REG ; Clear the RX FIFO
+.011105	a9 02		lda #$02	                LDA #SDC_TRANS_READ_BLK
+.011107	8f 02 ea af	sta $afea02	                STA SDC_TRANS_TYPE_REG;
+.01110b	a9 01		lda #$01	                LDA #SDC_TRANS_START
+.01110d	8f 03 ea af	sta $afea03	                STA SDC_TRANS_CONTROL_REG;
+.011111					ISD_READ_TEST_SD_INIT_FLAG:
+.011111	af 04 ea af	lda $afea04	                LDA SDC_TRANS_STATUS_REG  ; read the bussy state flag : 1 busy / 0 finished
+.011115	29 01		and #$01	                AND #SDC_TRANS_BUSY
+.011117	c9 01		cmp #$01	                CMP #SDC_TRANS_BUSY
+.011119	f0 f6		beq $011111	                BEQ ISD_READ_TEST_SD_INIT_FLAG
+.01111b	af 05 ea af	lda $afea05	                LDA SDC_TRANS_ERROR_REG ; read the error status
+.01111f	48		pha		                PHA
+.011120	a9 20		lda #$20	                LDA #' '
+.011122	22 91 06 39	jsl $390691	                JSL IPUTC
+.011126	a9 45		lda #$45	                LDA #'E'
+.011128	22 91 06 39	jsl $390691	                JSL IPUTC
+.01112c	68		pla		                PLA
+.01112d	48		pha		                PHA
+.01112e	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011132	a9 20		lda #$20	                LDA #' '
+.011134	22 91 06 39	jsl $390691	                JSL IPUTC
+.011138	a9 42		lda #$42	                LDA #'B'
+.01113a	22 91 06 39	jsl $390691	                JSL IPUTC
+.01113e	a9 20		lda #$20	                LDA #' '
+.011140	22 91 06 39	jsl $390691	                JSL IPUTC
+.011144	68		pla		                PLA
+.011145	c9 00		cmp #$00	                CMP #0
+.011147	d0 2b		bne $011174	                BNE ISD_READ__INIT_RETURN
+.011149					ISD_READ_GET_BYTE_COUNT:
+.011149	af 12 ea af	lda $afea12	                LDA SDC_RX_FIFO_DATA_CNT_HI ; get the number of byte in the fifo
+.01114d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011151	af 13 ea af	lda $afea13	                LDA SDC_RX_FIFO_DATA_CNT_LO ; get the number of byte in the fifo
+.011155	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011159	a9 0d		lda #$0d	                LDA #$0D
+.01115b	22 91 06 39	jsl $390691	                JSL IPUTC
+.01115f	a2 00 00	ldx #$0000	                LDX #0
+.011162					ISD_READ__READ_LOOP_BYTE:
+.011162	af 10 ea af	lda $afea10	                LDA SDC_RX_FIFO_DATA_REG
+.011166	9f 00 00 01	sta $010000,x	                STA @l FAT32_DATA_ADDRESS_BUFFER_512,x
+.01116a	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01116e	e8		inx		                INX
+.01116f	e0 00 02	cpx #$0200	                CPX #$200
+.011172	d0 ee		bne $011162	                BNE ISD_READ__READ_LOOP_BYTE
+.011174					ISD_READ__INIT_RETURN:
+.011174	a9 01		lda #$01	                LDA #1
+.011176	8f 14 ea af	sta $afea14	                STA SDC_RX_FIFO_CTRL_REG ; discard all possible other byt
+.01117a	a9 0d		lda #$0d	                LDA #$0D
+.01117c	22 91 06 39	jsl $390691	                JSL IPUTC
+.011180	a9 2d		lda #$2d	                LDA #'-'
+.011182	22 91 06 39	jsl $390691	                JSL IPUTC
+.011186	c2 30		rep #$30	                REP #$30        ; set A&X long
+.011188	6b		rtl		                RTL
+.011189					FAT32_Print_FAT_STATE
+.011189	a2 45 04	ldx #$0445	                LDX #<>TEXT_FAT32___Byte_Per_Sector
+.01118c	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Byte_Per_Sector
+.01118f	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011193	af 00 08 01	lda $010800	                LDA FAT32_Byte_Per_Sector
+.011197	eb		xba		                XBA
+.011198	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01119c	eb		xba		                XBA
+.01119d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111a1	a2 6b 04	ldx #$046b	                LDX #<>TEXT_FAT32___Sector_Per_Cluster
+.0111a4	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_Per_Cluster
+.0111a7	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0111ab	af 02 08 01	lda $010802	                LDA FAT32_Sector_Per_Cluster
+.0111af	eb		xba		                XBA
+.0111b0	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111b4	eb		xba		                XBA
+.0111b5	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111b9	a2 90 04	ldx #$0490	                LDX #<>TEXT_FAT32___Nb_Of_reserved_Cluster
+.0111bc	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Nb_Of_reserved_Cluster
+.0111bf	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0111c3	af 04 08 01	lda $010804	                LDA FAT32_Nb_Of_reserved_Cluster
+.0111c7	eb		xba		                XBA
+.0111c8	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111cc	eb		xba		                XBA
+.0111cd	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111d1	a2 b5 04	ldx #$04b5	                LDX #<>TEXT_FAT32___Nb_Of_FAT
+.0111d4	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Nb_Of_FAT
+.0111d7	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0111db	af 06 08 01	lda $010806	                LDA FAT32_Nb_Of_FAT
+.0111df	eb		xba		                XBA
+.0111e0	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111e4	eb		xba		                XBA
+.0111e5	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111e9	a2 da 04	ldx #$04da	                LDX #<>TEXT_FAT32___Max_Root_Entry
+.0111ec	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Max_Root_Entry
+.0111ef	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0111f3	af 08 08 01	lda $010808	                LDA FAT32_Max_Root_Entry
+.0111f7	eb		xba		                XBA
+.0111f8	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0111fc	eb		xba		                XBA
+.0111fd	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011201	a2 ff 04	ldx #$04ff	                LDX #<>TEXT_FAT32___Total_Sector_Count
+.011204	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Total_Sector_Count
+.011207	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.01120b	af 0a 08 01	lda $01080a	                LDA FAT32_Total_Sector_Count
+.01120f	eb		xba		                XBA
+.011210	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011214	eb		xba		                XBA
+.011215	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011219	a2 24 05	ldx #$0524	                LDX #<>TEXT_FAT32___Sector_per_Fat
+.01121c	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_per_Fat
+.01121f	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011223	af 0e 08 01	lda $01080e	                LDA FAT32_Sector_per_Fat+2
+.011227	eb		xba		                XBA
+.011228	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01122c	eb		xba		                XBA
+.01122d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011231	af 0c 08 01	lda $01080c	                LDA FAT32_Sector_per_Fat
+.011235	eb		xba		                XBA
+.011236	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01123a	eb		xba		                XBA
+.01123b	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01123f	a2 49 05	ldx #$0549	                LDX #<>TEXT_FAT32___Sector_per_Track
+.011242	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_per_Track
+.011245	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011249	af 10 08 01	lda $010810	                LDA FAT32_Sector_per_Track
+.01124d	eb		xba		                XBA
+.01124e	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011252	eb		xba		                XBA
+.011253	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011257	a2 6e 05	ldx #$056e	                LDX #<>TEXT_FAT32___Nb_of_Head
+.01125a	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Nb_of_Head
+.01125d	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011261	af 12 08 01	lda $010812	                LDA FAT32_Nb_of_Head
+.011265	eb		xba		                XBA
+.011266	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01126a	eb		xba		                XBA
+.01126b	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01126f	a2 93 05	ldx #$0593	                LDX #<>TEXT_FAT32___Nb_Of_Sector_In_Partition
+.011272	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Nb_Of_Sector_In_Partition
+.011275	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011279	af 16 08 01	lda $010816	                LDA FAT32_Nb_Of_Sector_In_Partition+2
 .01127d	eb		xba		                XBA
 .01127e	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .011282	eb		xba		                XBA
 .011283	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011287	a2 02 06	ldx #$0602	                LDX #<>TEXT_FAT32___Volume_Label
-.01128a	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Volume_Label
-.01128d	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011291	a2 00 00	ldx #$0000	                LDX #0
-.011294					PRINT_FAT32_Volume_Label:
-.011294	bf 1e 08 01	lda $01081e,x	                LDA @l FAT32_Volume_Label,x
-.011298	22 91 06 39	jsl $390691	                JSL IPUTC
-.01129c	e8		inx		                INX
-.01129d	e0 0b 00	cpx #$000b	                CPX #11
-.0112a0	d0 f2		bne $011294	                BNE PRINT_FAT32_Volume_Label
-.0112a2	a2 27 06	ldx #$0627	                LDX #<>TEXT_FAT32___File_System_Type
-.0112a5	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___File_System_Type
-.0112a8	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0112ac	af 29 08 01	lda $010829	                LDA FAT32_File_System_Type
-.0112b0	eb		xba		                XBA
-.0112b1	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112b5	eb		xba		                XBA
-.0112b6	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112ba	a2 4c 06	ldx #$064c	                LDX #<>TEXT_FAT32___Sector_loaded_in_ram
-.0112bd	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_loaded_in_ram
-.0112c0	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0112c4	af 2d 08 01	lda $01082d	                LDA FAT32_Sector_loaded_in_ram+2
-.0112c8	eb		xba		                XBA
-.0112c9	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112cd	eb		xba		                XBA
-.0112ce	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112d2	af 2b 08 01	lda $01082b	                LDA FAT32_Sector_loaded_in_ram
-.0112d6	eb		xba		                XBA
-.0112d7	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112db	eb		xba		                XBA
-.0112dc	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112e0	a2 71 06	ldx #$0671	                LDX #<>TEXT_FAT32___Root_Fat_Sector_offset
-.0112e3	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_Fat_Sector_offset
-.0112e6	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0112ea	af 2f 08 01	lda $01082f	                LDA FAT32_Root_Fat_Sector_offset
-.0112ee	eb		xba		                XBA
-.0112ef	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112f3	eb		xba		                XBA
-.0112f4	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0112f8	a2 96 06	ldx #$0696	                LDX #<>TEXT_FAT32___Root_Base_Sector
-.0112fb	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_Base_Sector
-.0112fe	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011302	af 33 08 01	lda $010833	                LDA FAT32_Root_Base_Sector+2
-.011306	eb		xba		                XBA
-.011307	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01130b	eb		xba		                XBA
-.01130c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011310	af 31 08 01	lda $010831	                LDA FAT32_Root_Base_Sector
+.011287	af 14 08 01	lda $010814	                LDA FAT32_Nb_Of_Sector_In_Partition
+.01128b	eb		xba		                XBA
+.01128c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011290	eb		xba		                XBA
+.011291	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011295	a2 b8 05	ldx #$05b8	                LDX #<>TEXT_FAT32___Boot_Signature
+.011298	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Boot_Signature
+.01129b	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.01129f	af 18 08 01	lda $010818	                LDA FAT32_Boot_Signature
+.0112a3	eb		xba		                XBA
+.0112a4	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0112a8	eb		xba		                XBA
+.0112a9	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0112ad	a2 dd 05	ldx #$05dd	                LDX #<>TEXT_FAT32___Volume_ID
+.0112b0	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Volume_ID
+.0112b3	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0112b7	af 1c 08 01	lda $01081c	                LDA FAT32_Volume_ID+2
+.0112bb	eb		xba		                XBA
+.0112bc	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0112c0	eb		xba		                XBA
+.0112c1	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0112c5	af 1a 08 01	lda $01081a	                LDA FAT32_Volume_ID
+.0112c9	eb		xba		                XBA
+.0112ca	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0112ce	eb		xba		                XBA
+.0112cf	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0112d3	a2 02 06	ldx #$0602	                LDX #<>TEXT_FAT32___Volume_Label
+.0112d6	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Volume_Label
+.0112d9	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0112dd	a2 00 00	ldx #$0000	                LDX #0
+.0112e0					PRINT_FAT32_Volume_Label:
+.0112e0	bf 1e 08 01	lda $01081e,x	                LDA @l FAT32_Volume_Label,x
+.0112e4	22 91 06 39	jsl $390691	                JSL IPUTC
+.0112e8	e8		inx		                INX
+.0112e9	e0 0b 00	cpx #$000b	                CPX #11
+.0112ec	d0 f2		bne $0112e0	                BNE PRINT_FAT32_Volume_Label
+.0112ee	a2 27 06	ldx #$0627	                LDX #<>TEXT_FAT32___File_System_Type
+.0112f1	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___File_System_Type
+.0112f4	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0112f8	af 29 08 01	lda $010829	                LDA FAT32_File_System_Type
+.0112fc	eb		xba		                XBA
+.0112fd	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011301	eb		xba		                XBA
+.011302	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011306	a2 4c 06	ldx #$064c	                LDX #<>TEXT_FAT32___Sector_loaded_in_ram
+.011309	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_loaded_in_ram
+.01130c	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011310	af 2d 08 01	lda $01082d	                LDA FAT32_Sector_loaded_in_ram+2
 .011314	eb		xba		                XBA
 .011315	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .011319	eb		xba		                XBA
 .01131a	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01131e	a2 bb 06	ldx #$06bb	                LDX #<>TEXT_FAT32___Root_Sector_loaded_in_ram
-.011321	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_Sector_loaded_in_ram
-.011324	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011328	af 37 08 01	lda $010837	                LDA FAT32_Root_Sector_loaded_in_ram+2
-.01132c	eb		xba		                XBA
-.01132d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011331	eb		xba		                XBA
-.011332	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011336	af 35 08 01	lda $010835	                LDA FAT32_Root_Sector_loaded_in_ram
+.01131e	af 2b 08 01	lda $01082b	                LDA FAT32_Sector_loaded_in_ram
+.011322	eb		xba		                XBA
+.011323	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011327	eb		xba		                XBA
+.011328	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01132c	a2 71 06	ldx #$0671	                LDX #<>TEXT_FAT32___Root_Sector_offset
+.01132f	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_Sector_offset
+.011332	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011336	af 31 08 01	lda $010831	                LDA FAT32_Root_Sector_offset+2
 .01133a	eb		xba		                XBA
 .01133b	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .01133f	eb		xba		                XBA
 .011340	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011344	a2 e0 06	ldx #$06e0	                LDX #<>TEXT_FAT32___Root_entry_value
-.011347	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_entry_value
-.01134a	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.01134e	a9 0d 00	lda #$000d	                LDA #$0D
-.011351	22 91 06 39	jsl $390691	                JSL IPUTC
-.011355	a2 00 00	ldx #$0000	                LDX #0
-.011358					PRINT_FAT32_Root_entry_value:
-.011358	bf 39 08 01	lda $010839,x	                LDA @l FAT32_Root_entry_value,x
-.01135c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011360	e8		inx		                INX
-.011361	e0 20 00	cpx #$0020	                CPX #32
-.011364	d0 f2		bne $011358	                BNE PRINT_FAT32_Root_entry_value
-.011366	a9 0d 00	lda #$000d	                LDA #$0D
-.011369	22 91 06 39	jsl $390691	                JSL IPUTC
-.01136d	a2 00 00	ldx #$0000	                LDX #0
-.011370					PRINT_FAT32_Root_entry_value_ASCII:
-.011370	bf 39 08 01	lda $010839,x	                LDA @l FAT32_Root_entry_value,x
-.011374	22 91 06 39	jsl $390691	                JSL IPUTC
-.011378	e8		inx		                INX
-.011379	e0 20 00	cpx #$0020	                CPX #32
-.01137c	d0 f2		bne $011370	                BNE PRINT_FAT32_Root_entry_value_ASCII
-.01137e	a2 05 07	ldx #$0705	                LDX #<>TEXT_FAT32___FAT_Base_Sector
-.011381	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Base_Sector
-.011384	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011388	af 5b 08 01	lda $01085b	                LDA FAT32_FAT_Base_Sector+2
-.01138c	eb		xba		                XBA
-.01138d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011391	eb		xba		                XBA
-.011392	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011396	af 59 08 01	lda $010859	                LDA FAT32_FAT_Base_Sector
-.01139a	eb		xba		                XBA
-.01139b	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01139f	eb		xba		                XBA
-.0113a0	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113a4	a2 2a 07	ldx #$072a	                LDX #<>TEXT_FAT32___FAT_Sector_loaded_in_ram
-.0113a7	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Sector_loaded_in_ram
-.0113aa	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0113ae	af 5f 08 01	lda $01085f	                LDA FAT32_FAT_Sector_loaded_in_ram+2
-.0113b2	eb		xba		                XBA
-.0113b3	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113b7	eb		xba		                XBA
-.0113b8	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113bc	af 5d 08 01	lda $01085d	                LDA FAT32_FAT_Sector_loaded_in_ram
-.0113c0	eb		xba		                XBA
-.0113c1	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113c5	eb		xba		                XBA
-.0113c6	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113ca	a2 4f 07	ldx #$074f	                LDX #<>TEXT_FAT32___FAT_Entry
-.0113cd	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Entry
-.0113d0	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0113d4	af 63 08 01	lda $010863	                LDA FAT32_FAT_Entry+2
-.0113d8	eb		xba		                XBA
-.0113d9	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113dd	eb		xba		                XBA
-.0113de	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113e2	af 61 08 01	lda $010861	                LDA FAT32_FAT_Entry
+.011344	af 2f 08 01	lda $01082f	                LDA FAT32_Root_Sector_offset
+.011348	eb		xba		                XBA
+.011349	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01134d	eb		xba		                XBA
+.01134e	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011352	a2 96 06	ldx #$0696	                LDX #<>TEXT_FAT32___Root_Base_Sector
+.011355	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_Base_Sector
+.011358	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.01135c	af 35 08 01	lda $010835	                LDA FAT32_Root_Base_Sector+2
+.011360	eb		xba		                XBA
+.011361	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011365	eb		xba		                XBA
+.011366	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01136a	af 33 08 01	lda $010833	                LDA FAT32_Root_Base_Sector
+.01136e	eb		xba		                XBA
+.01136f	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011373	eb		xba		                XBA
+.011374	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011378	a2 bb 06	ldx #$06bb	                LDX #<>TEXT_FAT32___Root_Sector_loaded_in_ram
+.01137b	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_Sector_loaded_in_ram
+.01137e	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011382	af 39 08 01	lda $010839	                LDA FAT32_Root_Sector_loaded_in_ram+2
+.011386	eb		xba		                XBA
+.011387	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01138b	eb		xba		                XBA
+.01138c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011390	af 37 08 01	lda $010837	                LDA FAT32_Root_Sector_loaded_in_ram
+.011394	eb		xba		                XBA
+.011395	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011399	eb		xba		                XBA
+.01139a	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01139e	a2 e0 06	ldx #$06e0	                LDX #<>TEXT_FAT32___Root_entry_value
+.0113a1	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Root_entry_value
+.0113a4	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0113a8	a9 0d 00	lda #$000d	                LDA #$0D
+.0113ab	22 91 06 39	jsl $390691	                JSL IPUTC
+.0113af	a2 00 00	ldx #$0000	                LDX #0
+.0113b2					PRINT_FAT32_Root_entry_value:
+.0113b2	bf 3b 08 01	lda $01083b,x	                LDA @l FAT32_Root_entry_value,x
+.0113b6	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0113ba	e8		inx		                INX
+.0113bb	e0 20 00	cpx #$0020	                CPX #32
+.0113be	d0 f2		bne $0113b2	                BNE PRINT_FAT32_Root_entry_value
+.0113c0	a9 0d 00	lda #$000d	                LDA #$0D
+.0113c3	22 91 06 39	jsl $390691	                JSL IPUTC
+.0113c7	a2 00 00	ldx #$0000	                LDX #0
+.0113ca					PRINT_FAT32_Root_entry_value_ASCII:
+.0113ca	bf 3b 08 01	lda $01083b,x	                LDA @l FAT32_Root_entry_value,x
+.0113ce	22 91 06 39	jsl $390691	                JSL IPUTC
+.0113d2	e8		inx		                INX
+.0113d3	e0 20 00	cpx #$0020	                CPX #32
+.0113d6	d0 f2		bne $0113ca	                BNE PRINT_FAT32_Root_entry_value_ASCII
+.0113d8	a2 05 07	ldx #$0705	                LDX #<>TEXT_FAT32___FAT_Base_Sector
+.0113db	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Base_Sector
+.0113de	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0113e2	af 5d 08 01	lda $01085d	                LDA FAT32_FAT_Base_Sector+2
 .0113e6	eb		xba		                XBA
 .0113e7	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .0113eb	eb		xba		                XBA
 .0113ec	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0113f0	a2 74 07	ldx #$0774	                LDX #<>TEXT_FAT32___FAT_Next_Entry
-.0113f3	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Next_Entry
-.0113f6	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0113fa	af 67 08 01	lda $010867	                LDA FAT32_FAT_Next_Entry+2
-.0113fe	eb		xba		                XBA
-.0113ff	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011403	eb		xba		                XBA
-.011404	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011408	af 65 08 01	lda $010865	                LDA FAT32_FAT_Next_Entry
+.0113f0	af 5b 08 01	lda $01085b	                LDA FAT32_FAT_Base_Sector
+.0113f4	eb		xba		                XBA
+.0113f5	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0113f9	eb		xba		                XBA
+.0113fa	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0113fe	a2 2a 07	ldx #$072a	                LDX #<>TEXT_FAT32___FAT_Sector_loaded_in_ram
+.011401	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Sector_loaded_in_ram
+.011404	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011408	af 61 08 01	lda $010861	                LDA FAT32_FAT_Sector_loaded_in_ram+2
 .01140c	eb		xba		                XBA
 .01140d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .011411	eb		xba		                XBA
 .011412	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011416	a2 99 07	ldx #$0799	                LDX #<>TEXT_FAT32___FAT_Linked_Entry
-.011419	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Linked_Entry
-.01141c	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011420	af 6b 08 01	lda $01086b	                LDA FAT32_FAT_Linked_Entry+2
-.011424	eb		xba		                XBA
-.011425	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011429	eb		xba		                XBA
-.01142a	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01142e	af 69 08 01	lda $010869	                LDA FAT32_FAT_Linked_Entry
+.011416	af 5f 08 01	lda $01085f	                LDA FAT32_FAT_Sector_loaded_in_ram
+.01141a	eb		xba		                XBA
+.01141b	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01141f	eb		xba		                XBA
+.011420	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011424	a2 4f 07	ldx #$074f	                LDX #<>TEXT_FAT32___FAT_Entry
+.011427	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Entry
+.01142a	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.01142e	af 65 08 01	lda $010865	                LDA FAT32_FAT_Entry+2
 .011432	eb		xba		                XBA
 .011433	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .011437	eb		xba		                XBA
 .011438	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01143c	a2 be 07	ldx #$07be	                LDX #<>TEXT_FAT32___Data_Base_Sector
-.01143f	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Data_Base_Sector
-.011442	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011446	af 6f 08 01	lda $01086f	                LDA FAT32_Data_Base_Sector+2
-.01144a	eb		xba		                XBA
-.01144b	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01144f	eb		xba		                XBA
-.011450	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011454	af 6d 08 01	lda $01086d	                LDA FAT32_Data_Base_Sector
+.01143c	af 63 08 01	lda $010863	                LDA FAT32_FAT_Entry
+.011440	eb		xba		                XBA
+.011441	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011445	eb		xba		                XBA
+.011446	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01144a	a2 74 07	ldx #$0774	                LDX #<>TEXT_FAT32___FAT_Next_Entry
+.01144d	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Next_Entry
+.011450	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011454	af 69 08 01	lda $010869	                LDA FAT32_FAT_Next_Entry+2
 .011458	eb		xba		                XBA
 .011459	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .01145d	eb		xba		                XBA
 .01145e	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011462	a2 e3 07	ldx #$07e3	                LDX #<>TEXT_FAT32___MBR_Partition_address
-.011465	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___MBR_Partition_address
-.011468	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.01146c	af 73 08 01	lda $010873	                LDA MBR_Partition_address+2
-.011470	eb		xba		                XBA
-.011471	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011475	eb		xba		                XBA
-.011476	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01147a	af 71 08 01	lda $010871	                LDA MBR_Partition_address
+.011462	af 67 08 01	lda $010867	                LDA FAT32_FAT_Next_Entry
+.011466	eb		xba		                XBA
+.011467	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01146b	eb		xba		                XBA
+.01146c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011470	a2 99 07	ldx #$0799	                LDX #<>TEXT_FAT32___FAT_Linked_Entry
+.011473	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___FAT_Linked_Entry
+.011476	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.01147a	af 6d 08 01	lda $01086d	                LDA FAT32_FAT_Linked_Entry+2
 .01147e	eb		xba		                XBA
 .01147f	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .011483	eb		xba		                XBA
 .011484	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011488	a2 08 08	ldx #$0808	                LDX #<>TEXT_FAT32___Curent_File_base_cluster
-.01148b	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Curent_File_base_cluster
-.01148e	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011492	af 77 08 01	lda $010877	                LDA FAT32_Curent_File_base_cluster+2
-.011496	eb		xba		                XBA
-.011497	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01149b	eb		xba		                XBA
-.01149c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114a0	af 75 08 01	lda $010875	                LDA FAT32_Curent_File_base_cluster
+.011488	af 6b 08 01	lda $01086b	                LDA FAT32_FAT_Linked_Entry
+.01148c	eb		xba		                XBA
+.01148d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011491	eb		xba		                XBA
+.011492	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011496	a2 be 07	ldx #$07be	                LDX #<>TEXT_FAT32___Data_Base_Sector
+.011499	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Data_Base_Sector
+.01149c	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0114a0	af 71 08 01	lda $010871	                LDA FAT32_Data_Base_Sector+2
 .0114a4	eb		xba		                XBA
 .0114a5	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .0114a9	eb		xba		                XBA
 .0114aa	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114ae	a2 2d 08	ldx #$082d	                LDX #<>TEXT_FAT32___Curent_File_curent_cluster
-.0114b1	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Curent_File_curent_cluster
-.0114b4	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0114b8	af 7b 08 01	lda $01087b	                LDA FAT32_Curent_File_curent_cluster+2
-.0114bc	eb		xba		                XBA
-.0114bd	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114c1	eb		xba		                XBA
-.0114c2	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114c6	af 79 08 01	lda $010879	                LDA FAT32_Curent_File_curent_cluster
+.0114ae	af 6f 08 01	lda $01086f	                LDA FAT32_Data_Base_Sector
+.0114b2	eb		xba		                XBA
+.0114b3	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0114b7	eb		xba		                XBA
+.0114b8	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0114bc	a2 e3 07	ldx #$07e3	                LDX #<>TEXT_FAT32___MBR_Partition_address
+.0114bf	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___MBR_Partition_address
+.0114c2	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0114c6	af 75 08 01	lda $010875	                LDA MBR_Partition_address+2
 .0114ca	eb		xba		                XBA
 .0114cb	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .0114cf	eb		xba		                XBA
 .0114d0	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114d4	a2 52 08	ldx #$0852	                LDX #<>TEXT_FAT32___Sector_to_read
-.0114d7	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_to_read
-.0114da	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.0114de	af 7f 08 01	lda $01087f	                LDA FAT32_Sector_to_read+2
-.0114e2	eb		xba		                XBA
-.0114e3	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114e7	eb		xba		                XBA
-.0114e8	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114ec	af 7d 08 01	lda $01087d	                LDA FAT32_Sector_to_read
+.0114d4	af 73 08 01	lda $010873	                LDA MBR_Partition_address
+.0114d8	eb		xba		                XBA
+.0114d9	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0114dd	eb		xba		                XBA
+.0114de	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.0114e2	a2 08 08	ldx #$0808	                LDX #<>TEXT_FAT32___Curent_File_base_cluster
+.0114e5	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Curent_File_base_cluster
+.0114e8	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.0114ec	af 79 08 01	lda $010879	                LDA FAT32_Curent_File_base_cluster+2
 .0114f0	eb		xba		                XBA
 .0114f1	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .0114f5	eb		xba		                XBA
 .0114f6	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.0114fa	a2 77 08	ldx #$0877	                LDX #<>TEXT_FAT32___SD_FDD_HDD_Sell
-.0114fd	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___SD_FDD_HDD_Sell
-.011500	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
-.011504	af 81 08 01	lda $010881	                LDA FAT32_SD_FDD_HDD_Sell
-.011508	eb		xba		                XBA
-.011509	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.01150d	eb		xba		                XBA
-.01150e	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.011512	6b		rtl		                RTL
+.0114fa	af 77 08 01	lda $010877	                LDA FAT32_Curent_File_base_cluster
+.0114fe	eb		xba		                XBA
+.0114ff	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011503	eb		xba		                XBA
+.011504	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011508	a2 2d 08	ldx #$082d	                LDX #<>TEXT_FAT32___Curent_File_curent_cluster
+.01150b	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Curent_File_curent_cluster
+.01150e	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011512	af 7d 08 01	lda $01087d	                LDA FAT32_Curent_File_curent_cluster+2
+.011516	eb		xba		                XBA
+.011517	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01151b	eb		xba		                XBA
+.01151c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011520	af 7b 08 01	lda $01087b	                LDA FAT32_Curent_File_curent_cluster
+.011524	eb		xba		                XBA
+.011525	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011529	eb		xba		                XBA
+.01152a	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01152e	a2 52 08	ldx #$0852	                LDX #<>TEXT_FAT32___Sector_to_read
+.011531	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___Sector_to_read
+.011534	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.011538	af 81 08 01	lda $010881	                LDA FAT32_Sector_to_read+2
+.01153c	eb		xba		                XBA
+.01153d	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011541	eb		xba		                XBA
+.011542	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011546	af 7f 08 01	lda $01087f	                LDA FAT32_Sector_to_read
+.01154a	eb		xba		                XBA
+.01154b	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01154f	eb		xba		                XBA
+.011550	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011554	a2 77 08	ldx #$0877	                LDX #<>TEXT_FAT32___SD_FDD_HDD_Sell
+.011557	a9 02 00	lda #$0002	                LDA #`TEXT_FAT32___SD_FDD_HDD_Sell
+.01155a	22 cc 44 38	jsl $3844cc	                JSL IPUTS_ABS       ; print the first line
+.01155e	af 83 08 01	lda $010883	                LDA FAT32_SD_FDD_HDD_Sell
+.011562	eb		xba		                XBA
+.011563	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.011567	eb		xba		                XBA
+.011568	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
+.01156c	6b		rtl		                RTL
 >020425	50 61 72 74 69 74 69 6f		Partition_ofset_text    .text "Partition ofset (in cluster) : ",0
 >02042d	6e 20 6f 66 73 65 74 20 28 69 6e 20 63 6c 75 73
 >02043d	74 65 72 29 20 3a 20 00
@@ -6424,9 +6433,9 @@
 >02056e	0d 46 41 54 33 32 20 4e		TEXT_FAT32___Nb_of_Head                  .text   $0D, "FAT32 Nb of Head                   ",0
 >020576	62 20 6f 66 20 48 65 61 64 20 20 20 20 20 20 20
 >020586	20 20 20 20 20 20 20 20 20 20 20 20 00
->020593	0d 46 41 54 33 32 20 54		TEXT_FAT32___Total_Sector_Count_FAT32    .text   $0D, "FAT32 Total Sector Count FAT32     ",0
->02059b	6f 74 61 6c 20 53 65 63 74 6f 72 20 43 6f 75 6e
->0205ab	74 20 46 41 54 33 32 20 20 20 20 20 00
+>020593	0d 46 41 54 33 32 20 4e		TEXT_FAT32___Nb_Of_Sector_In_Partition   .text   $0D, "FAT32 Nb Of Sector In Partition    ",0
+>02059b	62 20 4f 66 20 53 65 63 74 6f 72 20 49 6e 20 50
+>0205ab	61 72 74 69 74 69 6f 6e 20 20 20 20 00
 >0205b8	0d 46 41 54 33 32 20 42		TEXT_FAT32___Boot_Signature              .text   $0D, "FAT32 Boot Signature               ",0
 >0205c0	6f 6f 74 20 53 69 67 6e 61 74 75 72 65 20 20 20
 >0205d0	20 20 20 20 20 20 20 20 20 20 20 20 00
@@ -6442,9 +6451,9 @@
 >02064c	0d 46 41 54 33 32 20 53		TEXT_FAT32___Sector_loaded_in_ram        .text   $0D, "FAT32 Sector loaded in ram         ",0
 >020654	65 63 74 6f 72 20 6c 6f 61 64 65 64 20 69 6e 20
 >020664	72 61 6d 20 20 20 20 20 20 20 20 20 00
->020671	0d 46 41 54 33 32 20 52		TEXT_FAT32___Root_Fat_Sector_offset      .text   $0D, "FAT32 Root Fat Sector offset       ",0
->020679	6f 6f 74 20 46 61 74 20 53 65 63 74 6f 72 20 6f
->020689	66 66 73 65 74 20 20 20 20 20 20 20 00
+>020671	0d 46 41 54 33 32 20 52		TEXT_FAT32___Root_Sector_offset          .text   $0D, "FAT32 Root Sector offset           ",0
+>020679	6f 6f 74 20 53 65 63 74 6f 72 20 6f 66 66 73 65
+>020689	74 20 20 20 20 20 20 20 20 20 20 20 00
 >020696	0d 46 41 54 33 32 20 52		TEXT_FAT32___Root_Base_Sector            .text   $0D, "FAT32 Root Base Sector             ",0
 >02069e	6f 6f 74 20 42 61 73 65 20 53 65 63 74 6f 72 20
 >0206ae	20 20 20 20 20 20 20 20 20 20 20 20 00
@@ -6487,6 +6496,9 @@
 >020877	0d 46 41 54 33 32 20 53		TEXT_FAT32___SD_FDD_HDD_Sell             .text   $0D, "FAT32 SD_FDD_HDD_Sell              ",0
 >02087f	44 5f 46 44 44 5f 48 44 44 5f 53 65 6c 6c 20 20
 >02088f	20 20 20 20 20 20 20 20 20 20 20 20 00
+>02089c	0d 46 61 74 5f 73 69 7a		TEXT_____Fat_size                        .text   $0D, "Fat_size                           ",0
+>0208a4	65 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20
+>0208b4	20 20 20 20 20 20 20 20 20 20 20 20 00
 
 ;******  Processing file: src\HDD_row_TEXT_HEX.asm
 
@@ -9336,31 +9348,31 @@
 .3904f9	5b		tcd		                TCD
 .3904fa	28		plp		                PLP
 .3904fb	68		pla		                PLA             ; end setdp macro
-.3904fc	22 72 10 01	jsl $011072	                JSL ISD_INIT
+.3904fc	22 be 10 01	jsl $0110be	                JSL ISD_INIT
 .390500	a9 50 00	lda #$0050	                LDA #$50
 .390503	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .390507	a9 01 00	lda #$0001	                LDA FAT32_SD
-.39050a	8f 81 08 01	sta $010881	                STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
+.39050a	8f 83 08 01	sta $010883	                STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
 .39050e	a9 55 00	lda #$0055	                LDA #$55
 .390511	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.390515	22 8e 08 01	jsl $01088e	                JSL FAT32_init
+.390515	22 90 08 01	jsl $010890	                JSL FAT32_init
 .390519	a9 60 00	lda #$0060	                LDA #$60
 .39051c	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
-.390520	22 3d 11 01	jsl $01113d	                JSL FAT32_Print_FAT_STATE
+.390520	22 89 11 01	jsl $011189	                JSL FAT32_Print_FAT_STATE
 .390524	80 2e		bra $390554	                BRA test_end_loop
 .390526	a9 0d 00	lda #$000d	                LDA #$0D
 .390529	22 91 06 39	jsl $390691	                JSL IPUTC
-.39052d	22 08 09 01	jsl $010908	                jsl FAT32_test
+.39052d	22 df 08 01	jsl $0108df	                jsl FAT32_test
 .390531	a9 61 00	lda #$0061	                LDA #$61
 .390534	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .390538	80 1a		bra $390554	                BRA test_end_loop
-.39053a	22 8e 08 01	jsl $01088e	                JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
-.39053e	22 72 09 01	jsl $010972	                JSL FAT32_LS_CMD
+.39053a	22 90 08 01	jsl $010890	                JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
+.39053e	22 49 09 01	jsl $010949	                JSL FAT32_LS_CMD
 .390542	a9 57 00	lda #$0057	                LDA #$57
 .390545	22 e9 44 38	jsl $3844e9	                JSL IPRINT_HEX
 .390549	a9 01 00	lda #$0001	                LDA FAT32_SD
-.39054c	8f 81 08 01	sta $010881	                STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
-.390550	22 ef 0a 01	jsl $010aef	                JSL IFAT32_READ_MBR
+.39054c	8f 83 08 01	sta $010883	                STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
+.390550	22 c6 0a 01	jsl $010ac6	                JSL IFAT32_READ_MBR
 .390554	80 fe		bra $390554	test_end_loop:   BRA test_end_loop
 .390556	e2 20		sep #$20	                SEP #$20        ; set A short
 .390558	c2 10		rep #$10	                REP #$10        ; set X long

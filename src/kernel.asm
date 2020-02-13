@@ -201,6 +201,10 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
                 JSL FAT32_init
                 LDA #$60
                 JSL IPRINT_HEX
+                JSL FAT32_Print_FAT_STATE
+                BRA test_end_loop
+                LDA #$0D
+                JSL IPUTC
                 ;JSL FAT32_LS_CMD
                 ;LDA #$61
                 ;JSL IPRINT_HEX

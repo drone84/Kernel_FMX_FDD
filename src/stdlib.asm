@@ -22,7 +22,7 @@ IPUTS_ABS       PHA
                 setas
                 setxl
                 STA @l LDA_instruction+3
-LDA_instruction LDA @l $FF0000,X      ; read from the string
+LDA_instruction:LDA @l $FF0000,X      ; read from the string
                 CMP #0
                 BEQ iputs_done_ABS
 iputs2_ABS      JSL IPUTC

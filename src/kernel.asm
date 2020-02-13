@@ -195,10 +195,19 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
 
                 LDA FAT32_SD
                 STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
-                LDA #$56
+                LDA #$55
                 JSL IPRINT_HEX
 
-                ;JSL IFAT32_READ_MBR
+                JSL FAT32_init
+                LDA #$60
+                JSL IPRINT_HEX
+                ;JSL FAT32_LS_CMD
+                ;LDA #$61
+                ;JSL IPRINT_HEX
+                jsl FAT32_test
+                LDA #$61
+                JSL IPRINT_HEX
+                BRA test_end_loop
 
                 JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
                 JSL FAT32_LS_CMD
@@ -215,7 +224,7 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
                 ;JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
                 ;JSL FAT32_LS_CMD
                 ;JSL FAT32_test
-test_end_loop   BRA test_end_loop
+test_end_loop:   BRA test_end_loop
                 setas
                 setxl
                 LDA #$9F ; Channel Two - No Atteniation

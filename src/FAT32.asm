@@ -52,6 +52,24 @@ FAT32_init  ; init
               JSL IFAT32_COMPUT_FAT_POS       ; Init only
               JSL IFAT32_COMPUT_DATA_POS      ; Init only
               JSL IFAT32_COMPUT_ROOT_DIR_POS  ; Init only
+
+              LDA #$0D
+              JSL IPUTC
+              LDA FAT32_Root_Base_Sector
+              XBA
+              JSL IPRINT_HEX
+              XBA
+              JSL IPRINT_HEX
+              LDA #$0D
+              JSL IPUTC
+              LDA FAT32_Data_Base_Sector
+              XBA
+              JSL IPRINT_HEX
+              XBA
+              JSL IPRINT_HEX
+              LDA #$0D
+              JSL IPUTC
+
               ; make sure the FAT sector stored in ram (missing befor init) is differant
               ; than the one we are requesting (at least the first tine the code is called)
               LDA #0
@@ -291,8 +309,7 @@ FAT32_Print_File_Name
 ;
 ;
 ;-------------------------------------------------------------------------------
-IFAT32_READ_MBR
-                  setal
+IFAT32_READ_MBR   setal
                   LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
                   PHA
                   LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
@@ -303,33 +320,33 @@ IFAT32_READ_MBR
                   PLX
 
                   LDX #MBR_Partition_Entry
-READ_MBR_Scan
+READ_MBR_Scan:
                   LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8
                   CMP #0
-                  BEQ READ_MBR_Partition_Entry_LSB_Not_Null
+                  BEQ READ_MBR_Partition_Entry_LSB_Null
                   LDY #1
-READ_MBR_Partition_Entry_LSB_Not_Null
+READ_MBR_Partition_Entry_LSB_Null:
                   STA MBR_Partition_address
                   LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8+2
                   CMP #0
-                  BEQ READ_MBR_Partition_Entry_MSB_Not_Null
+                  BEQ READ_MBR_Partition_Entry_MSB_Null
                   LDY #1
-READ_MBR_Partition_Entry_MSB_Not_Null
+READ_MBR_Partition_Entry_MSB_Null:
                   STA MBR_Partition_address+2
 
-                  CPY #1
+                  CPY #1 ; curent MBR entry not nul (sector location)
                   BEQ READ_MBR_Partition_valid_address
                   CPX #$1FE
                   BEQ READ_MBR_End_Scan_no_partition
-                  TXA
+                  TXA ; Conput the next NBR entry position
                   ADC #MBR_Partition_Entry_size
                   TAX
                   BRA READ_MBR_Scan
 
-READ_MBR_Partition_valid_address ; the number in MBR_Partition_address is an ofset in cluster of a Partiton
+READ_MBR_Partition_valid_address: ; the number in MBR_Partition_address is an ofset in cluster of a Partiton
                   LDX #<>Partition_ofset_text
                   LDA #`Partition_ofset_text
-                  JSL IPRINT_ABS       ; print the first line
+                  JSL IPUTS_ABS       ; print the first line
                   LDA #'0'
                   JSL IPUTC
                   LDA #'x'
@@ -344,6 +361,8 @@ READ_MBR_Partition_valid_address ; the number in MBR_Partition_address is an ofs
                   JSL IPRINT_HEX
                   LDA #$0D
                   JSL IPUTC
+                  LDA #1 ; success
+                  BRA READ_MBR_End
                   ;-----------------------------------
                   ;LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
                   ;PHA
@@ -354,82 +373,9 @@ READ_MBR_Partition_valid_address ; the number in MBR_Partition_address is an ofs
                   ;LDA MBR_Partition_address
                   ;JSL IFAT_READ_SECTOR
 
-READ_MBR_End_Scan_no_partition
+READ_MBR_End_Scan_no_partition:
                   LDA #-1
-READ_MBR_End
-                  RTL
-;-------------------------------------------------------------------------------
-;
-;
-;
-;-------------------------------------------------------------------------------
-
-IFAT32_SD_READ_MBR
-                  setal
-                  LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
-                  PHA
-                  LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
-                  PHA
-                  LDA #0 ; read sector 0 (where the MBR sector is stored)
-                  JSL IFAT_READ_SECTOR
-                  PLX
-                  PLX
-
-                  LDX #MBR_Partition_Entry
-READ_SD_MBR_Scan:
-                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8
-                  CMP #0
-                  BEQ READ_SD_MBR_Partition_Entry_LSB_Not_Null
-                  LDY #1
-READ_SD_MBR_Partition_Entry_LSB_Not_Null:
-                  STA MBR_Partition_address
-                  LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8+2
-                  CMP #0
-                  BEQ READ_SD_MBR_Partition_Entry_MSB_Not_Null
-                  LDY #1
-READ_SD_MBR_Partition_Entry_MSB_Not_Null:
-                  STA MBR_Partition_address+2
-
-                  CPY #1
-                  BEQ READ_SD_MBR_Partition_valid_address
-                  CPX #$1FE
-                  BEQ READ_SD_MBR_End_Scan_no_partition
-                  TXA
-                  ADC #MBR_Partition_Entry_size
-                  TAX
-                  BRA READ_SD_MBR_Scan
-
-READ_SD_MBR_Partition_valid_address: ; the number in MBR_Partition_address is an ofset in cluster of a Partiton
-                  LDX #<>Partition_ofset_text
-                  LDA #`Partition_ofset_text
-                  JSL IPRINT_ABS       ; print the first line
-                  LDA #'0'
-                  JSL IPUTC
-                  LDA #'x'
-                  JSL IPUTC
-                  LDA MBR_Partition_address +3
-                  JSL IPRINT_HEX
-                  LDA MBR_Partition_address +2
-                  JSL IPRINT_HEX
-                  LDA MBR_Partition_address +1
-                  JSL IPRINT_HEX
-                  LDA MBR_Partition_address
-                  JSL IPRINT_HEX
-                  LDA #$0D
-                  JSL IPUTC
-                  ;-----------------------------------
-                  ;LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
-                  ;PHA
-                  ;LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
-                  ;PHA
-                  ;LDA MBR_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
-                  ;TAX
-                  ;LDA MBR_Partition_address
-                  ;JSL IFAT_READ_SECTOR
-
-READ_SD_MBR_End_Scan_no_partition
-                  LDA #-1
-READ_SD_MBR_End
+READ_MBR_End:
                   RTL
 ;-------------------------------------------------------------------------------
 ;
@@ -615,8 +561,8 @@ FAT32_DATA_POS_FDD_END_LOOP_FAT_SECTOR_USAGE
                   ADC FAT32_Nb_Of_reserved_Cluster
                   CLC
                   ADC MBR_Partition_address; at this point we have the sector where the Root directory is starting
-                                             ; and because for the floppy disc Cluster = sector we just need to read the sector number
-                                             ; stored in A
+                  CLC
+                  ADC FAT32_Root_Fat_Sector_offset ; ad the number of root directory sector
                   STA FAT32_Data_Base_Sector
                   RTL
 ;-------------------------------------------------------------------------------
@@ -629,21 +575,17 @@ IFAT32_COMPUT_ROOT_DIR_POS
                   LDA FAT32_Nb_Of_FAT;
                   TAX
                   LDA FAT32_Sector_per_Fat
-FAT32_ADD_ONE_FAT       DEC X
+FAT32_ADD_ONE_FAT:DEC X
                   CPX #0
                   BEQ FAT32_FDD_END_LOOP_FAT_SECTOR_USAGE
                   CLC
                   ADC FAT32_Sector_per_Fat
                   BRA FAT32_ADD_ONE_FAT
-FAT32_FDD_END_LOOP_FAT_SECTOR_USAGE
+FAT32_FDD_END_LOOP_FAT_SECTOR_USAGE:
                   CLC
                   ADC FAT32_Nb_Of_reserved_Cluster
                   CLC
-                  ADC FAT32_Root_Fat_Sector_offset
-                  CLC
                   ADC MBR_Partition_address; at this point we have the sector where the Root directory is starting
-                                             ; and because for the floppy disc Cluster = sector we just need to read the sector number
-                                             ; stored in A
                   STA FAT32_Root_Base_Sector
                   RTL
 ;-------------------------------------------------------------------------------
@@ -1245,6 +1187,10 @@ ISD_READ        ;PHP
                 ;TAY
                 ;PLA ; LDA 0,S
                 ;PHA
+                XBA
+                JSL IPRINT_HEX ; print the sector
+                XBA
+                JSL IPRINT_HEX ; print the sector
 
                 ASL ;get the 512 byte ofset from the sector index
                 setas
@@ -1273,6 +1219,8 @@ ISD_READ_TEST_SD_INIT_FLAG:
                 LDA SDC_TRANS_ERROR_REG ; read the error status
 
                 PHA
+                LDA #' '
+                JSL IPUTC
                 LDA #'E'
                 JSL IPUTC
                 PLA

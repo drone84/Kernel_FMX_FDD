@@ -20,7 +20,7 @@ FAT32_Volume_Label              .fill 11,0 ;0xB
 FAT32_File_System_Type          .word 0
 FAT32_Sector_loaded_in_ram      .dword 0; updated by any function readding Sector from FDD like : IFAT32_READ_BOOT_SECTOR / IFAT32_COMPUT_ROOT_DIR_POS
 
-FAT32_Root_Sector_offset    .dword 0; hold the ofset in cluster of the first root dirrectory in the fat
+FAT32_Root_Sector_offset        .dword 0; hold the ofset in cluster of the first root dirrectory in the fat
 FAT32_Root_Base_Sector          .dword 0; hold the first sector containing the Root directory data
 FAT32_Root_Sector_loaded_in_ram .dword 0  ; store the actual Folder sector loades in ram
 FAT32_Root_entry_value          .fill 32,0 ; store the 32 byte of root entry
@@ -35,7 +35,8 @@ FAT32_Data_Base_Sector          .dword 0  ; contain the sector index of the firs
 MBR_Partition_address           .dword 0
 
 FAT32_Curent_File_base_cluster  .dword 0 ; Hold the first cluster from the FAT perspective => real cluster  = FAT32_Curent_File_base_cluster + FAT32_Data_Base_Sector
-FAT32_Curent_File_curent_cluster  .dword 0
+FAT32_Curent_File_curent_cluster .dword 0
+FAT32_Temp_32_bite              .dword 0
 
 FAT32_Sector_to_read            .dword 0
 FAT32_SD_FDD_HDD_Sell           .word 0
@@ -62,11 +63,9 @@ FAT32_init  ; init
               STA FAT32_Sector_loaded_in_ram+2
               STA FAT32_Root_Sector_loaded_in_ram+2
               STA FAT32_FAT_Sector_loaded_in_ram+2
-
+              ;LDA #0 already at 0
               JSL IFAT32_GET_ROOT_ENTRY
 
-              JSL FAT32_Print_FAT_STATE
-      fgsfgsfgsfgs        BRA fgsfgsfgsfgs
               LDA #5
               STA FAT32_FAT_Entry
               LDA #0
@@ -125,12 +124,15 @@ FAT32_Print_Cluster_Byte
 ; display the file name of the 32 first root entry
 ;
 ;-------------------------------------------------------------------------------
-FAT32_LS_CMD   LDX #0 ; start by readding the first folder entry
+FAT32_LS_CMD      LDX #0 ; start by readding the first folder entry
 FAT32_LS_CMD__Read_Next_Folder_Entry
                   TXA
                   CMP #32
                   BEQ FAT32_LS_CMD__EXIT
                   JSL IFAT32_GET_ROOT_ENTRY
+                  JSL FAT32_Print_File_Name
+                  LDA #$0D
+                  JSL IPUTC
                   INC X
                   LDA FAT32_Root_entry_value
                   AND #$00FF
@@ -300,6 +302,7 @@ IFAT32_READ_MBR   setal
                   LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   PHA
                   LDA #0 ; read sector 0 (where the MBR sector is stored)
+                  LDX #0
                   JSL IFAT_READ_SECTOR
                   PLX
                   PLX
@@ -683,13 +686,14 @@ IFAT32_GET_ROOT_ENTRY
                   PHX
                   PHA ; Save the root entry index we want to read
                   LDX #0 ; compute in witch sector the desired root entry is, 16 entry per sector so we just need to divid the sector size by 16
-FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX
+FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX:
                   LSR
                   INC X
                   CPX #4 ; divide by 16
                   BNE FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX
+                  ;-------------------------------------------------------------
                   CMP #0
-                  BEQ IFAT32_GET_ROOT_ENTRY__Load_first_sector
+                  BEQ IFAT32_GET_ROOT_ENTRY__Load_first_root_sector
                   ; the entry is bigger than 16, so we need to search for the entry cluster linked to the folder
                   STA FAT32_FAT_Linked_Entry
                   LDA #0
@@ -701,25 +705,44 @@ FAT32_KEEP_SHIFT_ROOT_ENTRY_INDEX
                   JSL IFAT32_READ_LIKED_FAT_ENTRY
                   CMP #0
                   BMI IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED
-
-IFAT32_GET_ROOT_ENTRY__Load_first_sector
-                  CLC ; reset the carry flag potencialy set by CPX
-                  ADC FAT32_Root_Base_Sector ; add the relative sector position of the root entry to the start root entry position shoud be 19 (0 based index)
+IFAT32_GET_ROOT_ENTRY__Load_first_root_sector:
+                  ;------ comput the real sector ofset ---------
+                  ; first operand
+                  LDA FAT32_Temp_32_bite ;
+                  STA ADDER_A
+                  LDA FAT32_Temp_32_bite+2
+                  STA ADDER_A+2
+                  ; second operand
+                  LDA FAT32_Root_Base_Sector ; 32 byte number
+                  STA ADDER_B
+                  LDA FAT32_Root_Base_Sector+2
+                  STA ADDER_B+2
+                  ;---------------------------------------
                   ; test if the sector is alreaddy loaddes in RAM
+                  LDA ADDER_R
                   CMP FAT32_Root_Sector_loaded_in_ram
+                  BNE IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
+                  LDA ADDER_R+2
+                  CMP FAT32_Root_Sector_loaded_in_ram+2
+                  BNE IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
                   BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
-                  STA FAT32_Root_Sector_loaded_in_ram ; save the new sector loaded
+IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR:
+                  STA FAT32_Root_Sector_loaded_in_ram+2 ; save the new sector to load
+                  LDA ADDER_R
+                  STA FAT32_Root_Sector_loaded_in_ram
                   LDA #`FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
                   PHA
                   LDA #<>FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   PHA
-                  LDA FAT32_Root_Sector_loaded_in_ram ; Get the ROOT directory sector saved rearlyer
+                  LDA FAT32_Root_Sector_loaded_in_ram+2 ; Get the ROOT directory sector to read
+                  TAX
+                  LDA FAT32_Root_Sector_loaded_in_ram
                   JSL IFAT_READ_SECTOR
                   PLX
                   PLX
-FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
+FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM;
                   ; get the root entry now we have the right sector loaded in RAM
-                  PLA ; GET the root entry FDD_INDEX
+                  PLA ; GET the root entry
                   ;PHA
                   AND #$0F ; get only the 4 first byte to get the 16 value ofset in the root entry sector loades in ram (16 entry per sector)
                   ASL
@@ -733,7 +756,7 @@ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
                   LDA #<>FAT32_Root_entry_value
                   TAY
                   LDA #31
-                  MVN `FAT32_Root_entry_value, `FAT32_FOLDER_ADDRESS_BUFFER_512
+                  MVN `FAT32_FOLDER_ADDRESS_BUFFER_512, `FAT32_Root_entry_value
                   BRA IFAT32_GET_ROOT_ENTRY___EXIT_OK
 IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED
                   PLX
@@ -761,6 +784,7 @@ FAT32_IFAT_GET_FAT_ENTRY
                   LDA FAT32_FAT_Entry+2
                   CMP #0
                   BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER ; the FAT entry is definitly not in the first FAT cluster
+                  STA FAT32_FAT_Next_Entry+2
                   LDA FAT32_FAT_Entry
                   LSR A
                   LSR A
@@ -803,24 +827,43 @@ FAT32_FAT_ENTRY_FIND_THE_CLUSTER
                   ORA FAT32_FAT_Next_Entry
                   STA FAT32_FAT_Next_Entry ; Now contain the 32 bit FAT Cluster to load
 FAT32_ENTRY_SECTOR_LOCATION_FIND
-                  ; need to modify thre code to use 32 byte number
-                  LDA FAT32_FAT_Next_Entry
-                  CLC
-                  ADC FAT32_FAT_Base_Sector
+                  ;------ comput the real sector ofset ---------
+                  ; first operand
+                  LDA FAT32_FAT_Next_Entry ;
+                  STA ADDER_A
+                  LDA FAT32_FAT_Next_Entry+2
+                  STA ADDER_A+2
+                  ; second operand
+                  LDA FAT32_FAT_Base_Sector ; 32 byte number
+                  STA ADDER_B
+                  LDA FAT32_FAT_Base_Sector+2
+                  STA ADDER_B+2
+                  ;---------------------------------------
+                  ; test if the sector is alreaddy loaddes in RAM
+                  LDA ADDER_R
                   CMP FAT32_FAT_Sector_loaded_in_ram
-                  BEQ FAT32_COMPUTED_OFSET_IN_CLUSTER ; dont need to load the fat sector because it's alreaddy loaded
-                  STA FAT32_FAT_Sector_loaded_in_ram  ; update the cluster value
-                  ; comput the address where to read the data from
+                  BNE FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
+                  LDA ADDER_R+2
+                  CMP FAT32_Root_Sector_loaded_in_ram+2
+                  BNE FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
+                  BEQ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM
+                  FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR:
+                  STA FAT32_FAT_Sector_loaded_in_ram+2 ; save the new sector to load
+                  LDA ADDER_R
+                  STA FAT32_FAT_Sector_loaded_in_ram
+
                   LDA #`FAT32_FAT_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
                   PHA
                   LDA #<>FAT32_FAT_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   PHA
-                  LDA FAT32_FAT_Sector_loaded_in_ram ; read the ROOT directory sector saved at the begining of the function
+                  LDA FAT32_FAT_Sector_loaded_in_ram+2 ; read the ROOT directory sector saved at the begining of the function
+                  TAX
+                  LDA FAT32_FAT_Sector_loaded_in_ram
                   JSL IFAT_READ_SECTOR
                   PLX
                   PLX
                   ; from here the right FAT sector is loades in ram
-FAT32_COMPUTED_OFSET_IN_CLUSTER
+FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM:
                   LDA FAT32_FAT_Entry
                   AND #$0F ; get only the 7 first byte to get the ofset in the curent FAT cluster loades
                   ASL
@@ -834,11 +877,7 @@ FAT32_COMPUTED_OFSET_IN_CLUSTER
                   LDA #<>FAT32_FAT_Next_Entry
                   TAY
                   LDA #3 ; read 4 byte
-                  MVN `FAT32_FAT_Next_Entry,`FAT32_FAT_ADDRESS_BUFFER_512
-                  LDA FAT32_FAT_Next_Entry    ; FOR DEBUG
-                  LDA FAT32_FAT_Next_Entry+2  ; FOR DEBUG
-                  LDA FAT32_FAT_Next_Entry    ; FOR DEBUG
-                  LDA FAT32_FAT_Next_Entry+2  ; FOR DEBUG
+                  MVN `FAT32_FAT_ADDRESS_BUFFER_512,`FAT32_FAT_Next_Entry
                   PLY
                   PLX
                   PLA
@@ -959,6 +998,7 @@ FAT32_ILOAD_FILE_Read_next_sector; read sector function to call there
                   PHA
                   LDA FAT32_FAT_Next_Entry ; sector to read
                   ADC #1+9+9+14 ; skip the reserved sector(MBR?) ,  the 2 fat and the root sector that will need to be computed  acording to the fat position if several partition are in the same hardrive, it for now hardcoded as one partition
+                  LDX #0
                   JSL IFAT_READ_SECTOR
                   PLX
                   PLX
@@ -1179,13 +1219,7 @@ ISD_INIT_TEST_SD_INIT_FLAG:
 
 ; sector index :  A
 ISD_READ        ;PHP
-                ;setaxl
-                ;PHA
-                ;LDA 8,S
-                ;TAY
-                ;LDA 6,S
-                ;TAY
-                ;PLA ; LDA 0,S
+                setaxl
                 ;PHA
                 XBA
                 JSL IPRINT_HEX ; print the sector
@@ -1197,7 +1231,8 @@ ISD_READ        ;PHP
                 STA SDC_SD_ADDR_15_8_REG
                 XBA ; get the other part of the 16 byte A register
                 STA SDC_SD_ADDR_23_16_REG
-
+                TXA
+                STA SDC_SD_ADDR_31_24_REG
                 LDA #0
                 STA SDC_SD_ADDR_7_0_REG
                 STA SDC_SD_ADDR_31_24_REG
@@ -1244,10 +1279,31 @@ ISD_READ_GET_BYTE_COUNT:
                 LDA #$0D
                 JSL IPUTC
 
+
+                ;LDA #$0D
+                ;JSL IPUTC
+                setas
+                LDA 9,S
+                STA @l ISD_READ_+ 3
+                ;JSL IPRINT_HEX ; print the sector
+                LDA 8,S
+                STA @l ISD_READ_+ 2
+                ;JSL IPRINT_HEX ; print the sector
+                LDA 7,S
+                STA @l ISD_READ_+ 1
+                ;JSL IPRINT_HEX ; print the sector
+                setal
+                ;LDA #$0D
+                ;JSL IPUTC
+                ;LDA #$0D
+                ;JSL IPUTC
+
+
+
                 LDX #0
 ISD_READ__READ_LOOP_BYTE:
                 LDA SDC_RX_FIFO_DATA_REG
-                STA @l FAT32_DATA_ADDRESS_BUFFER_512,x
+ISD_READ_       STA @l FAT32_DATA_ADDRESS_BUFFER_512,x
                 JSL IPRINT_HEX
                 INX
                 CPX #$200

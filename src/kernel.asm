@@ -188,37 +188,47 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
                 ;LDA #$57
                 ;JSL IPRINT_HEX
                 ;JSL FOENIX_SD_INIT_READ
-                JSL ISD_INIT
 
-                LDA #$50
-                JSL IPRINT_HEX
-
+                ;-------------------------------
                 LDA FAT32_SD
                 STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
-                LDA #$55
-                JSL IPRINT_HEX
-
+                ;-------------------------------
+                JSL ISD_INIT
+                ;-------------------------------
+LDA #$50
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+                ;-------------------------------
                 JSL FAT32_init
-                LDA #$60
-                JSL IPRINT_HEX
-                JSL FAT32_Print_FAT_STATE
+                ;-------------------------------
+LDA #$60
+JSL IPRINT_HEX
+;JSL FAT32_Print_FAT_STATE
+LDA #$0D
+JSL IPUTC
+                ;-------------------------------
                 LDA #0
-                JSL FAT32_LS_CMD
-                LDA #$61
-                JSL IPRINT_HEX
-                BRA test_end_loop
-                LDA #$0D
-                JSL IPUTC
-
-                ;LDA #$61
-                ;JSL IPRINT_HEX
+                JSL FAT32_DIR_CMD
+                ;-------------------------------
+LDA #$61
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+                ;-------------------------------
                 jsl FAT32_test
-                LDA #$61
-                JSL IPRINT_HEX
+                ;-------------------------------
+LDA #$62
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+LDA #$0D
+JSL IPUTC
+
                 BRA test_end_loop
 
                 JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
-                JSL FAT32_LS_CMD
+                JSL FAT32_DIR_CMD
 
 
 

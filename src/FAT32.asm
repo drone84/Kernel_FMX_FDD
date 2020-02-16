@@ -150,7 +150,7 @@ FAT32_DIR_CMD__Read_Next_Folder_Entry:
                   ;;JSL FAT32_PRINT_Root_entry_value_HEX
                   INC X
                   LDA FAT32_Curent_Folder_entry_value +11
-                  AND #$000F
+                  AND #$00FF
                   CMP #$0F ; test if it's a long name entry
                   BEQ FAT32_DIR_CMD__Read_Next_Folder_Entry
                   AND #$10
@@ -162,7 +162,7 @@ FAT32_DIR_CMD__Read_Next_Folder_Entry:
                   BEQ FAT32_DIR_CMD__Read_Next_Folder_Entry
                   CMP #$00 ; test if we reached the last entry in the folder
                   BEQ FAT32_DIR_CMD__EXIT
-                  LDA #$5D                  ; Set the default text color to light gray on dark gray
+                  LDA #$2D                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
                   JSL FAT32_Print_File_Name
                   LDA #$ED                  ; Set the default text color to light gray on dark gray
@@ -171,7 +171,7 @@ FAT32_DIR_CMD__Read_Next_Folder_Entry:
 
 FAT32_DIR_CMD__print_folder:
                   setas
-                  LDA #$4D                  ; Set the default text color to light gray on dark gray
+                  LDA #$8D                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
                   setal
                   JSL FAT32_Print_Folder_Name
@@ -638,6 +638,7 @@ IFAT32_READ_LINKED_FAT_ENTRY
                   PHX
 IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT:
                   JSL FAT32_IFAT_GET_FAT_ENTRY
+.comment
 ;JSL FAT32_Print_FAT_STATE
 ;----- debug -----
 PHX
@@ -670,87 +671,33 @@ PLX
 ;----- debug -----
 PHX
 PHA
-BRA TEST_TEXT_798
-text_798 .text "Linked fat entry         ",0
-TEST_TEXT_798:
-LDX #<>text_798
-LDA #`text_798
+LDX #<>TEXT_FAT32___FAT_Entry
+LDA #`TEXT_FAT32___FAT_Entry
 JSL IPUTS_ABS       ; print the first line
-LDA #$5D                  ; Set the default text color to light gray on dark gray
+LDA #$BD
 JSL SET_COLOUR
-LDA FAT32_FAT_Linked_Entry+2
+LDA FAT32_FAT_Entry+2
 XBA
 JSL IPRINT_HEX
 XBA
 JSL IPRINT_HEX
-LDA FAT32_FAT_Linked_Entry
+LDA FAT32_FAT_Entry
 XBA
 JSL IPRINT_HEX
 XBA
 JSL IPRINT_HEX
 LDA #$ED                  ; Set the default text color to light gray on dark gray
 JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_777
-text_777 .text "Next fat entry           ",0
-TEST_TEXT_777:
-LDX #<>text_777
-LDA #`text_777
-JSL IPUTS_ABS       ; print the first line
-LDA #$5D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_FAT_Next_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Next_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
 
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
+.endc
                   ;-------------------------------------------------------------
                   ; test the fat entry for reserved or bad sector
                   JSL FAT32_Test_Fat_Entry_Validity
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_858
-text_858 .text "fat entry Valisity           ",0
-TEST_TEXT_858:
-LDX #<>text_858
-LDA #`text_858
-JSL IPUTS_ABS       ; print the first line
-LDA #$5D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-PLA
-PHA
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   CMP #0
                   BEQ IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID
                   BRL IFAT32_READ_LINKED_FAT_ENTRY___EXIT
@@ -760,34 +707,6 @@ PLX
                   ; linked counter  to see if we need to look at the next fat entry
 IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID:
                   JSL IFAT32_DEC_FAT_Linked_Entry
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_893
-text_893 .text "New Linked fat entry     ",0
-TEST_TEXT_893:
-LDX #<>text_893
-LDA #`text_893
-JSL IPUTS_ABS       ; print the first line
-LDA #$5D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_FAT_Linked_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Linked_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   LDA FAT32_FAT_Linked_Entry
                   CMP #0
                   BEQ IFAT32_READ_LINKED_FAT_ENTRY___TEST_HIGH_PART
@@ -855,31 +774,6 @@ IFAT32_INC_FAT_Entry
 IFAT32_GET_ROOT_ENTRY
                   setaxl
                   PHA
-
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_Folder_entry_index
-test_text .text "Folder entry index                  ",0
-TEST_TEXT_Folder_entry_index:
-LDX #<>test_text
-LDA #`test_text
-JSL IPUTS_ABS       ; print the first line
-LDA #$4D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-PLA
-PHA
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   ; Set the curent folder cluster index to the ROOT FOLDER sector
                   ; ofset to point to the root directory ofset in the fat
                   ; I need to find the exact way to get this ofset
@@ -901,62 +795,7 @@ IFAT32_GET_FOLDER_ENTRY__16_DIV:
                   CPX #4 ; divide by 16
                   BNE IFAT32_GET_FOLDER_ENTRY__16_DIV
                   CMP #0
-                  BEQ IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR_1 ; the entry is in the first folder cluster
-                  BRA next_873
-IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR_1 BRL IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR
-next_873:
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_876
-text_876 .text "Folder entry sector ofset           ",0
-TEST_TEXT_876:
-LDX #<>text_876
-LDA #`text_876
-JSL IPUTS_ABS       ; print the first line
-LDA #$5D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-PLA
-PHA
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_908
-text_908 .text "Base sector index                   ",0
-TEST_TEXT_908:
-LDX #<>text_908
-LDA #`text_908
-JSL IPUTS_ABS       ; print the first line
-LDA #$6D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_Curent_Folder_base_cluster+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_Curent_Folder_base_cluster
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
+                  BEQ IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR ; the entry is in the first folder cluster
                   ;-------------------------------------------------------------
                   ; the entry is bigger than 16, so we need to search for the entry cluster linked to the folder
                   STA FAT32_FAT_Linked_Entry ; store the number of sector from the base sector we need to read
@@ -967,35 +806,6 @@ PLX
                   LDA FAT32_Curent_Folder_base_cluster+2; FAT32_Root_Base_Sector +2
                   STA FAT32_FAT_Entry + 2
                   JSL IFAT32_READ_LINKED_FAT_ENTRY
-
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_919
-text_919 .text "New sector index                    ",0
-TEST_TEXT_919:
-LDX #<>text_919
-LDA #`text_919
-JSL IPUTS_ABS       ; print the first line
-LDA #$7D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_FAT_Next_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Next_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   ;-------------------- Test for fat validity ------------------
                   LDA FAT32_FAT_Next_Entry
                   CMP #0
@@ -1046,10 +856,9 @@ IFAT32_GET_ROOT_ENTRY__LOAD_SECTOR:
                   LDA ADDER_R+2
                   CMP FAT32_Curent_Folder_Sector_loaded_in_ram+2
                   BNE IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
-                  BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM_1
+                  BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
 
 BRA IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_NEXT
-FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM_1: BRL FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
 IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED: BRL IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_1
 IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_NEXT
 
@@ -1065,36 +874,6 @@ IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR:
                   LDA FAT32_Curent_Folder_Sector_loaded_in_ram+2 ; Get the ROOT directory sector to read
                   TAX
                   LDA FAT32_Curent_Folder_Sector_loaded_in_ram
-
-;----- debug -----
-PHX
-PHA
-LDX #<>TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
-LDA #`TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
-JSL IPUTS_ABS       ; print the first line
-LDA #$2D                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_Curent_Folder_Sector_loaded_in_ram+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_Curent_Folder_Sector_loaded_in_ram
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$0D
-JSL IPUTC
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #'a'
-JSL IPUTC
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   JSL IFAT_READ_SECTOR
                   PLA
                   PLA
@@ -1137,32 +916,6 @@ FAT32_IFAT_GET_FAT_ENTRY
                   PHA
                   PHX
                   PHY
-;----- debug -----
-PHX
-PHA
-LDX #<>TEXT_FAT32___FAT_Entry
-LDA #`TEXT_FAT32___FAT_Entry
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD
-JSL SET_COLOUR
-LDA FAT32_FAT_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   ; find in witch sector the fat entry is suposed to be
                   ;------- Test id the FAT entry is in the first cluster -------
                   LDA FAT32_FAT_Entry+2
@@ -1224,34 +977,6 @@ FAT32_FAT_ENTRY_FIND_THE_CLUSTER_16_BYTE_NUMBER
                   ORA FAT32_FAT_Next_Entry
                   STA FAT32_FAT_Next_Entry ; Now contain the 32 bit FAT Cluster to load
 FAT32_ENTRY_SECTOR_LOCATION_FIND:
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_1250
-text_1250 .text "Sector to get the fat block        ",0
-TEST_TEXT_1250:
-LDX #<>text_1250
-LDA #`text_1250
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_FAT_Next_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Next_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   ;------ comput the real sector ofset ---------
                   ; first operand
                   LDA FAT32_FAT_Next_Entry ;
@@ -1271,39 +996,8 @@ PLX
                   LDA ADDER_R+2
                   CMP FAT32_Curent_Folder_Sector_loaded_in_ram+2
                   BNE FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
-                  BEQ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM_debug
-BRA FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
-FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM_debug BRL FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM
-
+                  BEQ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM
 FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR:
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_1280
-text_1280 .text "Sector to get the fat block ABS    ",0
-TEST_TEXT_1280:
-LDX #<>text_1280
-LDA #`text_1280
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA ADDER_R+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA ADDER_R
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   LDA ADDER_R+2
                   STA FAT32_FAT_Sector_loaded_in_ram+2 ; save the new sector to load
                   LDA ADDER_R
@@ -1334,35 +1028,6 @@ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM:
                   TAY
                   LDA #3 ; read 4 byte
                   MVN `FAT32_FAT_ADDRESS_BUFFER_512,`FAT32_FAT_Next_Entry
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_1341
-text_1341 .text "New fat entry read                 ",0
-
-TEST_TEXT_1341:
-LDX #<>text_1341
-LDA #`text_1341
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_FAT_Next_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Next_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
                   PLY
                   PLX
                   PLA

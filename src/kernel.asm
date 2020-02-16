@@ -188,7 +188,6 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
                 ;LDA #$57
                 ;JSL IPRINT_HEX
                 ;JSL FOENIX_SD_INIT_READ
-
                 ;-------------------------------
                 LDA FAT32_SD
                 STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
@@ -216,7 +215,7 @@ JSL IPRINT_HEX
 LDA #$0D
 JSL IPUTC
                 ;-------------------------------
-                jsl FAT32_test
+                ;jsl FAT32_test
                 ;-------------------------------
 LDA #$62
 JSL IPRINT_HEX
@@ -224,6 +223,13 @@ LDA #$0D
 JSL IPUTC
 LDA #$0D
 JSL IPUTC
+                ;BRA TEST_TEXT_Folder_entry_index
+                ;test_text .text "Folder entry index                  ",0
+                ;TEST_TEXT_Folder_entry_index:
+                ;LDX #<>test_text
+                ;LDA #`test_text
+                ;JSL IPUTS_ABS       ; print the first line
+
 
                 BRA test_end_loop
 

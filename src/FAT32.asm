@@ -32,7 +32,7 @@ FAT32_FAT_Next_Entry            .dword 0  ; store the next 32 bit FAT entry asso
 FAT32_FAT_Linked_Entry          .dword 0
 
 FAT32_Data_Base_Sector          .dword 0  ; contain the sector index of the first data in the FAT volume (that include the reserved cluster after the fat) => used to convert from cluster count to fat index
-MBR_Partition_address           .dword 0 ; ofset of the curent FAT volume used
+FAT_Partition_address           .dword 0 ; ofset of the curent FAT volume used
 
 FAT32_Curent_Folder_base_cluster   .dword 0 ; Hold the first cluster from the FAT perspective => real cluster  = FAT32_Curent_Folder_base_cluster + FAT32_Data_Base_Sector
 FAT32_Curent_Folder_curent_cluster .dword 0
@@ -44,7 +44,8 @@ FAT32_Temp_32_bite              .dword 0
 FAT32_Sector_to_read            .dword 0
 FAT32_SD_FDD_HDD_Sell           .word 0
 ;file_to_load_f32    .text "SDFGVGH TXT"
-file_to_load_f32    .text "TEXT_T~1TXT"
+;file_to_load_f32    .text "TEXT_T~1TXT",0
+file_to_load_f32    .text "AMIGA   TXT",0
 FAT32_counter_32              .dword 0
 
 debug_stop                      .word 0
@@ -94,39 +95,34 @@ FAT32_test
               ;PHA
               JSL FAT32_Open_File
               CMP #1
-              BNE FAT32_test__Faill_To_Find_file
+              BNE FAT32_TEST__Faill_To_Find_file
               JSL FAT32_Read_File
               JSL FAT32_Print_Cluster
-FAT32_test__Faill_To_Find_file
-              ;-------------------------
-              RTL
-;-------------------------------------------------------------------------------
-FAT32_Print_Cluster
-              LDA #$0D
-              JSL IPUTC
-              LDX #0
-FAT32_Print_Cluster_line
-              LDY #0
-FAT32_Print_Cluster_Byte
-              LDA FAT32_DATA_ADDRESS_BUFFER_512,X
-              JSL IPRINT_HEX
-              LDA #$20
-              JSL IPUTC
-              INY
-              CPY #16
-              BNE FAT32_Print_Cluster_Byte
-              LDA #$0D
-              JSL IPUTC
-              INX
-              CPX #512
-              BNE FAT32_Print_Cluster_line
-              RTL
-
-Wait_loop:
               PHX
-              LDX #1000
-              JSL ILOOP_MS
+              PHA
+              LDX #<>TEXT__OPEN_FILE_SUCCESS
+              LDA #`TEXT__OPEN_FILE_SUCCESS
+              JSL IPRINT_ABS
+              LDX #<>file_to_load_f32
+              LDA #`file_to_load_f32
+              JSL IPRINT_ABS
+              PLA
               PLX
+              BRA FAT32_TEST_END
+
+FAT32_TEST__Faill_To_Find_file:
+              PHX
+              PHA
+              LDX #<>TEXT__CANT_FIND_THE_FILE
+              LDA #`TEXT__CANT_FIND_THE_FILE
+              JSL IPRINT_ABS
+              LDX #<>file_to_load_f32
+              LDA #`file_to_load_f32
+              JSL IPRINT_ABS
+              PLA
+              PLX
+FAT32_TEST_END:
+              ;-------------------------
               RTL
 ;-------------------------------------------------------------------------------
 ;
@@ -148,12 +144,13 @@ PLX
                   LDX #0 ; start by readding the first folder entry
 FAT32_DIR_CMD__Read_Next_Folder_Entry:
                   TXA
-                  CPX #$20
+                  CPX #32+200
                   BEQ FAT32_DIR_CMD__EXIT
                   JSL IFAT32_GET_ROOT_ENTRY
+                  ;;JSL FAT32_PRINT_Root_entry_value_HEX
                   INC X
                   LDA FAT32_Curent_Folder_entry_value +11
-                  AND #$00FF
+                  AND #$000F
                   CMP #$0F ; test if it's a long name entry
                   BEQ FAT32_DIR_CMD__Read_Next_Folder_Entry
                   AND #$10
@@ -163,19 +160,23 @@ FAT32_DIR_CMD__Read_Next_Folder_Entry:
                   AND #$00FF
                   CMP #$E5 ; test if the entry is deleted
                   BEQ FAT32_DIR_CMD__Read_Next_Folder_Entry
+                  CMP #$00 ; test if we reached the last entry in the folder
+                  BEQ FAT32_DIR_CMD__EXIT
                   LDA #$5D                  ; Set the default text color to light gray on dark gray
-                  STA CURCOLOR
+                  JSL SET_COLOUR
                   JSL FAT32_Print_File_Name
                   LDA #$ED                  ; Set the default text color to light gray on dark gray
-                  STA CURCOLOR
+                  JSL SET_COLOUR
                   BRA FAT32_DIR_CMD__Read_Next_Folder_Entry
 
 FAT32_DIR_CMD__print_folder:
+                  setas
                   LDA #$4D                  ; Set the default text color to light gray on dark gray
-                  STA CURCOLOR
+                  JSL SET_COLOUR
+                  setal
                   JSL FAT32_Print_Folder_Name
                   LDA #$ED                  ; Set the default text color to light gray on dark gray
-                  STA CURCOLOR
+                  JSL SET_COLOUR
                   BRA FAT32_DIR_CMD__Read_Next_Folder_Entry
 FAT32_DIR_CMD__EXIT:
 ;----- debug ------
@@ -200,20 +201,23 @@ PLX
 FAT32_Open_File   LDX #0 ; start by readding the first folder entry
 FAT32_Open_File_Read_Next_Folder_Entry
                   TXA
-                  CMP #32
+                  CMP #200 ;#65534 ;#32
                   BEQ FAT32_Open_File__EXIT
                   JSL IFAT32_GET_ROOT_ENTRY
                   INC X
                   LDA FAT32_Curent_Folder_entry_value +11
-                  AND #$00FF
+                  AND #$000F
                   CMP #$0F ; test if it's a long name entry
                   BEQ FAT32_Open_File_Read_Next_Folder_Entry
-                  CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
+                  AND #$10
+                  CMP #$10 ;CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
                   BEQ FAT32_Open_File_Read_Next_Folder_Entry
                   LDA FAT32_Curent_Folder_entry_value
                   AND #$00FF
                   CMP #$E5 ; test if the entry is deleted
                   BEQ FAT32_Open_File_Read_Next_Folder_Entry
+                  CMP #$00 ; test if we reached the last entry in the folder
+                  BEQ FAT32_Open_File__EXIT
                   ;-------------------------------------------------------------
                   ; copare the file name we want to load and the folder entry file name
                   JSL FAT32_Print_File_Name
@@ -299,92 +303,7 @@ FAT32_Read_File___Reserved_Or_Bad_Sector
                   RTL
 ;-------------------------------------------------------------------------------
 ;
-;
-;
-;-------------------------------------------------------------------------------
-FAT32_Print_File_Name
-                  PHX
-                  PHA
-                  LDA FAT32_Curent_Folder_entry_value
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +1
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +2
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +3
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +4
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +5
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +6
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +7
-                  JSL IPUTC
-                  LDA #'.'
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +8
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +9
-                  JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +10
-                  JSL IPUTC
-                  LDA #$0D
-                  JSL IPUTC
-                  PLA
-                  PLX
-                  RTL
-;-------------------------------------------------------------------------------
-;
-; print the folder name from the curent folder entry
-;
-;-------------------------------------------------------------------------------
-FAT32_Print_Folder_Name
-                  PHX
-                  LDX #0
-FAT32_Print_Folder_Name__Print_char:
-                  LDA FAT32_Curent_Folder_entry_value,x
-                  JSL IPUTC
-                  INX
-                  CPX #$B
-                  BNE FAT32_Print_Folder_Name__Print_char
-                  LDA #$0D
-                  JSL IPUTC
-                  PLX
-                  RTL
-;-------------------------------------------------------------------------------
-;
-; display the ROOT entry in hex and in ASCII
-;
-;-------------------------------------------------------------------------------
-FAT32_PRINT_Root_entry_value
-                  PHX
-                  PHY
-                  PHA
-                  LDX #0
-                  FAT32_PRINT_Root_entry_value_loop_1:
-                  LDA @l FAT32_Curent_Folder_entry_value,x
-                  JSL IPRINT_HEX
-                  INX
-                  CPX #32
-                  BNE FAT32_PRINT_Root_entry_value_loop_1
-                  LDA #$0D
-                  JSL IPUTC
-                  LDX #0
-                  FAT32_PRINT_Root_entry_value_loop_2:
-                  LDA @l FAT32_Curent_Folder_entry_value,x
-                  JSL IPUTC
-                  INX
-                  CPX #32
-                  BNE FAT32_PRINT_Root_entry_value_loop_2
-                  LDA #$0D
-                  JSL IPUTC
-                  PLA
-                  PLY
-                  PLX
-                  RTL
-;-------------------------------------------------------------------------------
-;
+; Read the Master Boot Record to get the address of the first FAT32 partition
 ;
 ;
 ;-------------------------------------------------------------------------------
@@ -406,13 +325,13 @@ READ_MBR_Scan:
                   BEQ READ_MBR_Partition_Entry_LSB_Null
                   LDY #1
 READ_MBR_Partition_Entry_LSB_Null:
-                  STA MBR_Partition_address
+                  STA FAT_Partition_address
                   LDA FAT32_DATA_ADDRESS_BUFFER_512,X+8+2
                   CMP #0
                   BEQ READ_MBR_Partition_Entry_MSB_Null
                   LDY #1
 READ_MBR_Partition_Entry_MSB_Null:
-                  STA MBR_Partition_address+2
+                  STA FAT_Partition_address+2
 
                   CPY #1 ; curent MBR entry not nul (sector location)
                   BEQ READ_MBR_Partition_valid_address
@@ -423,7 +342,7 @@ READ_MBR_Partition_Entry_MSB_Null:
                   TAX
                   BRA READ_MBR_Scan
 
-READ_MBR_Partition_valid_address: ; the number in MBR_Partition_address is an ofset in cluster of a Partiton
+READ_MBR_Partition_valid_address: ; the number in FAT_Partition_address is an ofset in cluster of a Partiton
                   LDX #<>Partition_ofset_text
                   LDA #`Partition_ofset_text
                   JSL IPUTS_ABS       ; print the first line
@@ -431,13 +350,13 @@ READ_MBR_Partition_valid_address: ; the number in MBR_Partition_address is an of
                   JSL IPUTC
                   LDA #'x'
                   JSL IPUTC
-                  LDA MBR_Partition_address +3
+                  LDA FAT_Partition_address +3
                   JSL IPRINT_HEX
-                  LDA MBR_Partition_address +2
+                  LDA FAT_Partition_address +2
                   JSL IPRINT_HEX
-                  LDA MBR_Partition_address +1
+                  LDA FAT_Partition_address +1
                   JSL IPRINT_HEX
-                  LDA MBR_Partition_address
+                  LDA FAT_Partition_address
                   JSL IPRINT_HEX
                   LDA #$0D
                   JSL IPUTC
@@ -448,9 +367,9 @@ READ_MBR_Partition_valid_address: ; the number in MBR_Partition_address is an of
                   ;PHA
                   ;LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   ;PHA
-                  ;LDA MBR_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
+                  ;LDA FAT_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
                   ;TAX
-                  ;LDA MBR_Partition_address
+                  ;LDA FAT_Partition_address
                   ;JSL IFAT_READ_SECTOR
 
 READ_MBR_End_Scan_no_partition:
@@ -468,9 +387,9 @@ IFAT32_READ_BOOT_SECTOR
                   PHA
                   LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   PHA
-                  LDA MBR_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
+                  LDA FAT_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
                   TAX
-                  LDA MBR_Partition_address
+                  LDA FAT_Partition_address
                   JSL IFAT_READ_SECTOR
                   PLX
                   PLX;
@@ -657,7 +576,7 @@ IFAT32_COMPUT_ROOT_DIR_POS
                   LDA M0_RESULT+2
                   STA ADDER_A+2
                   ; second operand
-                  LDA FAT32_FAT_Base_Sector ;  reserved sector + partition ofset (MBR_Partition_address)
+                  LDA FAT32_FAT_Base_Sector ;  reserved sector + partition ofset (FAT_Partition_address)
                   STA ADDER_B
                   LDA FAT32_FAT_Base_Sector+2
                   STA ADDER_B+2
@@ -691,9 +610,9 @@ IFAT32_COMPUT_FAT_POS
                   LDA #0
                   STA ADDER_A+2
                   ; second operand
-                  LDA MBR_Partition_address ; 32 byte number
+                  LDA FAT_Partition_address ; 32 byte number
                   STA ADDER_B
-                  LDA MBR_Partition_address+2
+                  LDA FAT_Partition_address+2
                   STA ADDER_B+2
                   ;---------------------------------------
                   ; Get the result , don't really care about the overflow bit as
@@ -706,68 +625,226 @@ IFAT32_COMPUT_FAT_POS
 ;
 ;-------------------------------------------------------------------------------
 ;
-; REG A (16 bit) contain the root directory entry to read
-;
+; REG A (16 bit) contain the sector to read from the
+
+; return value :
+;  1  => sector found
+; -1  =>  end of the file, no more sector
+; -2  =>  bad sector
+; -3  =>  reserved sector
 ;-------------------------------------------------------------------------------
 
-IFAT32_READ_LIKED_FAT_ENTRY
+IFAT32_READ_LINKED_FAT_ENTRY
                   PHX
-IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT:
+IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT:
                   JSL FAT32_IFAT_GET_FAT_ENTRY
 ;JSL FAT32_Print_FAT_STATE
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_799
+text_799 .text $0d,"curen fat entry          ",0
+TEST_TEXT_799:
+LDX #<>text_799
+LDA #`text_799
+JSL IPUTS_ABS       ; print the first line
+LDA #$AF                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_798
+text_798 .text "Linked fat entry         ",0
+TEST_TEXT_798:
+LDX #<>text_798
+LDA #`text_798
+JSL IPUTS_ABS       ; print the first line
+LDA #$5D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Linked_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Linked_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_777
+text_777 .text "Next fat entry           ",0
+TEST_TEXT_777:
+LDX #<>text_777
+LDA #`text_777
+JSL IPUTS_ABS       ; print the first line
+LDA #$5D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Next_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Next_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
+
                   ;-------------------------------------------------------------
                   ; test the fat entry for reserved or bad sector
-                  LDA FAT32_FAT_Next_Entry +2 ; test for EOC (End Of Cluster)
-                  AND #$0FFF ; the 4 MSB are not used in the FAT32
-                  CMP #$0FFF
-                  BNE IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
-                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
-                  AND #$FFF0
-                  CMP #$FFF0
-                  BNE IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
-                  LDA FAT32_FAT_Next_Entry ; the cluster entry is not usable or its the last in the chaine
-                  AND #$000F
-                  CMP #8
-                  BMI IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED_OR_BAD
-                  LDA #-1 ; end of the file
-                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EOC
-IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED_OR_BAD
-                  CMP #7
-                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED
-                  LDA #-2 ; Bad sector
-                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
-IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_RESERVED
-                  LDA #-3 ; reserved sector
-                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
-                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
-IFAT32_READ_LIKED_FAT_ENTRY___TEST_NULL_VALUE
+                  JSL FAT32_Test_Fat_Entry_Validity
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_858
+text_858 .text "fat entry Valisity           ",0
+TEST_TEXT_858:
+LDX #<>text_858
+LDA #`text_858
+JSL IPUTS_ABS       ; print the first line
+LDA #$5D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+PLA
+PHA
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   CMP #0
-                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
-                  LDA FAT32_FAT_Next_Entry + 2 ; test for EOC (End Of Cluster)
-                  CMP #0
-                  BNE IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
-                  LDA #-4 ; empty sector
-                  BRA IFAT32_READ_LIKED_FAT_ENTRY___EXIT
+                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID
+                  BRL IFAT32_READ_LINKED_FAT_ENTRY___EXIT
                   ;-------------------------------------------------------------
+
                   ; the fat entry is containning data, now decrementing the
-                  ; linked counter  to see if we need looking to the next fat entry
-IFAT32_READ_LIKED_FAT_ENTRY___NEXT_CLUSTER_VALID
+                  ; linked counter  to see if we need to look at the next fat entry
+IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID:
+                  JSL IFAT32_DEC_FAT_Linked_Entry
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_893
+text_893 .text "New Linked fat entry     ",0
+TEST_TEXT_893:
+LDX #<>text_893
+LDA #`text_893
+JSL IPUTS_ABS       ; print the first line
+LDA #$5D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Linked_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Linked_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   LDA FAT32_FAT_Linked_Entry
-                  DEC A
-                  BMI IFAT32_READ_LIKED_FAT_ENTRY___UNDERFLOW
-                  STA FAT32_FAT_Entry ; update the low part the the fat entry we want to read
-                  BRA IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
-IFAT32_READ_LIKED_FAT_ENTRY___UNDERFLOW
-                  LDA FAT32_FAT_Linked_Entry+2
-                  DEC A
-                  BMI IFAT32_READ_LIKED_FAT_ENTRY___WENT_THRW_ALL_FAT_LINKED
+                  CMP #0
+                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___TEST_HIGH_PART
+                  LDA FAT32_FAT_Next_Entry
+                  STA FAT32_FAT_Entry
+                  LDA FAT32_FAT_Next_Entry+2
                   STA FAT32_FAT_Entry+2
-                  BRA IFAT32_READ_LIKED_FAT_ENTRY___READ_NEXT_FAT
-IFAT32_READ_LIKED_FAT_ENTRY___WENT_THRW_ALL_FAT_LINKED
+                  ;JSL IFAT32_INC_FAT_Entry
+                  BRL IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT
+IFAT32_READ_LINKED_FAT_ENTRY___TEST_HIGH_PART:
+                  LDA FAT32_FAT_Linked_Entry+2
+                  CMP #0
+                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___ALL_LINKED_FAT_PARSED
+                  LDA FAT32_FAT_Next_Entry
+                  STA FAT32_FAT_Entry
+                  LDA FAT32_FAT_Next_Entry+2
+                  STA FAT32_FAT_Entry+2
+                  ;JSL IFAT32_INC_FAT_Entry
+                  BRL IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT
+IFAT32_READ_LINKED_FAT_ENTRY___ALL_LINKED_FAT_PARSED:
                   LDA #1
-IFAT32_READ_LIKED_FAT_ENTRY___EOC
-IFAT32_READ_LIKED_FAT_ENTRY___EXIT
+IFAT32_READ_LINKED_FAT_ENTRY___EXIT:
                   PLX
+                  RTL
+;-------------------------------------------------------------------------------
+IFAT32_DEC_FAT_Linked_Entry
+                  PHA
+                  LDA FAT32_FAT_Linked_Entry
+                  STA ADDER_A
+                  LDA FAT32_FAT_Linked_Entry+2
+                  STA ADDER_A+2
+                  LDA #$FFFF ; load -1 in comp 2
+                  STA ADDER_B
+                  LDA #$FFFF
+                  STA ADDER_B+2
+                  LDA ADDER_R
+                  STA FAT32_FAT_Linked_Entry
+                  LDA ADDER_R+2
+                  STA FAT32_FAT_Linked_Entry+2
+                  PLA
+                  RTL
+;-------------------------------------------------------------------------------
+IFAT32_INC_FAT_Entry
+                  PHA
+                  LDA FAT32_FAT_Entry
+                  STA ADDER_A
+                  LDA FAT32_FAT_Entry+2
+                  STA ADDER_A+2
+                  LDA #$0001 ; load -1 in comp 2
+                  STA ADDER_B
+                  LDA #$0000
+                  STA ADDER_B+2
+                  LDA ADDER_R
+                  STA FAT32_FAT_Entry
+                  LDA ADDER_R+2
+                  STA FAT32_FAT_Entry+2
+                  PLA
                   RTL
 ;-------------------------------------------------------------------------------
 ;
@@ -778,6 +855,31 @@ IFAT32_READ_LIKED_FAT_ENTRY___EXIT
 IFAT32_GET_ROOT_ENTRY
                   setaxl
                   PHA
+
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_Folder_entry_index
+test_text .text "Folder entry index                  ",0
+TEST_TEXT_Folder_entry_index:
+LDX #<>test_text
+LDA #`test_text
+JSL IPUTS_ABS       ; print the first line
+LDA #$4D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+PLA
+PHA
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   ; Set the curent folder cluster index to the ROOT FOLDER sector
                   ; ofset to point to the root directory ofset in the fat
                   ; I need to find the exact way to get this ofset
@@ -799,7 +901,62 @@ IFAT32_GET_FOLDER_ENTRY__16_DIV:
                   CPX #4 ; divide by 16
                   BNE IFAT32_GET_FOLDER_ENTRY__16_DIV
                   CMP #0
-                  BEQ IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR ; the entry is in the first folder cluster
+                  BEQ IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR_1 ; the entry is in the first folder cluster
+                  BRA next_873
+IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR_1 BRL IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR
+next_873:
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_876
+text_876 .text "Folder entry sector ofset           ",0
+TEST_TEXT_876:
+LDX #<>text_876
+LDA #`text_876
+JSL IPUTS_ABS       ; print the first line
+LDA #$5D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+PLA
+PHA
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_908
+text_908 .text "Base sector index                   ",0
+TEST_TEXT_908:
+LDX #<>text_908
+LDA #`text_908
+JSL IPUTS_ABS       ; print the first line
+LDA #$6D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_Curent_Folder_base_cluster+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_Curent_Folder_base_cluster
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   ;-------------------------------------------------------------
                   ; the entry is bigger than 16, so we need to search for the entry cluster linked to the folder
                   STA FAT32_FAT_Linked_Entry ; store the number of sector from the base sector we need to read
@@ -809,7 +966,36 @@ IFAT32_GET_FOLDER_ENTRY__16_DIV:
                   STA FAT32_FAT_Entry
                   LDA FAT32_Curent_Folder_base_cluster+2; FAT32_Root_Base_Sector +2
                   STA FAT32_FAT_Entry + 2
-                  JSL IFAT32_READ_LIKED_FAT_ENTRY
+                  JSL IFAT32_READ_LINKED_FAT_ENTRY
+
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_919
+text_919 .text "New sector index                    ",0
+TEST_TEXT_919:
+LDX #<>text_919
+LDA #`text_919
+JSL IPUTS_ABS       ; print the first line
+LDA #$7D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Next_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Next_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   ;-------------------- Test for fat validity ------------------
                   LDA FAT32_FAT_Next_Entry
                   CMP #0
@@ -860,10 +1046,11 @@ IFAT32_GET_ROOT_ENTRY__LOAD_SECTOR:
                   LDA ADDER_R+2
                   CMP FAT32_Curent_Folder_Sector_loaded_in_ram+2
                   BNE IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
-                  BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
+                  BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM_1
 
 BRA IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_NEXT
-IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED: BRA IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_1
+FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM_1: BRL FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
+IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED: BRL IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_1
 IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_NEXT
 
 IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR:
@@ -878,9 +1065,39 @@ IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR:
                   LDA FAT32_Curent_Folder_Sector_loaded_in_ram+2 ; Get the ROOT directory sector to read
                   TAX
                   LDA FAT32_Curent_Folder_Sector_loaded_in_ram
+
+;----- debug -----
+PHX
+PHA
+LDX #<>TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
+LDA #`TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
+JSL IPUTS_ABS       ; print the first line
+LDA #$2D                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_Curent_Folder_Sector_loaded_in_ram+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_Curent_Folder_Sector_loaded_in_ram
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #'a'
+JSL IPUTC
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   JSL IFAT_READ_SECTOR
-                  PLX
-                  PLX
+                  PLA
+                  PLA
 FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM:
                   ; get the root entry now we have the right sector loaded in RAM
                   PLA ; GET the root entry
@@ -920,32 +1137,67 @@ FAT32_IFAT_GET_FAT_ENTRY
                   PHA
                   PHX
                   PHY
+;----- debug -----
+PHX
+PHA
+LDX #<>TEXT_FAT32___FAT_Entry
+LDA #`TEXT_FAT32___FAT_Entry
+JSL IPUTS_ABS       ; print the first line
+LDA #$BD
+JSL SET_COLOUR
+LDA FAT32_FAT_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   ; find in witch sector the fat entry is suposed to be
                   ;------- Test id the FAT entry is in the first cluster -------
                   LDA FAT32_FAT_Entry+2
                   CMP #0
-                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER ; the FAT entry is definitly not in the first FAT cluster
-                  STA FAT32_FAT_Next_Entry+2
+                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER_32_BYTE_NUMBER ; the FAT entry is definitly not in the first FAT cluster as MSB != 0
+                  STA FAT32_FAT_Next_Entry+2 ; the MSB of the sector will be for sure 0
                   LDA FAT32_FAT_Entry
                   LSR A
                   LSR A
                   LSR A
                   LSR A
+                  LSR A
+                  LSR A
+                  LSR A ; /128 (512/4)=> 128 entry per sector
                   STA FAT32_FAT_Next_Entry
                   CMP #0
-                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER
-                  BRA FAT32_ENTRY_SECTOR_LOCATION_FIND ; if this part of the code is riched, its mean that the FAT entry requested is with in the first FAT clustrer (entry smaller than 16)
-FAT32_FAT_ENTRY_FIND_THE_CLUSTER
-                  ; ----- shift the 32 Byte FAT entry by 4 (divide by 16) ------
+                  BNE FAT32_FAT_ENTRY_FIND_THE_CLUSTER_16_BYTE_NUMBER
+                  BRA FAT32_ENTRY_SECTOR_LOCATION_FIND ;  FAT entry is in  first FAT clustrer (entry smaller than 128)
+FAT32_FAT_ENTRY_FIND_THE_CLUSTER_32_BYTE_NUMBER
+                  ; ----- shift the 32 Byte FAT entry by 7 (divide by 128) ------
                   ;-------- to comput the FAT cluster to load in memory --------
                   LDA FAT32_FAT_Entry+2
                   LSR A
                   LSR A
                   LSR A
-                  LSR A ; comput the high part divided by 16
+                  LSR A
+                  LSR A
+                  LSR A
+                  LSR A ; /128 (512/4)=> 128 entry per sector
                   STA FAT32_FAT_Next_Entry+2 ; use FAT32_FAT_Next_Entry as a temporary variable
-                  LDA FAT32_FAT_Entry+2 ;extract the 4 bits of the HIGHT part of FAT32_FAT_Entry to casrry them in the LOW part
-                  AND #$F
+                  LDA FAT32_FAT_Entry+2 ;extract the 7 bits of the HIGHT part of FAT32_FAT_Entry to casrry them in the LOW part
+                  AND #$007F
+                  ASL A
+                  ASL A
+                  ASL A
                   ASL A
                   ASL A
                   ASL A
@@ -959,15 +1211,47 @@ FAT32_FAT_ENTRY_FIND_THE_CLUSTER
                   ASL A
                   ASL A ; get the 4 bit in the right position to be added to the LOW part
                   STA FAT32_FAT_Next_Entry
+FAT32_FAT_ENTRY_FIND_THE_CLUSTER_16_BYTE_NUMBER
                   LDA FAT32_FAT_Entry
                   LSR A
                   LSR A
                   LSR A
+                  LSR A
+                  LSR A
+                  LSR A
                   LSR A ; divide the high part of the FAT entry requested by 16  because there is 16 FAt entry per sector
-                  AND #$0FFF
+                  AND #$7FFF
                   ORA FAT32_FAT_Next_Entry
                   STA FAT32_FAT_Next_Entry ; Now contain the 32 bit FAT Cluster to load
 FAT32_ENTRY_SECTOR_LOCATION_FIND:
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_1250
+text_1250 .text "Sector to get the fat block        ",0
+TEST_TEXT_1250:
+LDX #<>text_1250
+LDA #`text_1250
+JSL IPUTS_ABS       ; print the first line
+LDA #$BD                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Next_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Next_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   ;------ comput the real sector ofset ---------
                   ; first operand
                   LDA FAT32_FAT_Next_Entry ;
@@ -987,8 +1271,39 @@ FAT32_ENTRY_SECTOR_LOCATION_FIND:
                   LDA ADDER_R+2
                   CMP FAT32_Curent_Folder_Sector_loaded_in_ram+2
                   BNE FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
-                  BEQ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM
+                  BEQ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM_debug
+BRA FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
+FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM_debug BRL FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM
+
 FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR:
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_1280
+text_1280 .text "Sector to get the fat block ABS    ",0
+TEST_TEXT_1280:
+LDX #<>text_1280
+LDA #`text_1280
+JSL IPUTS_ABS       ; print the first line
+LDA #$BD                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA ADDER_R+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA ADDER_R
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   LDA ADDER_R+2
                   STA FAT32_FAT_Sector_loaded_in_ram+2 ; save the new sector to load
                   LDA ADDER_R
@@ -1006,7 +1321,7 @@ FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR:
                   ; from here the right FAT sector is loades in ram
 FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM:
                   LDA FAT32_FAT_Entry
-                  AND #$0F ; get only the 7 first byte to get the ofset in the curent FAT cluster loades
+                  AND #$007F ; get only the 7 first byte to get the ofset in the curent FAT cluster loades
                   ASL
                   ASL ; *4 to point to the FAT entry 32 byte
                   ;STA FAT32_FAT_Next_Entry+2
@@ -1019,6 +1334,35 @@ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM:
                   TAY
                   LDA #3 ; read 4 byte
                   MVN `FAT32_FAT_ADDRESS_BUFFER_512,`FAT32_FAT_Next_Entry
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_1341
+text_1341 .text "New fat entry read                 ",0
+
+TEST_TEXT_1341:
+LDX #<>text_1341
+LDA #`text_1341
+JSL IPUTS_ABS       ; print the first line
+LDA #$BD                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Next_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Next_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
                   PLY
                   PLX
                   PLA
@@ -1034,7 +1378,7 @@ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM:
 ; -3  =>  reserved sector
 ;-------------------------------------------------------------------------------
 FAT32_Test_Fat_Entry_Validity
-                  PLA
+                  ;PLA
                   LDA FAT32_FAT_Next_Entry +2 ; test for EOC (End Of Cluster)
                   AND #$0FFF ; the 4 MSB are not used in the FAT32
                   CMP #$0FFF
@@ -1048,25 +1392,28 @@ FAT32_Test_Fat_Entry_Validity
                   CMP #8
                   BMI FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED_OR_BAD
                   LDA #-1 ; end of the file
-                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
+                  BRA FAT32_Test_Fat_Entry_Validity_ERROR_EXIT
 FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED_OR_BAD
                   CMP #7
                   BNE FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED
                   LDA #-2 ; Bad sector
-                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
+                  BRA FAT32_Test_Fat_Entry_Validity_ERROR_EXIT
 FAT32_Test_Fat_Entry_Validity___NEXT_CLUSTER_RESERVED
                   LDA #-3 ; reserved sector
-                  BRA FAT32_Test_Fat_Entry_Validity___EXIT
-                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
+                  BRA FAT32_Test_Fat_Entry_Validity_ERROR_EXIT
 FAT32_Test_Fat_Entry_Validity___TEST_NULL_VALUE
+                  LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
                   CMP #0
                   BNE FAT32_Test_Fat_Entry_Validity___EXIT
                   LDA FAT32_FAT_Next_Entry + 2 ; test for EOC (End Of Cluster)
                   CMP #0
                   BNE FAT32_Test_Fat_Entry_Validity___EXIT
                   LDA #-4 ; empty sector
-FAT32_Test_Fat_Entry_Validity___EXIT
-                  PHA
+                  BRA FAT32_Test_Fat_Entry_Validity_ERROR_EXIT
+FAT32_Test_Fat_Entry_Validity___EXIT:
+                  LDA #0
+FAT32_Test_Fat_Entry_Validity_ERROR_EXIT:
+                  ;PHA
                   RTL
                   ;-------------------------------------------------------------
 ;-------------------------------------------------------------------------------
@@ -1074,7 +1421,7 @@ FAT32_Test_Fat_Entry_Validity___EXIT
 ; Stack 0-1-3-4 pointer to the file name strings to load
 ; Stack 5-6-7-8 buffer where to load the file
 ;-------------------------------------------------------------------------------
-FAT32_ILOAD_FILE
+FAT32_ILOAD_FILE ; the equivalent of Open + Read in one block
                   JSL IFAT32_READ_BOOT_SECTOR
                   CMP #$0001
                   BEQ ILOAD_FILE_FAT_32_BOOT_SECTOR_PARSING_OK
@@ -1453,440 +1800,16 @@ ISD_READ__INIT_RETURN:
                 ;JSL IPUTC
                 setaxl
                 RTL
+
 ;----------------------------------------------------------------------------------------------------------
-;
+; will add all the function to display and debug
 ;----------------------------------------------------------------------------------------------------------
 
-FAT32_Print_FAT_STATE
-                PHP
-                PHA
-                PHX
-                PHY
-                LDX #<>TEXT_FAT32___Byte_Per_Sector
-                LDA #`TEXT_FAT32___Byte_Per_Sector
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Byte_Per_Sector
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Sector_Per_Cluster
-                LDA #`TEXT_FAT32___Sector_Per_Cluster
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Sector_Per_Cluster
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Nb_Of_reserved_Cluster
-                LDA #`TEXT_FAT32___Nb_Of_reserved_Cluster
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Nb_Of_reserved_Cluster
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Nb_Of_FAT
-                LDA #`TEXT_FAT32___Nb_Of_FAT
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Nb_Of_FAT
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Max_Root_Entry
-                LDA #`TEXT_FAT32___Max_Root_Entry
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Max_Root_Entry
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Total_Sector_Count
-                LDA #`TEXT_FAT32___Total_Sector_Count
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Total_Sector_Count
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Sector_per_Fat
-                LDA #`TEXT_FAT32___Sector_per_Fat
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Sector_per_Fat+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Sector_per_Fat
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Sector_per_Track
-                LDA #`TEXT_FAT32___Sector_per_Track
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Sector_per_Track
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Nb_of_Head
-                LDA #`TEXT_FAT32___Nb_of_Head
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Nb_of_Head
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Nb_Of_Sector_In_Partition
-                LDA #`TEXT_FAT32___Nb_Of_Sector_In_Partition
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Nb_Of_Sector_In_Partition+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Nb_Of_Sector_In_Partition
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Boot_Signature
-                LDA #`TEXT_FAT32___Boot_Signature
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Boot_Signature
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Volume_ID
-                LDA #`TEXT_FAT32___Volume_ID
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Volume_ID+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Volume_ID
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Volume_Label
-                LDA #`TEXT_FAT32___Volume_Label
-                JSL IPUTS_ABS       ; print the first line
-                LDX #0
-PRINT_FAT32_Volume_Label:
-                LDA @l FAT32_Volume_Label,x
-                JSL IPUTC
-                INX
-                CPX #11
-                BNE PRINT_FAT32_Volume_Label
-                LDX #<>TEXT_FAT32___File_System_Type
-                LDA #`TEXT_FAT32___File_System_Type
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_File_System_Type
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Sector_loaded_in_ram
-                LDA #`TEXT_FAT32___Sector_loaded_in_ram
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Sector_loaded_in_ram+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Sector_loaded_in_ram
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Root_Sector_offset
-                LDA #`TEXT_FAT32___Root_Sector_offset
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Root_Sector_offset+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Root_Sector_offset
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Root_Base_Sector
-                LDA #`TEXT_FAT32___Root_Base_Sector
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Root_Base_Sector+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Root_Base_Sector
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
-                LDA #`TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_Folder_Sector_loaded_in_ram+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Curent_Folder_Sector_loaded_in_ram
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Curent_Folder_entry_value
-                LDA #`TEXT_FAT32___Curent_Folder_entry_value
-                JSL IPUTS_ABS       ; print the first line
-                LDA #$0D
-                JSL IPUTC
-                LDX #0
-PRINT_FAT32_Root_entry_value:
-                LDA @l FAT32_Curent_Folder_entry_value,x
-                JSL IPRINT_HEX
-                INX
-                CPX #32
-                BNE PRINT_FAT32_Root_entry_value
-                LDA #$0D
-                JSL IPUTC
-                LDX #0
-PRINT_FAT32_Root_entry_value_ASCII:
-                LDA @l FAT32_Curent_Folder_entry_value,x
-                JSL IPUTC
-                INX
-                CPX #32
-                BNE PRINT_FAT32_Root_entry_value_ASCII
-                LDX #<>TEXT_FAT32___FAT_Base_Sector
-                LDA #`TEXT_FAT32___FAT_Base_Sector
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_FAT_Base_Sector+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_FAT_Base_Sector
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___FAT_Sector_loaded_in_ram
-                LDA #`TEXT_FAT32___FAT_Sector_loaded_in_ram
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_FAT_Sector_loaded_in_ram+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_FAT_Sector_loaded_in_ram
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___FAT_Entry
-                LDA #`TEXT_FAT32___FAT_Entry
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_FAT_Entry+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_FAT_Entry
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___FAT_Next_Entry
-                LDA #`TEXT_FAT32___FAT_Next_Entry
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_FAT_Next_Entry+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_FAT_Next_Entry
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___FAT_Linked_Entry
-                LDA #`TEXT_FAT32___FAT_Linked_Entry
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_FAT_Linked_Entry+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_FAT_Linked_Entry
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Data_Base_Sector
-                LDA #`TEXT_FAT32___Data_Base_Sector
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Data_Base_Sector+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Data_Base_Sector
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___MBR_Partition_address
-                LDA #`TEXT_FAT32___MBR_Partition_address
-                JSL IPUTS_ABS       ; print the first line
-                LDA MBR_Partition_address+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA MBR_Partition_address
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Curent_Folder_base_cluster
-                LDA #`TEXT_FAT32___Curent_Folder_base_cluster
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_Folder_base_cluster+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Curent_Folder_base_cluster
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Curent_Folder_curent_cluster
-                LDA #`TEXT_FAT32___Curent_Folder_curent_cluster
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_Folder_curent_cluster+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Curent_Folder_curent_cluster
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Curent_File_base_cluster
-                LDA #`TEXT_FAT32___Curent_File_base_cluster
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_File_base_cluster+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Curent_File_base_cluster
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Curent_File_curent_cluster
-                LDA #`TEXT_FAT32___Curent_File_curent_cluster
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_File_curent_cluster+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Curent_File_curent_cluster
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Sector_to_read
-                LDA #`TEXT_FAT32___Sector_to_read
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Sector_to_read+2
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDA FAT32_Sector_to_read
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___SD_FDD_HDD_Sell
-                LDA #`TEXT_FAT32___SD_FDD_HDD_Sell
-                JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_SD_FDD_HDD_Sell
-                XBA
-                JSL IPRINT_HEX
-                XBA
-                JSL IPRINT_HEX
-                PLY
-                PLX
-                PLA
-                PLP
-                RTL
-
+.include "FAT32_Utils.asm"
 
 ;----------------------------------------------------------------------------------------------------------
 ; EOF
 ;----------------------------------------------------------------------------------------------------------
 
-* = $20425
-Partition_ofset_text    .text "Partition ofset (in cluster) : ",0
-
-TEXT_FAT32___Byte_Per_Sector		         .text   $0D, "FAT32 Byte Per Sector              ",0
-TEXT_FAT32___Sector_Per_Cluster          .text   $0D, "FAT32 Sector Per Cluster           ",0
-TEXT_FAT32___Nb_Of_reserved_Cluster      .text   $0D, "FAT32 Nb Of reserved Cluster       ",0
-TEXT_FAT32___Nb_Of_FAT                   .text   $0D, "FAT32 Nb Of FAT                    ",0
-TEXT_FAT32___Max_Root_Entry              .text   $0D, "FAT32 Max Root Entry               ",0
-TEXT_FAT32___Total_Sector_Count          .text   $0D, "FAT32 Total_Sector_Count           ",0
-TEXT_FAT32___Sector_per_Fat              .text   $0D, "FAT32 Sector per Fat               ",0
-TEXT_FAT32___Sector_per_Track            .text   $0D, "FAT32 Sector per Track             ",0
-TEXT_FAT32___Nb_of_Head                  .text   $0D, "FAT32 Nb of Head                   ",0
-TEXT_FAT32___Nb_Of_Sector_In_Partition   .text   $0D, "FAT32 Nb Of Sector In Partition    ",0
-TEXT_FAT32___Boot_Signature              .text   $0D, "FAT32 Boot Signature               ",0
-TEXT_FAT32___Volume_ID                   .text   $0D, "FAT32 Volume ID                    ",0
-TEXT_FAT32___Volume_Label                .text   $0D, "FAT32 Volume Label                 ",0
-TEXT_FAT32___File_System_Type            .text   $0D, "FAT32 File System Type             ",0
-TEXT_FAT32___Sector_loaded_in_ram        .text   $0D, "FAT32 Sector loaded in ram         ",0
-TEXT_FAT32___Root_Sector_offset          .text   $0D, "FAT32 Root Sector offset           ",0
-TEXT_FAT32___Root_Base_Sector            .text   $0D, "FAT32 Root Base Sector             ",0
-TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram   .text   $0D, "FAT32 Folder Sector loaded in ram  ",0
-TEXT_FAT32___Curent_Folder_entry_value            .text   $0D, "FAT32 Folder entry value            ",0
-TEXT_FAT32___FAT_Base_Sector             .text   $0D, "FAT32 FAT Base Sector              ",0
-TEXT_FAT32___FAT_Sector_loaded_in_ram    .text   $0D, "FAT32 FAT Sector loaded in ram     ",0
-TEXT_FAT32___FAT_Entry                   .text   $0D, "FAT32 FAT Entry                    ",0
-TEXT_FAT32___FAT_Next_Entry              .text   $0D, "FAT32 FAT Next Entry               ",0
-TEXT_FAT32___FAT_Linked_Entry            .text   $0D, "FAT32 FAT Linked Entry             ",0
-TEXT_FAT32___Data_Base_Sector            .text   $0D, "FAT32 Data Base Sector             ",0
-TEXT_FAT32___MBR_Partition_address       .text   $0D, "MBR Partition address              ",0
-TEXT_FAT32___Curent_Folder_base_cluster   .text   $0D, "FAT32 Curent Folder base cluster   ",0
-TEXT_FAT32___Curent_Folder_curent_cluster .text   $0D, "FAT32 Curent Folder curent cluster ",0
-TEXT_FAT32___Curent_File_base_cluster    .text   $0D, "FAT32 Curent File base cluster     ",0
-TEXT_FAT32___Curent_File_curent_cluster  .text   $0D, "FAT32 Curent File curent cluster   ",0
-TEXT_FAT32___Sector_to_read              .text   $0D, "FAT32 Sector to read               ",0
-TEXT_FAT32___SD_FDD_HDD_Sell             .text   $0D, "FAT32 SD_FDD_HDD_Sell              ",0
-TEXT_____Fat_size                        .text   $0D, "Fat_size                           ",0
-
-TEXT_____DEBUG                           .text   $0D, "DEBUG                              ",0
-TEXT_____BREAK                           .text   $0D, "BREAK                              ",0
-TEXT_____DEBUG_FOLDER_ENTRY_TO_READ      .text   $0D, "DEBUG  Folder Entry To Read        ",0
-TEXT_____DEBUG_FAT_SECTOR_TO_READ        .text   $0D, "DEBUG  FAT Sector To Read          ",0
-TEXT_____DEBUG_SECTOR_TO_READ            .text   $0D, "DEBUG  SECTOR_TO_READ              ",0
-TEXT_____DEBUG______FAT_L_IN             .text   $0D, "*********** FAT L IN **************",$0D,0
-TEXT_____DEBUG______FAT_L_OUT            .text   $0D, "----------- FAT L OUT -------------",$0D,0
-TEXT_____DEBUG_____________              .text   $0D, "*********** FOLDER IN *************",$0D,0
-TEXT_____DEBUG____________EX             .text   $0D, "----------- FOLDER OUT ------------",$0D,0
-TEXT_____DEBUG_START_DIR                  .text   $0D, "__________ START DIR CMD __________",$0D,0
-TEXT_____DEBUG_END_DIR                    .text   $0D, "___________ END DIR CMD ___________",$0D,0
-
 * = $120000
-.include "HDD_row_TEXT_HEX.asm"
+.include "HDD_row_TEXT_HEX.asm" ; fake HDD data

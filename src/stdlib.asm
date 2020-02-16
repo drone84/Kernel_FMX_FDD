@@ -67,3 +67,9 @@ IPRINT_HEX  .proc
             RTL
             .pend
 hex_digits_stdlib      .text  "0123456789ABCDEF",0
+
+SET_COLOUR
+          setas
+          STA @l CURCOLOR
+          setal
+          RTL

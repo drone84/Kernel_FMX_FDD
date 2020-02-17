@@ -168,73 +168,80 @@ FAT32_DIR_CMD_149:
                   BRA FAT32_DIR_CMD_168
 FAT32_DIR_CMD__EXIT_TEMP_2: BRL FAT32_DIR_CMD__EXIT
 FAT32_DIR_CMD_168:
-            LDA #0
-            STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
-            STA FAT32_LONG_FILE_NAME_BUFFER_pointer
-            TXA ; get the folder entry index
-            JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
-            PHA
+                  LDA #0
+                  ;STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+                  STA FAT32_LONG_FILE_NAME_BUFFER_pointer
+                  TXA ; get the folder entry index
+                  JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+
+                  PHA
                   LDA #$2D                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
-                  JSL FAT32_Print_File_Name
-           PLA
-                  PHX
-                  PHA
-                  CMP #0
-                  BNE FAT32_DIR_CMD__NO_FILE_LFN
-                  LDA #$20
-                  JSL IPUTC
-                  LDA #$20
-                  JSL IPUTC
-                  LDA #$20
-                  JSL IPUTC
-                  LDX #<>FAT32_LONG_FILE_NAME_BUFFER_256
-                  LDA #`FAT32_LONG_FILE_NAME_BUFFER_256
-                  JSL IPUTS_ABS
-FAT32_DIR_CMD__NO_FILE_LFN:
                   LDA #$0D
                   JSL IPUTC
                   PLA
-                  PLX
 
-
+                  CMP #1
+                  BEQ FAT32_DIR_CMD__Print_FLN_File_Name
+                  ;------ print the short name -----
+                  JSL FAT32_Print_File_Name
+                  LDA #$0D
+                  JSL IPUTC
                   LDA #$ED                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
                   BRL FAT32_DIR_CMD__Read_Next_Folder_Entry
-
-FAT32_DIR_CMD__print_folder:
-            LDA #0
-            STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
-            STA FAT32_LONG_FILE_NAME_BUFFER_pointer
-            TXA ; get the folder entry index
-            JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
-            PHA ; save the FLN result
-                  LDA #$8D                  ; Set the default text color to light gray on dark gray
-                  JSL SET_COLOUR
-                  JSL FAT32_Print_Folder_Name
-            PLA
+FAT32_DIR_CMD__Print_FLN_File_Name:
+                  ;------ print the Long Name -----
                   PHX
                   PHA
-                  CMP #0
-                  BNE FAT32_DIR_CMD__NO_FOLDER_LFN
-                  LDA #$20
-                  JSL IPUTC
-                  LDA #$20
-                  JSL IPUTC
-                  LDA #$20
-                  JSL IPUTC
-                  LDA #$20
-                  JSL IPUTC
                   LDX #<>FAT32_LONG_FILE_NAME_BUFFER_256
                   LDA #`FAT32_LONG_FILE_NAME_BUFFER_256
                   JSL IPUTS_ABS
-FAT32_DIR_CMD__NO_FOLDER_LFN:
+                  LDA #$0D
+                  JSL IPUTC
+                  LDA #$ED                  ; Set the default text color to light gray on dark gray
+                  JSL SET_COLOUR
+                  PLA
+                  PLX
+                  BRL FAT32_DIR_CMD__Read_Next_Folder_Entry
+
+FAT32_DIR_CMD__print_folder:
+                  LDA #0
+                  ;STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+                  STA FAT32_LONG_FILE_NAME_BUFFER_pointer
+                  TXA ; get the folder entry index
+                  JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+                  PHA ; save the FLN result
+                  LDA #$8D                  ; Set the default text color to light gray on dark gray
+                  JSL SET_COLOUR
                   LDA #$0D
                   JSL IPUTC
                   PLA
-                  PLX
+
+                  CMP #1
+                  BEQ FAT32_DIR_CMD__Print_FLN_Folder_Name
+                  ;------ print the short name -----
+                  PHA ; save the FLN result
+                  JSL FAT32_Print_Folder_Name
+                  LDA #$0D
+                  JSL IPUTC
                   LDA #$ED                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
+                  PLA
+                  BRL FAT32_DIR_CMD__Read_Next_Folder_Entry
+FAT32_DIR_CMD__Print_FLN_Folder_Name:
+                  ;------ print the Long Name -----
+                  PHX
+                  PHA
+                  LDX #<>FAT32_LONG_FILE_NAME_BUFFER_256
+                  LDA #`FAT32_LONG_FILE_NAME_BUFFER_256
+                  JSL IPUTS_ABS
+                  LDA #$0D
+                  JSL IPUTC
+                  LDA #$ED                  ; Set the default text color to light gray on dark gray
+                  JSL SET_COLOUR
+                  PLA
+                  PLX
                   BRL FAT32_DIR_CMD__Read_Next_Folder_Entry
 FAT32_DIR_CMD__EXIT:
 ;----- debug ------
@@ -786,10 +793,20 @@ IFAT32_GET_FOLDER_ENTRY_LONG_NAME
                   setaxl
                   PHX
                   PHA ; Save the root entry index we want get the long for
+                  ; reset the buffer pointer to write the new LFN
+                  LDA #0
+                  ;STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+                  STA FAT32_LONG_FILE_NAME_BUFFER_pointer
+                  PLA
+                  PHA
 
+                  ; save the curent folder entry value
                   PHA
                   PHX
                   PHY
+                  LDA FAT32_Temp_16_bite
+                  INC A
+                  STA FAT32_Temp_16_bite
                   setas
                   setdbr `FAT32_Curent_Folder_entry_value
                   setal
@@ -802,6 +819,7 @@ IFAT32_GET_FOLDER_ENTRY_LONG_NAME
                   PlY
                   PLX
                   PLA
+
                   CMP #0
                   BNE IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY ; scan the previous folder entry to get the long name string
 IFAT32_GET_FOLDER_ENTRY_LONG_NAME__NO_MORE_ENTRY_TO_READ:
@@ -838,7 +856,7 @@ PLA
                   ;--------------------------------------------------------------------------------
                   PHA ; save thwe curent folder entry
                   JSL IFAT32_GET_FOLDER_ENTRY
-;JSL FAT32_PRINT_Root_entry_value
+                  ;;JSL FAT32_PRINT_Root_entry_value
                   LDA FAT32_Curent_Folder_entry_value +11 ; test the dirrectory entry type
                   AND #$00FF
                   CMP #$0F ; test if it's a long name entry
@@ -865,6 +883,22 @@ IFAT32_GET_FOLDER_ENTRY_LONG_NAME__END_READDING_LOOP:
                   PLA ; get the foler index back
                   LDA #0 ; end of string
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+.comment
+PHA
+PHX
+PHY
+LDA #$0D
+JSL IPUTC
+LDX #<>FAT32_LONG_FILE_NAME_BUFFER_256
+LDA #`FAT32_LONG_FILE_NAME_BUFFER_256
+JSL IPUTS_ABS
+LDA #$0D
+JSL IPUTC
+PLY
+PLX
+PLA
+.endc
+                  LDA #1
 IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT:
                   ;--------------------- Restore the curent folder entry--------------------------
 .comment
@@ -1695,7 +1729,6 @@ ISD_READ_GET_BYTE_COUNT:
                 LDA 7,S
                 STA @l ISD_READ_+ 1
                 ;JSL IPRINT_HEX ; print the sector
-                setal
 
                 LDX #0
 ISD_READ__READ_LOOP_BYTE:
@@ -1705,6 +1738,7 @@ ISD_READ_       STA @l FAT32_DATA_ADDRESS_BUFFER_512,x
                 INX
                 CPX #$200
                 BNE ISD_READ__READ_LOOP_BYTE
+                setal
 ISD_READ__INIT_RETURN:
                 LDA #1
                 STA SDC_RX_FIFO_CTRL_REG ; discard all possible other byt

@@ -141,14 +141,17 @@ JSL IPRINT_ABS
 PLA
 PLX
 ;-----------------
-                  LDX #0 ; start by readding the first folder entry
+                  LDX #-1 ; start by readding the first folder entry
 FAT32_DIR_CMD__Read_Next_Folder_Entry:
-                  TXA
+                  INC X
+                  TXA ; get the folder entry index
                   CPX #32+200
-                  BEQ FAT32_DIR_CMD__EXIT
+                  BEQ FAT32_DIR_CMD__EXIT_TEMP
+                  BRA FAT32_DIR_CMD_149
+FAT32_DIR_CMD__EXIT_TEMP: BRL FAT32_DIR_CMD__EXIT
+FAT32_DIR_CMD_149:
                   JSL IFAT32_GET_ROOT_ENTRY
                   ;;JSL FAT32_PRINT_Root_entry_value_HEX
-                  INC X
                   LDA FAT32_Curent_Folder_entry_value +11
                   AND #$00FF
                   CMP #$0F ; test if it's a long name entry
@@ -161,23 +164,78 @@ FAT32_DIR_CMD__Read_Next_Folder_Entry:
                   CMP #$E5 ; test if the entry is deleted
                   BEQ FAT32_DIR_CMD__Read_Next_Folder_Entry
                   CMP #$00 ; test if we reached the last entry in the folder
-                  BEQ FAT32_DIR_CMD__EXIT
+                  BEQ FAT32_DIR_CMD__EXIT_TEMP_2
+                  BRA FAT32_DIR_CMD_168
+FAT32_DIR_CMD__EXIT_TEMP_2: BRL FAT32_DIR_CMD__EXIT
+FAT32_DIR_CMD_168:
+            LDA #0
+            STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+            STA FAT32_LONG_FILE_NAME_BUFFER_pointer
+            TXA ; get the folder entry index
+            JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+            PHA
                   LDA #$2D                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
                   JSL FAT32_Print_File_Name
+           PLA
+                  PHX
+                  PHA
+                  CMP #0
+                  BNE FAT32_DIR_CMD__NO_FILE_LFN
+                  LDA #$20
+                  JSL IPUTC
+                  LDA #$20
+                  JSL IPUTC
+                  LDA #$20
+                  JSL IPUTC
+                  LDX #<>FAT32_LONG_FILE_NAME_BUFFER_256
+                  LDA #`FAT32_LONG_FILE_NAME_BUFFER_256
+                  JSL IPUTS_ABS
+FAT32_DIR_CMD__NO_FILE_LFN:
+                  LDA #$0D
+                  JSL IPUTC
+                  PLA
+                  PLX
+
+
                   LDA #$ED                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
-                  BRA FAT32_DIR_CMD__Read_Next_Folder_Entry
+                  BRL FAT32_DIR_CMD__Read_Next_Folder_Entry
 
 FAT32_DIR_CMD__print_folder:
-                  setas
+            LDA #0
+            STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+            STA FAT32_LONG_FILE_NAME_BUFFER_pointer
+            TXA ; get the folder entry index
+            JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+            PHA ; save the FLN result
                   LDA #$8D                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
-                  setal
                   JSL FAT32_Print_Folder_Name
+            PLA
+                  PHX
+                  PHA
+                  CMP #0
+                  BNE FAT32_DIR_CMD__NO_FOLDER_LFN
+                  LDA #$20
+                  JSL IPUTC
+                  LDA #$20
+                  JSL IPUTC
+                  LDA #$20
+                  JSL IPUTC
+                  LDA #$20
+                  JSL IPUTC
+                  LDX #<>FAT32_LONG_FILE_NAME_BUFFER_256
+                  LDA #`FAT32_LONG_FILE_NAME_BUFFER_256
+                  JSL IPUTS_ABS
+FAT32_DIR_CMD__NO_FOLDER_LFN:
+                  LDA #$0D
+                  JSL IPUTC
+                  PLA
+                  PLX
                   LDA #$ED                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
-                  BRA FAT32_DIR_CMD__Read_Next_Folder_Entry
+                  BRL FAT32_DIR_CMD__Read_Next_Folder_Entry
 FAT32_DIR_CMD__EXIT:
 ;----- debug ------
 PHX
@@ -622,115 +680,6 @@ IFAT32_COMPUT_FAT_POS
                   LDA ADDER_R+2
                   STA FAT32_FAT_Base_Sector+2
                   RTL
-;
-;-------------------------------------------------------------------------------
-;
-; REG A (16 bit) contain the sector to read from the
-
-; return value :
-;  1  => sector found
-; -1  =>  end of the file, no more sector
-; -2  =>  bad sector
-; -3  =>  reserved sector
-;-------------------------------------------------------------------------------
-
-IFAT32_READ_LINKED_FAT_ENTRY
-                  PHX
-IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT:
-                  JSL FAT32_IFAT_GET_FAT_ENTRY
-.comment
-;JSL FAT32_Print_FAT_STATE
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_799
-text_799 .text $0d,"curen fat entry          ",0
-TEST_TEXT_799:
-LDX #<>text_799
-LDA #`text_799
-JSL IPUTS_ABS       ; print the first line
-LDA #$AF                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA FAT32_FAT_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
-;----- debug -----
-PHX
-PHA
-LDX #<>TEXT_FAT32___FAT_Entry
-LDA #`TEXT_FAT32___FAT_Entry
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD
-JSL SET_COLOUR
-LDA FAT32_FAT_Entry+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Entry
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
-.endc
-                  ;-------------------------------------------------------------
-                  ; test the fat entry for reserved or bad sector
-                  JSL FAT32_Test_Fat_Entry_Validity
-                  CMP #0
-                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID
-                  BRL IFAT32_READ_LINKED_FAT_ENTRY___EXIT
-                  ;-------------------------------------------------------------
-
-                  ; the fat entry is containning data, now decrementing the
-                  ; linked counter  to see if we need to look at the next fat entry
-IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID:
-                  JSL IFAT32_DEC_FAT_Linked_Entry
-                  LDA FAT32_FAT_Linked_Entry
-                  CMP #0
-                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___TEST_HIGH_PART
-                  LDA FAT32_FAT_Next_Entry
-                  STA FAT32_FAT_Entry
-                  LDA FAT32_FAT_Next_Entry+2
-                  STA FAT32_FAT_Entry+2
-                  ;JSL IFAT32_INC_FAT_Entry
-                  BRL IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT
-IFAT32_READ_LINKED_FAT_ENTRY___TEST_HIGH_PART:
-                  LDA FAT32_FAT_Linked_Entry+2
-                  CMP #0
-                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___ALL_LINKED_FAT_PARSED
-                  LDA FAT32_FAT_Next_Entry
-                  STA FAT32_FAT_Entry
-                  LDA FAT32_FAT_Next_Entry+2
-                  STA FAT32_FAT_Entry+2
-                  ;JSL IFAT32_INC_FAT_Entry
-                  BRL IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT
-IFAT32_READ_LINKED_FAT_ENTRY___ALL_LINKED_FAT_PARSED:
-                  LDA #1
-IFAT32_READ_LINKED_FAT_ENTRY___EXIT:
-                  PLX
-                  RTL
 ;-------------------------------------------------------------------------------
 IFAT32_DEC_FAT_Linked_Entry
                   PHA
@@ -765,9 +714,201 @@ IFAT32_INC_FAT_Entry
                   STA FAT32_FAT_Entry+2
                   PLA
                   RTL
+
 ;-------------------------------------------------------------------------------
 ;
-; REG A (16 bit) contain the root directory entry to read
+; FAT32_Curent_Folder_entry_value contain the long name file to get the data from
+;
+;
+;-------------------------------------------------------------------------------
+IFAT32_GET_LONG_NAME_STRING
+                  setaxl
+                  PHX
+                  PHA
+                  LDA FAT32_LONG_FILE_NAME_BUFFER_pointer
+                  TAX
+                  LDA FAT32_Curent_Folder_entry_value+1
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+3
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+5
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+7
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+9
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+14
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+16
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+18
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+20
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+22
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+24
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+28
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  LDA FAT32_Curent_Folder_entry_value+30
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+                  INX
+                  TXA
+                  STA FAT32_LONG_FILE_NAME_BUFFER_pointer
+                  PLA
+                  PLX
+                  RTL
+
+;-------------------------------------------------------------------------------
+;
+; ; REG A (16 bit) contain the (root/normal) directory entry to get the long
+; name for
+;
+;-------------------------------------------------------------------------------
+FAT32_Temp_16_bite              .word 0
+FAT32_Curent_Folder_entry_value_back_up     .fill 32,0 ; store the 32 byte of root entry
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry .word 0
+
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+                  setaxl
+                  PHX
+                  PHA ; Save the root entry index we want get the long for
+
+                  PHA
+                  PHX
+                  PHY
+                  setas
+                  setdbr `FAT32_Curent_Folder_entry_value
+                  setal
+                  LDA #<>FAT32_Curent_Folder_entry_value
+                  TAX
+                  LDA #<>FAT32_Curent_Folder_entry_value_back_up
+                  TAY
+                  LDA #31
+                  MVN `FAT32_Curent_Folder_entry_value, `FAT32_Curent_Folder_entry_value_back_up
+                  PlY
+                  PLX
+                  PLA
+                  CMP #0
+                  BNE IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY ; scan the previous folder entry to get the long name string
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__NO_MORE_ENTRY_TO_READ:
+                  LDA #-1
+                  BRL IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY:
+                  DEC A; read the previous entry
+                  CMP #$FFFF
+                  BEQ IFAT32_GET_FOLDER_ENTRY_LONG_NAME__NO_MORE_ENTRY_TO_READ
+                  ;--------------------- Back up the curent folder entry --------------------------
+.comment
+PHA
+PHX
+PHY
+LDA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+CMP #0
+BEQ IFAT32_GET_FOLDER_ENTRY_LONG_NAME__BACKUP_ALREADDY_DONE
+setas
+setdbr `FAT32_Curent_Folder_entry_value
+setal
+LDA #<>FAT32_Curent_Folder_entry_value
+TAX
+LDA #<>FAT32_Curent_Folder_entry_value_back_up
+TAY
+LDA #31
+MVN `FAT32_Curent_Folder_entry_value, `FAT32_Curent_Folder_entry_value_back_up
+LDA #1 ; active the flag to restore the folder entry prior to the function call
+STA  @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__BACKUP_ALREADDY_DONE:
+PlY
+PLX
+PLA
+.endc
+                  ;--------------------------------------------------------------------------------
+                  PHA ; save thwe curent folder entry
+                  JSL IFAT32_GET_FOLDER_ENTRY
+;JSL FAT32_PRINT_Root_entry_value
+                  LDA FAT32_Curent_Folder_entry_value +11 ; test the dirrectory entry type
+                  AND #$00FF
+                  CMP #$0F ; test if it's a long name entry
+                  BNE IFAT32_GET_FOLDER_ENTRY_LONG_NAME__ERROR_IN_LONG_NAME_ORDER ; all the long name sould be aone after the otherone
+                  BRA IFAT32_GET_FOLDER_ENTRY_LONG_NAME__TEST_FOR_FIRST_LONG_NAME_ENTRY
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__ERROR_IN_LONG_NAME_ORDER:
+                  PLA ; get the foler index back
+                  LDA #-2
+                  BRL IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__TEST_FOR_FIRST_LONG_NAME_ENTRY:
+                  JSL IFAT32_GET_LONG_NAME_STRING
+                  LDA FAT32_Curent_Folder_entry_value
+                  AND #$0040
+                  CMP #$40
+                  BNE IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY_1
+                  BRA IFAT32_GET_FOLDER_ENTRY_LONG_NAME__END_READDING_LOOP
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY_1:
+                  PLA ; get the foler index back
+                  BRL IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY
+                  ;--------------------- end the long name -----------------------
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__END_READDING_LOOP:
+                  LDA FAT32_LONG_FILE_NAME_BUFFER_pointer
+                  TAX
+                  PLA ; get the foler index back
+                  LDA #0 ; end of string
+                  STA FAT32_LONG_FILE_NAME_BUFFER_256,x
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT:
+                  ;--------------------- Restore the curent folder entry--------------------------
+.comment
+PHA
+PHX
+PHY
+LDA  @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+CMP #0
+BEQ IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT_NO_RESTOR
+LDA #<>FAT32_Curent_Folder_entry_value_back_up
+TAX
+LDA #<>FAT32_Curent_Folder_entry_value
+TAY
+LDA #31
+MVN `FAT32_Curent_Folder_entry_value_back_up, `FAT32_Curent_Folder_entry_value
+LDA #0 ; active the flag to restore the folder entry prior to the function call
+STA  @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT_NO_RESTOR:
+PLY
+PLX
+PLA
+.endc
+                  PHA
+                  PHX
+                  PHY
+                  setas
+                  setdbr `FAT32_Curent_Folder_entry_value
+                  setal
+                  LDA #<>FAT32_Curent_Folder_entry_value_back_up
+                  TAX
+                  LDA #<>FAT32_Curent_Folder_entry_value
+                  TAY
+                  LDA #31
+                  MVN `FAT32_Curent_Folder_entry_value_back_up, `FAT32_Curent_Folder_entry_value
+                  PlY
+                  PLX
+                  PLA
+                  ;--------------------------------------------------------------------------------
+                  PLX ; get the PLA out of the way without modifiying the return value
+                  PLX
+                  RTL
+;-------------------------------------------------------------------------------
+;
+; REG A (16 bit) contain the (root/normal) directory entry to read
 ;
 ;
 ;-------------------------------------------------------------------------------
@@ -1031,6 +1172,115 @@ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM:
                   PLY
                   PLX
                   PLA
+                  RTL
+
+;-------------------------------------------------------------------------------
+;
+; REG A (16 bit) contain the sector to read from the
+
+; return value :
+;  1  => sector found
+; -1  =>  end of the file, no more sector
+; -2  =>  bad sector
+; -3  =>  reserved sector
+;-------------------------------------------------------------------------------
+
+IFAT32_READ_LINKED_FAT_ENTRY
+                  PHX
+IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT:
+                  JSL FAT32_IFAT_GET_FAT_ENTRY
+.comment
+;JSL FAT32_Print_FAT_STATE
+;----- debug -----
+PHX
+PHA
+BRA TEST_TEXT_799
+text_799 .text $0d,"curen fat entry          ",0
+TEST_TEXT_799:
+LDX #<>text_799
+LDA #`text_799
+JSL IPUTS_ABS       ; print the first line
+LDA #$AF                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA FAT32_FAT_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
+;----- debug -----
+PHX
+PHA
+LDX #<>TEXT_FAT32___FAT_Entry
+LDA #`TEXT_FAT32___FAT_Entry
+JSL IPUTS_ABS       ; print the first line
+LDA #$BD
+JSL SET_COLOUR
+LDA FAT32_FAT_Entry+2
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_FAT_Entry
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$ED                  ; Set the default text color to light gray on dark gray
+JSL SET_COLOUR
+
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+;------------------
+.endc
+                  ;-------------------------------------------------------------
+                  ; test the fat entry for reserved or bad sector
+                  JSL FAT32_Test_Fat_Entry_Validity
+                  CMP #0
+                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID
+                  BRL IFAT32_READ_LINKED_FAT_ENTRY___EXIT
+                  ;-------------------------------------------------------------
+
+                  ; the fat entry is containning data, now decrementing the
+                  ; linked counter  to see if we need to look at the next fat entry
+IFAT32_READ_LINKED_FAT_ENTRY___NEXT_CLUSTER_VALID:
+                  JSL IFAT32_DEC_FAT_Linked_Entry
+                  LDA FAT32_FAT_Linked_Entry
+                  CMP #0
+                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___TEST_HIGH_PART
+                  LDA FAT32_FAT_Next_Entry
+                  STA FAT32_FAT_Entry
+                  LDA FAT32_FAT_Next_Entry+2
+                  STA FAT32_FAT_Entry+2
+                  ;JSL IFAT32_INC_FAT_Entry
+                  BRL IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT
+IFAT32_READ_LINKED_FAT_ENTRY___TEST_HIGH_PART:
+                  LDA FAT32_FAT_Linked_Entry+2
+                  CMP #0
+                  BEQ IFAT32_READ_LINKED_FAT_ENTRY___ALL_LINKED_FAT_PARSED
+                  LDA FAT32_FAT_Next_Entry
+                  STA FAT32_FAT_Entry
+                  LDA FAT32_FAT_Next_Entry+2
+                  STA FAT32_FAT_Entry+2
+                  ;JSL IFAT32_INC_FAT_Entry
+                  BRL IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT
+IFAT32_READ_LINKED_FAT_ENTRY___ALL_LINKED_FAT_PARSED:
+                  LDA #1
+IFAT32_READ_LINKED_FAT_ENTRY___EXIT:
+                  PLX
                   RTL
 ;-------------------------------------------------------------------------------
 ;

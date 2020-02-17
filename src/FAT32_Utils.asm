@@ -54,8 +54,8 @@ FAT32_Print_File_Name
                   JSL IPUTC
                   LDA FAT32_Curent_Folder_entry_value +10
                   JSL IPUTC
-                  LDA #$0D
-                  JSL IPUTC
+                  ;LDA #$0D
+                  ;JSL IPUTC
                   PLA
                   PLX
                   RTL
@@ -73,8 +73,6 @@ FAT32_Print_Folder_Name__Print_char:
                   INX
                   CPX #$B
                   BNE FAT32_Print_Folder_Name__Print_char
-                  LDA #$0D
-                  JSL IPUTC
                   PLX
                   RTL
 ;-------------------------------------------------------------------------------

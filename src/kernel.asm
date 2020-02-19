@@ -169,7 +169,6 @@ CLEAR_MEM_LOOP
 greet           setdbr `greet_msg       ;Set data bank to ROM
                 LDX #<>greet_msg
                 JSL IPRINT       ; print the first line
-
                 ; Go set the Color Text Memory so we can have color for the LOGO
                 JSL ICOLORFLAG  ; This is to set the Color Memory for the Logo
 
@@ -207,7 +206,7 @@ JSL IPRINT_HEX
 LDA #$0D
 JSL IPUTC
                 ;-------------------------------
-                LDA #0
+                ;LDA #0
                 JSL FAT32_DIR_CMD
                 ;-------------------------------
 LDA #$61
@@ -215,11 +214,12 @@ JSL IPRINT_HEX
 LDA #$0D
 JSL IPUTC
                 ;-------------------------------
-                ;jsl FAT32_test
+                JSL FAT32_test
                 ;-------------------------------
 LDA #$62
 JSL IPRINT_HEX
 LDA #$0D
+                JSL FAT_32_test_fat_code
 JSL IPUTC
 LDA #$0D
 JSL IPUTC

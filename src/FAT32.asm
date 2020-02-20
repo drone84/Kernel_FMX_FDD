@@ -103,22 +103,6 @@ FAT32_test
               BNE FAT32_TEST__Faill_To_Find_file
 loop_read_file:
               JSL FAT32_Read_File
-
-PHX
-PHA
-BRA TEST_TEXT_87456
-text_87456 .text "test code",0
-TEST_TEXT_87456:
-LDX #<>text_87456
-LDA #`text_87456
-JSL IPUTS_ABS       ; print the first line
-LDA #$00
-JSL IPUTC
-PLA
-PHA
-JSL IPUTC
-PLA
-PLX
               CMP #0
               BEQ Skip_enpty_data
               PHA
@@ -504,13 +488,13 @@ FAT_32_test_fat_code
 FAT32_Read_File   ;  return value in A
                   PHX
 ;----- debug ------
-PHX
-PHA
-LDX #<>TEXT_____DEBUG_START_Read
-LDA #`TEXT_____DEBUG_START_Read
-JSL IPRINT_ABS
-PLA
-PLX
+;PHX
+;PHA
+;LDX #<>TEXT_____DEBUG_START_Read
+;LDA #`TEXT_____DEBUG_START_Read
+;JSL IPRINT_ABS
+;PLA
+;PLX
 ;-----------------
                   ; test if the file have already bin read
                   LDA FAT32_Curent_File_Cluster
@@ -526,35 +510,6 @@ PLX
                   STA FAT32_Curent_File_Cluster+2
 
 FAT32_Read_File___Get_Next_Sector:
-;----- debug -----
-PHX
-PHA
-BRA TEST_TEXT_8745
-text_8745 .text "Sector to read   ",0
-TEST_TEXT_8745:
-LDX #<>text_8745
-LDA #`text_8745
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD
-JSL SET_COLOUR
-LDA FAT32_Curent_File_Cluster+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_Curent_File_Cluster
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;----- debug -----
                   ; Get the curent sector to read
                   LDA FAT32_Curent_File_Cluster
                   STA FAT32_FAT_Entry
@@ -608,94 +563,15 @@ FAT32_Read_File___Read_Sector:
                   STA FAT32_Curent_File_Cluster+2
                   PLA ; Get the return value in A
 
-PHX
-PHA
-BRA _TEST_TEXT_82
-_text_82 .text "---- Error value ",0
-_TEST_TEXT_82:
-LDX #<>_text_82
-LDA #`_text_82
-JSL IPUTS_ABS
-PLA
-PHA
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;----- debug -----
-CMP #0
-;BNE PRINT_ERROR_READ_FILE
-CMP #1
-;BNE PRINT_ERROR_READ_FILE
-PHX
-PHA
-BRA TEST_TEXT_874522
-text_874522 .text "Next sector to read    ",0
-TEST_TEXT_874522:
-LDX #<>text_874522
-LDA #`text_874522
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD
-JSL SET_COLOUR
-LDA FAT32_Curent_File_Cluster+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_Curent_File_Cluster
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-BRL FAT32_Read_File___RETURN_ERROR
-PRINT_ERROR_READ_FILE
-PHX
-PHA
-BRA TEST_TEXT_874511
-text_874511 .text "Error while readding the file",0
-TEST_TEXT_874511:
-LDX #<>text_874511
-LDA #`text_874511
-JSL IPUTS_ABS       ; print the first line
-LDA #$BD
-JSL SET_COLOUR
-LDA FAT32_Curent_File_Cluster+2
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_Curent_File_Cluster
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$ED                  ; Set the default text color to light gray on dark gray
-JSL SET_COLOUR
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-;------------------
-
 FAT32_Read_File___RETURN_ERROR:
 ;----- debug ------
-PHX
-PHA
-LDX #<>TEXT_____DEBUG_END_Read
-LDA #`TEXT_____DEBUG_END_Read
-JSL IPRINT_ABS
-PLA
-PLX
+;PHX
+;PHA
+;LDX #<>TEXT_____DEBUG_END_Read
+;LDA #`TEXT_____DEBUG_END_Read
+;JSL IPRINT_ABS
+;PLA
+;PLX
 ;-----------------
                   PLX
                   RTL

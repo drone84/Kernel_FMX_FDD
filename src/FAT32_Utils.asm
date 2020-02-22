@@ -28,9 +28,9 @@ FAT32_COMPUT_PHISICAL_CLUSTER
 
                   ; get the final result out of the hardware
                   LDA ADDER_R;
-                  STA FAT32_FAT_Entry_PhisicalL_Address
+                  STA FAT32_FAT_Entry_Physical_Address
                   LDA ADDER_R+2
-                  STA FAT32_FAT_Entry_PhisicalL_Address+2
+                  STA FAT32_FAT_Entry_Physical_Address+2
                   PLA
                   RTL
 
@@ -172,6 +172,7 @@ FAT32_Test_Fat_Entry_Validity
                   LDA #1
                   FAT32_Test_Fat_Entry_Validity_ERROR_EXIT:
                   ;PLA
+.comment
 PHX
 PHA
 BRA _TEST_TEXT_8
@@ -202,5 +203,136 @@ LDA #$0D
 JSL IPUTC
 PLA
 PLX
+.endc
                   RTL
-                  ;-------------------------------------------------------------
+;--------------------------------------------------------------------------------
+;-- Copy the data in the FAT32 buffer at address FAT32_Data_Destination_buffer --
+;--------------------------------------------------------------------------------
+FAT32_Data_Destination_buffer .dword 0
+
+FAT32_Copy_Cluster_at_Address
+                  PHX
+                  PHY
+                  PHA
+                  LDX #<>FAT32_DATA_ADDRESS_BUFFER_512
+                  LDA @l FAT32_Data_Destination_buffer
+                  TAY
+                  LDA FAT32_Data_Destination_buffer+2
+                  setas
+                  ;STA FAT32_Copy_Cluster_at_Address_MVN + 2 ; rewrite the second parameter of the instruction in RAM
+                  setal
+                  LDA #$0200 ; 512 Byte
+
+
+;FAT32_Copy_Cluster_at_Address_MVN: MVN `FAT32_DATA_ADDRESS_BUFFER_512,$B0
+;FAT32_Copy_Cluster_at_Address_MVN: MVN `FAT32_DATA_ADDRESS_BUFFER_512,`FAT32_Data_Destination_buffer
+                  ; inc the buffer adres by 512
+                  setas
+                  LDA @lFAT32_Data_Destination_buffer+2
+                  STA @l FAT32_Copy_Cluster_at_Address_MVN+ 3
+                  ;JSL IPRINT_HEX ; print the sector
+                  LDA @lFAT32_Data_Destination_buffer+1
+                  STA @l FAT32_Copy_Cluster_at_Address_MVN+ 2
+                  ;JSL IPRINT_HEX ; print the sector
+                  LDA @lFAT32_Data_Destination_buffer+0
+                  STA @l FAT32_Copy_Cluster_at_Address_MVN+ 1
+                  ;JSL IPRINT_HEX ; print the sector
+                  setal
+.comment
+PHX
+PHA
+PHY
+BRA _TEST_TEXT_228
+_text_228 .text "---- cpy cluster address editing ",0
+_TEST_TEXT_228:
+LDX #<>_text_228
+LDA #`_text_228
+JSL IPUTS_ABS
+LDA #$00
+JSL IPUTC
+LDA FAT32_Data_Destination_buffer +2 ; test for EOC (End Of Cluster) MSB 24
+JSL IPRINT_HEX
+LDA FAT32_Data_Destination_buffer +1 ; test for EOC (End Of Cluster)
+JSL IPRINT_HEX
+LDA FAT32_Data_Destination_buffer +0 ; test for EOC (End Of Cluster) LSB 24
+JSL IPRINT_HEX
+LDA #$00
+JSL IPUTC
+LDA FAT32_Copy_Cluster_at_Address_MVN ; test for EOC (End Of Cluster)
+JSL IPRINT_HEX
+LDA #$00
+JSL IPUTC
+LDA FAT32_Copy_Cluster_at_Address_MVN +3 ; test for EOC (End Of Cluster)
+JSL IPRINT_HEX
+LDA FAT32_Copy_Cluster_at_Address_MVN +2 ; test for EOC (End Of Cluster)
+JSL IPRINT_HEX
+LDA FAT32_Copy_Cluster_at_Address_MVN +1 ; test for EOC (End Of Cluster)
+JSL IPRINT_HEX
+LDA #$00
+JSL IPUTC
+LDA FAT32_Data_Destination_buffer+2 ; test for EOC (End Of Cluster)
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_Data_Destination_buffer ; test for EOC (End Of Cluster)
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+PLY
+PLA
+PLX
+.endc
+                  LDX #0
+FAT32_Copy_Cluster_at_Address__READ_LOOP_BYTE:
+                  LDA @l FAT32_DATA_ADDRESS_BUFFER_512,x
+  FAT32_Copy_Cluster_at_Address_MVN STA @l FAT32_Data_Destination_buffer,x
+                  ;JSL IPRINT_HEX
+                  ;JSL IPUTC
+                  INX
+                  INX
+                  CPX #$200
+                  BNE FAT32_Copy_Cluster_at_Address__READ_LOOP_BYTE
+
+                  LDA #$0200
+                  CLC
+                  ADC FAT32_Data_Destination_buffer
+                  STA FAT32_Data_Destination_buffer
+                  BCC FAT32_Copy_Cluster_at_Address__No_over_flow_adresse
+                  LDA #$0001
+                  CLC
+                  ADC FAT32_Data_Destination_buffer+2
+                  STA FAT32_Data_Destination_buffer+2
+FAT32_Copy_Cluster_at_Address__No_over_flow_adresse
+.comment
+PHX
+PHA
+BRA _TEST_TEXT_229
+_text_229 .text "---- cpy cluster inc address ",0
+_TEST_TEXT_229:
+LDX #<>_text_229
+LDA #`_text_229
+JSL IPUTS_ABS
+LDA FAT32_Data_Destination_buffer+2 ; test for EOC (End Of Cluster)
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA FAT32_Data_Destination_buffer ; test for EOC (End Of Cluster)
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+PLA
+PLX
+.endc
+                  setaxl
+                  PLA
+                  PLY
+                  PLX
+                  RTL

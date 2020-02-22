@@ -149,6 +149,70 @@ FAT32_PRINT_Root_entry_value_HEX
                   PLX
                   RTL
 
+FAT32_Print_FAT_ENTRY_INFO
+                PHP
+                PHA
+                PHX
+                PHY
+                LDX #<>TEXT_FAT32___FAT_Entry
+                LDA #`TEXT_FAT32___FAT_Entry
+                JSL IPUTS_ABS       ; print the first line
+                LDA FAT32_FAT_Entry+2
+                XBA
+                JSL IPRINT_HEX
+                XBA
+                JSL IPRINT_HEX
+                LDA FAT32_FAT_Entry
+                XBA
+                JSL IPRINT_HEX
+                XBA
+                JSL IPRINT_HEX
+                LDX #<>TEXT_FAT32___FAT_Next_Entry
+                LDA #`TEXT_FAT32___FAT_Next_Entry
+                JSL IPUTS_ABS       ; print the first line
+                LDA FAT32_FAT_Next_Entry+2
+                XBA
+                JSL IPRINT_HEX
+                XBA
+                JSL IPRINT_HEX
+                LDA FAT32_FAT_Next_Entry
+                XBA
+                JSL IPRINT_HEX
+                XBA
+                JSL IPRINT_HEX
+                ;LDX #<>TEXT_FAT32___FAT_Linked_Entry
+                ;LDA #`TEXT_FAT32___FAT_Linked_Entry
+                ;JSL IPUTS_ABS       ; print the first line
+                ;LDA FAT32_FAT_Linked_Entry+2
+                ;XBA
+                ;JSL IPRINT_HEX
+                ;XBA
+                ;JSL IPRINT_HEX
+                ;LDA FAT32_FAT_Linked_Entry
+                ;XBA
+                ;JSL IPRINT_HEX
+                ;XBA
+                ;JSL IPRINT_HEX
+                LDX #<>TEXT_FAT32___FAT32_FAT_Entry_Physical_Address
+                LDA #`TEXT_FAT32___FAT32_FAT_Entry_Physical_Address
+                JSL IPUTS_ABS       ; print the first line
+                LDA FAT32_FAT_Entry_Physical_Address+2
+                XBA
+                JSL IPRINT_HEX
+                XBA
+                JSL IPRINT_HEX
+                LDA FAT32_FAT_Entry_Physical_Address
+                XBA
+                JSL IPRINT_HEX
+                XBA
+                JSL IPRINT_HEX
+                LDA #$0D
+                JSL IPUTC
+                PLY
+                PLX
+                PLA
+                PLP
+                RTL
 
 FAT32_Print_FAT_STATE
                 PHP
@@ -559,6 +623,7 @@ TEXT_FAT32___FAT_Sector_loaded_in_ram    .text   $0D, "FAT32 FAT Sector loaded i
 TEXT_FAT32___FAT_Entry                   .text   $0D, "FAT32 FAT Entry                    ",0
 TEXT_FAT32___FAT_Next_Entry              .text   $0D, "FAT32 FAT Next Entry               ",0
 TEXT_FAT32___FAT_Linked_Entry            .text   $0D, "FAT32 FAT Linked Entry             ",0
+TEXT_FAT32___FAT32_FAT_Entry_Physical_Address .text   $0D, "FAT32 FAT Entry Physical Address   ",0
 TEXT_FAT32___Data_Base_Sector            .text   $0D, "FAT32 Data Base Sector             ",0
 TEXT_FAT32___FAT_Partition_address       .text   $0D, "FAT Partition address              ",0
 TEXT_FAT32___Curent_Folder_base_cluster   .text   $0D, "FAT32 Curent Folder base cluster   ",0

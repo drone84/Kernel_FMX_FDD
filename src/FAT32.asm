@@ -31,7 +31,7 @@ FAT32_FAT_Entry                 .dword 0
 FAT32_FAT_Next_Entry            .dword 0  ; store the next 32 bit FAT entry associated to the FAT entry in 'FAT32_FAT_Entry'
 FAT32_FAT_Linked_Entry          .dword 0
 
-FAT32_FAT_Entry_PhisicalL_Address .dword 0        ; Contain the phisical (from the cluster 0) address of the curent fat entry
+FAT32_FAT_Entry_Physical_Address .dword 0        ; Contain the phisical (from the cluster 0) address of the curent fat entry
 FAT32_FAT_Entry_PhisicalL_Address_Next .dword 0   ; Contain the phisical (from the cluster 0) address of the next fat entry
 
 FAT32_Data_Base_Sector          .dword 0  ; contain the sector index of the first data in the FAT volume (that include the reserved cluster after the fat) => used to convert from cluster count to fat index
@@ -48,7 +48,8 @@ FAT32_Sector_to_read            .dword 0
 FAT32_SD_FDD_HDD_Sell           .word 0
 ;file_to_load_fat_32    .text "SDFGVGH TXT"
 ;file_to_load_fat_32    .text "TEXT_T~1TXT",0
-file_to_load_fat_32    .text "AMIGA   TXT",0
+;file_to_load_fat_32    .text "AMIGA   TXT",0
+file_to_load_fat_32    .text "HALFLIFEBIN",0
 FAT32_counter_32              .dword 0
 
 debug_stop                      .word 0
@@ -77,7 +78,7 @@ FAT32_init  ; init
               JSL IFAT32_GET_ROOT_ENTRY
               RTL
 
-FAT32_test
+FAT32_Open_Read_Display_File
               LDA 0;
               JSL IFAT32_GET_ROOT_ENTRY
               LDA #5
@@ -91,32 +92,48 @@ FAT32_test
               JSL FAT32_DIR_CMD
               LDA #$0D
               JSL IPUTC
-              LDX #$8000      ; 1.6s
-              JSL ILOOP_MS
+              ;LDX #$8000      ; 1.6s
+              ;JSL ILOOP_MS
               ;-------------------------
               ;LDA #`file_to_load_fat_32 ; load the byte nb 3 (bank byte)
               ;PHA
               ;LDA #<>file_to_load_fat_32 ; load the low world part of the buffer address
               ;PHA
+              ; set the buffer where to write the data (VRAM)
+              LDA #$001B
+              STA FAT32_Data_Destination_buffer+2
+              LDA #$0000
+              STA FAT32_Data_Destination_buffer+0
+
               JSL FAT32_Open_File
               CMP #1
               BNE FAT32_TEST__Faill_To_Find_file
+
+              ;LDX #0
 loop_read_file:
               JSL FAT32_Read_File
               CMP #0
               BEQ Skip_enpty_data
               PHA
               PHX
-              JSL FAT32_Print_Cluster
-              JSL Wait_loop
-              JSL Wait_loop
+              PHY
+
+              ;JSL FAT32_Print_Cluster
+              ;JSL FAT32_Print_Cluster_HEX
+              JSL FAT32_Copy_Cluster_at_Address
+              ;JSL Wait_loop
+              ;JSL Wait_loop
+              PLY
               PLX
               PLA
 Skip_enpty_data
+              ;INX
+              ;CPX #19
+;loop_read_file_freez BEQ loop_read_file_freez
               CMP #1
               BEQ loop_read_file
-              LDX #$FFFF      ; 1.6s
-              JSL ILOOP_MS
+              ;LDX #$FFFF      ; 1.6s
+              ;JSL ILOOP_MS
               ;JSL FAT32_Print_Cluster
               PHX
               PHA
@@ -126,8 +143,8 @@ Skip_enpty_data
               LDX #<>file_to_load_fat_32
               LDA #`file_to_load_fat_32
               JSL IPRINT_ABS
-              LDX #$8000      ; 1.6s
-              JSL ILOOP_MS
+              ;LDX #$8000      ; 1.6s
+              ;JSL ILOOP_MS
               PLA
               PLX
               BRA FAT32_TEST_END
@@ -141,10 +158,10 @@ FAT32_TEST__Faill_To_Find_file:
               LDX #<>file_to_load_fat_32
               LDA #`file_to_load_fat_32
               JSL IPRINT_ABS
-              LDX #$8000      ; 1.6s
-              JSL ILOOP_MS
-              LDX #$8000      ; 1.6s
-              JSL ILOOP_MS
+              ;LDX #$8000      ; 1.6s
+              ;JSL ILOOP_MS
+              ;LDX #$8000      ; 1.6s
+              ;JSL ILOOP_MS
               PLA
               PLX
 FAT32_TEST_END:
@@ -536,15 +553,17 @@ FAT32_Read_File___still_several_sector_to_read:
 
                   ; if everyting is ok (last sector or in the middle of the file)
                   ; then read the data
-                  JSL FAT32_COMPUT_PHISICAL_CLUSTER; (in : FAT32_FAT_Entry / Out : FAT32_FAT_Entry)
+                  JSL FAT32_COMPUT_PHISICAL_CLUSTER; (in : FAT32_FAT_Entry / Out : FAT32_FAT_Entry_Physical_Address)
+
+                  ;JSL FAT32_Print_FAT_ENTRY_INFO
 
                   LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
                   PHA
                   LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   PHA
-                  LDA FAT32_FAT_Entry_PhisicalL_Address+2
+                  LDA FAT32_FAT_Entry_Physical_Address+2
                   TAX
-                  LDA FAT32_FAT_Entry_PhisicalL_Address
+                  LDA FAT32_FAT_Entry_Physical_Address
                   JSL IFAT_READ_SECTOR
                   PLX
                   PLX
@@ -644,6 +663,7 @@ READ_MBR_Partition_valid_address: ; the number in FAT_Partition_address is an of
                   ;LDA FAT_Partition_address+2 ; dont use X value for now IFAT_READ_SECTOR is a dummy function unlit I ger the real HDD hardware driver
                   ;TAX
                   ;LDA FAT_Partition_address
+                  ;LDX FAT32_Sector_to_read+2
                   ;JSL IFAT_READ_SECTOR
 
 READ_MBR_End_Scan_no_partition:
@@ -1429,7 +1449,7 @@ IFAT32_READ_LINKED_FAT_ENTRY___READ_NEXT_FAT:
 PHX
 PHA
 BRA TEST_TEXT_799
-text_799 .text $0d,"curen fat entry          ",0
+text_799 .text $0d,"curent fat entry          ",0
 TEST_TEXT_799:
 LDX #<>text_799
 LDA #`text_799
@@ -1712,6 +1732,7 @@ SDC_LOAD_BLOCK
 ; LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
 ; PHA
 ; LDA FAT32_Sector_to_read
+; LDX FAT32_Sector_to_read+2
 ; JSL IFAT_READ_SECTOR
 ;----------------------------------------------------------------------------------------------------------
 IFAT_READ_SECTOR
@@ -1816,7 +1837,43 @@ ISD_READ        ;PHP
                 ADC #1
                 TAX
                 PLA
+                BRA ISD_READ__OVERFLOW_DONE
 ISD_READ__NO_OVERFLOW:
+                PHA
+                TXA
+                ASL
+                TAX
+                PLA
+ISD_READ__OVERFLOW_DONE:
+.comment
+PHA
+PHX
+BRA _TEST_TEXT_2212
+_text_2212 .text "---- cluser address to read X:A    ",0
+_TEST_TEXT_2212:
+LDX #<>_text_2212
+LDA #`_text_2212
+JSL IPUTS_ABS
+PLA ; get Content of X MSB
+PHA
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+PLA
+PLX
+PHX
+PHA
+TXA
+XBA
+JSL IPRINT_HEX
+XBA
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+PLX
+PLA
+.endc
                 setas
                 STA SDC_SD_ADDR_15_8_REG
                 XBA ; get the other part of the 16 byte A register

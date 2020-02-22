@@ -214,12 +214,31 @@ JSL IPRINT_HEX
 LDA #$0D
 JSL IPUTC
                 ;-------------------------------
-                JSL FAT32_test
+                JSL FAT32_Open_Read_Display_File
                 ;-------------------------------
+                ;----- debug -----
+                PHX
+                PHA
+                BRA TEST_TEXT_7998
+                text_7998 .text $0d,"Activate the BMP engine  ",0
+                TEST_TEXT_7998:
+                LDX #<>text_7998
+                LDA #`text_7998
+                JSL IPUTS_ABS       ; print the first line
+                LDA #$0D
+                JSL IPUTC
+                PLA
+                PLX
+                ;------------------
+                JSR INIT_DISPLAY
+GAME_LOOP:
+                BRA GAME_LOOP
+.include "display.asm"
+
 LDA #$62
 JSL IPRINT_HEX
 LDA #$0D
-                JSL FAT_32_test_fat_code
+                JSL FAT_32_test_fat_code ; test if the function to get the next fat entry is working as expected
 JSL IPUTC
 LDA #$0D
 JSL IPUTC
@@ -247,7 +266,7 @@ JSL IPUTC
                 ;JSl IFAT32_SD_READ_MBR
                 ;JSL FAT32_init  ; initialise the FAT so get the MBR / boot sector / first Root directory cluster
                 ;JSL FAT32_LS_CMD
-                ;JSL FAT32_test
+                ;JSL FAT32_Open_Read_Display_File
 test_end_loop:   BRA test_end_loop
                 setas
                 setxl

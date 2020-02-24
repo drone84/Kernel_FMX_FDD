@@ -148,7 +148,11 @@ FAT32_PRINT_Root_entry_value_HEX
                   PLY
                   PLX
                   RTL
-
+;-------------------------------------------------------------------------------
+;
+;
+;
+;-------------------------------------------------------------------------------
 FAT32_Print_FAT_ENTRY_INFO
                 PHP
                 PHA
@@ -515,12 +519,12 @@ PRINT_FAT32_Root_entry_value_ASCII:
                 LDX #<>TEXT_FAT32___Curent_Folder_base_cluster
                 LDA #`TEXT_FAT32___Curent_Folder_base_cluster
                 JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_Folder_base_cluster+2
+                LDA FAT32_Curent_Folder_start_cluster+2
                 XBA
                 JSL IPRINT_HEX
                 XBA
                 JSL IPRINT_HEX
-                LDA FAT32_Curent_Folder_base_cluster
+                LDA FAT32_Curent_Folder_start_cluster
                 XBA
                 JSL IPRINT_HEX
                 XBA
@@ -599,42 +603,43 @@ PRINT_FAT32_Root_entry_value_ASCII:
 * = $20425
 Partition_ofset_text    .text "Partition ofset (in cluster) : ",0
 
-TEXT_FAT32___Byte_Per_Sector		         .text   $0D, "FAT32 Byte Per Sector              ",0
-TEXT_FAT32___Sector_Per_Cluster          .text   $0D, "FAT32 Sector Per Cluster           ",0
-TEXT_FAT32___Nb_Of_reserved_Cluster      .text   $0D, "FAT32 Nb Of reserved Cluster       ",0
-TEXT_FAT32___Nb_Of_FAT                   .text   $0D, "FAT32 Nb Of FAT                    ",0
-TEXT_FAT32___Max_Root_Entry              .text   $0D, "FAT32 Max Root Entry               ",0
-TEXT_FAT32___Total_Sector_Count          .text   $0D, "FAT32 Total_Sector_Count           ",0
-TEXT_FAT32___Sector_per_Fat              .text   $0D, "FAT32 Sector per Fat               ",0
-TEXT_FAT32___Sector_per_Track            .text   $0D, "FAT32 Sector per Track             ",0
-TEXT_FAT32___Nb_of_Head                  .text   $0D, "FAT32 Nb of Head                   ",0
-TEXT_FAT32___Nb_Of_Sector_In_Partition   .text   $0D, "FAT32 Nb Of Sector In Partition    ",0
-TEXT_FAT32___Boot_Signature              .text   $0D, "FAT32 Boot Signature               ",0
-TEXT_FAT32___Volume_ID                   .text   $0D, "FAT32 Volume ID                    ",0
-TEXT_FAT32___Volume_Label                .text   $0D, "FAT32 Volume Label                 ",0
-TEXT_FAT32___File_System_Type            .text   $0D, "FAT32 File System Type             ",0
-TEXT_FAT32___Sector_loaded_in_ram        .text   $0D, "FAT32 Sector loaded in ram         ",0
-TEXT_FAT32___Root_Sector_offset          .text   $0D, "FAT32 Root Sector offset           ",0
-TEXT_FAT32___Root_Base_Sector            .text   $0D, "FAT32 Root Base Sector             ",0
+TEXT_FAT32___Byte_Per_Sector		                  .text   $0D, "FAT32 Byte Per Sector              ",0
+TEXT_FAT32___Sector_Per_Cluster                   .text   $0D, "FAT32 Sector Per Cluster           ",0
+TEXT_FAT32___Nb_Of_reserved_Cluster               .text   $0D, "FAT32 Nb Of reserved Cluster       ",0
+TEXT_FAT32___Nb_Of_FAT                            .text   $0D, "FAT32 Nb Of FAT                    ",0
+TEXT_FAT32___Max_Root_Entry                       .text   $0D, "FAT32 Max Root Entry               ",0
+TEXT_FAT32___Total_Sector_Count                   .text   $0D, "FAT32 Total_Sector_Count           ",0
+TEXT_FAT32___Sector_per_Fat                       .text   $0D, "FAT32 Sector per Fat               ",0
+TEXT_FAT32___Sector_per_Track                     .text   $0D, "FAT32 Sector per Track             ",0
+TEXT_FAT32___Nb_of_Head                           .text   $0D, "FAT32 Nb of Head                   ",0
+TEXT_FAT32___Nb_Of_Sector_In_Partition            .text   $0D, "FAT32 Nb Of Sector In Partition    ",0
+TEXT_FAT32___Boot_Signature                       .text   $0D, "FAT32 Boot Signature               ",0
+TEXT_FAT32___Volume_ID                            .text   $0D, "FAT32 Volume ID                    ",0
+TEXT_FAT32___Volume_Label                         .text   $0D, "FAT32 Volume Label                 ",0
+TEXT_FAT32___File_System_Type                     .text   $0D, "FAT32 File System Type             ",0
+TEXT_FAT32___Sector_loaded_in_ram                 .text   $0D, "FAT32 Sector loaded in ram         ",0
+TEXT_FAT32___Root_Sector_offset                   .text   $0D, "FAT32 Root Sector offset           ",0
+TEXT_FAT32___Root_Base_Sector                     .text   $0D, "FAT32 Root Base Sector             ",0
 TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram   .text   $0D, "FAT32 Folder Sector loaded in ram  ",0
-TEXT_FAT32___Curent_Folder_entry_value            .text   $0D, "FAT32 Folder entry value            ",0
-TEXT_FAT32___FAT_Base_Sector             .text   $0D, "FAT32 FAT Base Sector              ",0
-TEXT_FAT32___FAT_Sector_loaded_in_ram    .text   $0D, "FAT32 FAT Sector loaded in ram     ",0
-TEXT_FAT32___FAT_Entry                   .text   $0D, "FAT32 FAT Entry                    ",0
-TEXT_FAT32___FAT_Next_Entry              .text   $0D, "FAT32 FAT Next Entry               ",0
-TEXT_FAT32___FAT_Linked_Entry            .text   $0D, "FAT32 FAT Linked Entry             ",0
-TEXT_FAT32___FAT32_FAT_Entry_Physical_Address .text   $0D, "FAT32 FAT Entry Physical Address   ",0
-TEXT_FAT32___Data_Base_Sector            .text   $0D, "FAT32 Data Base Sector             ",0
-TEXT_FAT32___FAT_Partition_address       .text   $0D, "FAT Partition address              ",0
-TEXT_FAT32___Curent_Folder_base_cluster   .text   $0D, "FAT32 Curent Folder base cluster   ",0
-TEXT_FAT32___Curent_Folder_curent_cluster .text   $0D, "FAT32 Curent Folder curent cluster ",0
-TEXT_FAT32___Curent_File_Cluster    .text   $0D, "FAT32 Curent File base cluster     ",0
-TEXT_FAT32___FAT32_Start_Of_The_file_Cluster .text   $0D, "FAT32 Start Of The file cluster    ",0
-TEXT_FAT32___Sector_to_read              .text   $0D, "FAT32 Sector to read               ",0
-TEXT_FAT32___SD_FDD_HDD_Sell             .text   $0D, "FAT32 SD_FDD_HDD_Sell              ",0
-TEXT_____Fat_size                        .text   $0D, "Fat_size                           ",0
+TEXT_FAT32___Curent_Folder_entry_value            .text   $0D, "FAT32 Folder entry value           ",0
+TEXT_FAT32___FAT_Base_Sector                      .text   $0D, "FAT32 FAT Base Sector              ",0
+TEXT_FAT32___FAT_Sector_loaded_in_ram             .text   $0D, "FAT32 FAT Sector loaded in ram     ",0
+TEXT_FAT32___FAT_Entry                            .text   $0D, "FAT32 FAT Entry                    ",0
+TEXT_FAT32___FAT_Next_Entry                       .text   $0D, "FAT32 FAT Next Entry               ",0
+TEXT_FAT32___FAT_Linked_Entry                     .text   $0D, "FAT32 FAT Linked Entry             ",0
+TEXT_FAT32___FAT32_FAT_Entry_Physical_Address     .text   $0D, "FAT32 FAT Entry Physical Address   ",0
+TEXT_FAT32___Data_Base_Sector                     .text   $0D, "FAT32 Data Base Sector             ",0
+TEXT_FAT32___FAT_Partition_address                .text   $0D, "FAT Partition address              ",0
+TEXT_FAT32___Curent_Folder_base_cluster           .text   $0D, "FAT32 Curent Folder base cluster   ",0
+TEXT_FAT32___Curent_Folder_curent_cluster         .text   $0D, "FAT32 Curent Folder curent cluster ",0
+TEXT_FAT32___Curent_File_Cluster                  .text   $0D, "FAT32 Curent File base cluster     ",0
+TEXT_FAT32___FAT32_Start_Of_The_file_Cluster      .text   $0D, "FAT32 Start Of The file cluster    ",0
+TEXT_FAT32___FAT32_Start_Of_The_folder_Cluster    .text   $0D, "FAT32 Start Of The folder cluster  ",0
+TEXT_FAT32___Sector_to_read                       .text   $0D, "FAT32 Sector to read               ",0
+TEXT_FAT32___SD_FDD_HDD_Sell                      .text   $0D, "FAT32 SD_FDD_HDD_Sell              ",0
+TEXT_____Fat_size                                 .text   $0D, "Fat_size                           ",0
 
-TEXT__OPEN_FILE_SUCCESS                   .text "File open Sucsessfuly",$0D,0
+TEXT__OPEN_FILE_SUCCESS                  .text "File open Sucsessfuly",$0D,0
 TEXT__CANT_FIND_THE_FILE                 .text "Can't find or open the specified file",$0D,0
 
 TEXT_____DEBUG                           .text   $0D, "DEBUG                              ",0
@@ -650,5 +655,7 @@ TEXT_____DEBUG_START_DIR                 .text   $0D, "__________ START DIR CMD 
 TEXT_____DEBUG_END_DIR                   .text   $0D, "___________ END DIR CMD ___________",$0D,0
 TEXT_____DEBUG_START_Oppen               .text   $0D, "_________ START Oppen CMD _________",$0D,0
 TEXT_____DEBUG_END_Oppen                 .text   $0D, "__________ END Oppen CMD __________",$0D,0
-TEXT_____DEBUG_START_Read               .text   $0D, "__________ START Read CMD __________",$0D,0
-TEXT_____DEBUG_END_Read                 .text   $0D, "___________ END Read CMD ___________",$0D,0
+TEXT_____DEBUG_START_Read                .text   $0D, "__________ START Read CMD _________",$0D,0
+TEXT_____DEBUG_END_Read                  .text   $0D, "___________ END Read CMD __________",$0D,0
+TEXT_____DEBUG_START_Write               .text   $0D, "__________ START Write CMD ________",$0D,0
+TEXT_____DEBUG_END_Write                 .text   $0D, "___________ END Write CMD _________",$0D,0

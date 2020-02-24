@@ -34,7 +34,7 @@ FAT32_FAT_Linked_Entry          .dword 0
 FAT32_Data_Base_Sector          .dword 0  ; contain the sector index of the first data in the FAT volume (that include the reserved cluster after the fat) => used to convert from cluster count to fat index
 MBR_Partition_address           .dword 0 ; ofset of the curent FAT volume used
 
-FAT32_Curent_Folder_base_cluster   .dword 0 ; Hold the first cluster from the FAT perspective => real cluster  = FAT32_Curent_Folder_base_cluster + FAT32_Data_Base_Sector
+FAT32_Curent_Folder_start_cluster   .dword 0 ; Hold the first cluster from the FAT perspective => real cluster  = FAT32_Curent_Folder_start_cluster + FAT32_Data_Base_Sector
 FAT32_Curent_Folder_curent_cluster .dword 0
 FAT32_Curent_File_base_cluster   .dword 0 ; Hold the first cluster from the FAT perspective => real cluster  = FAT32_Curent_File_base_cluster + FAT32_Data_Base_Sector
 FAT32_Curent_File_curent_cluster .dword 0
@@ -831,9 +831,9 @@ PLA
                   ; ofset to point to the root directory ofset in the fat
                   ; I need to find the exact way to get this ofset
                   LDA FAT32_Root_Sector_offset
-                  STA FAT32_Curent_Folder_base_cluster
+                  STA FAT32_Curent_Folder_start_cluster
                   LDA FAT32_Root_Sector_offset+2
-                  STA FAT32_Curent_Folder_base_cluster+2
+                  STA FAT32_Curent_Folder_start_cluster+2
                   PLA
                   ;-------------------------------------------------------------
 IFAT32_GET_FOLDER_ENTRY
@@ -877,9 +877,9 @@ IFAT32_GET_FOLDER_ENTRY__16_DIV:
                   STA FAT32_FAT_Linked_Entry ; store the number of sector from the base sector we need to read
                   LDA #0 ; entry index is 16 bit only so that limit at max 65535 entry per folder
                   STA FAT32_FAT_Linked_Entry+2
-                  LDA FAT32_Curent_Folder_base_cluster ;FAT32_Root_Base_Sector
+                  LDA FAT32_Curent_Folder_start_cluster ;FAT32_Root_Base_Sector
                   STA FAT32_FAT_Entry
-                  LDA FAT32_Curent_Folder_base_cluster+2; FAT32_Root_Base_Sector +2
+                  LDA FAT32_Curent_Folder_start_cluster+2; FAT32_Root_Base_Sector +2
                   STA FAT32_FAT_Entry + 2
 ;----- debug -----
 PHA
@@ -906,9 +906,9 @@ IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_temp_1:
                   BRA IFAT32_GET_ROOT_ENTRY__LOAD_SECTOR ; the entry is not null so keep going
                   ;-------------------------------------------------------------
 IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR: ; set the cluster we want to read from the disc
-                  LDA FAT32_Curent_Folder_base_cluster
+                  LDA FAT32_Curent_Folder_start_cluster
                   STA FAT32_FAT_Next_Entry
-                  LDA FAT32_Curent_Folder_base_cluster+2
+                  LDA FAT32_Curent_Folder_start_cluster+2
                   STA FAT32_FAT_Next_Entry+2
 IFAT32_GET_ROOT_ENTRY__LOAD_SECTOR:
                   ;-------------------------------------------------------------
@@ -2041,12 +2041,12 @@ PRINT_FAT32_Root_entry_value_ASCII:
                 LDX #<>TEXT_FAT32___Curent_Folder_base_cluster
                 LDA #`TEXT_FAT32___Curent_Folder_base_cluster
                 JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_Folder_base_cluster+2
+                LDA FAT32_Curent_Folder_start_cluster+2
                 XBA
                 JSL IPRINT_HEX
                 XBA
                 JSL IPRINT_HEX
-                LDA FAT32_Curent_Folder_base_cluster
+                LDA FAT32_Curent_Folder_start_cluster
                 XBA
                 JSL IPRINT_HEX
                 XBA

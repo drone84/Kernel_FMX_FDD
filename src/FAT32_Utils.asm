@@ -1,4 +1,55 @@
 .cpu "65816"
+
+;-------------------------------------------------------------------------------
+;
+; Test the folder entry type
+;
+; The folder entry is read by JSL IFAT32_GET_ROOT_ENTRY,  A is containing the
+; folder entry to read
+;
+; out A
+; $00 -> Last folder entry in the curent folder, can be used for new file
+; $01 -> file entry
+; $08 -> Volume name entry, only present on the first entry of the root directory
+; $0F -> Long FileName entry
+; $10 -> folder entry
+; $E5 -> deleted entry, can be used for new file
+;-------------------------------------------------------------------------------
+FAT32_GET_FOLDER_ENTRY_TYPE
+                  LDA FAT32_Curent_Folder_entry_value +11
+                  AND #$00FF
+                  CMP #$0F ; test if it's a long name entry
+                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__FLN
+                  CMP #$08 ; test if it's a volum name
+                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__VOLUM_NAME
+                  AND #$10
+                  CMP #$10 ;CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
+                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__Folder
+                  LDA FAT32_Curent_Folder_entry_value
+                  AND #$00FF
+                  CMP #$E5 ; test if the entry is deleted
+                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__DELETED_ENTRY
+                  CMP #$00 ; test if we reached the last entry in the folder
+                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__LAST_ENTRY_IN_FOLDER
+                  LDA #$01
+                  BRA FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY
+ FAT32_GET_FOLDER_ENTRY_TYPE__FLN:
+                  LDA #$0F
+                  BRA FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY
+ FAT32_GET_FOLDER_ENTRY_TYPE__VOLUM_NAME:
+                  LDA #$08
+                  BRA FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY
+ FAT32_GET_FOLDER_ENTRY_TYPE__Folder:
+                  LDA #$10
+                  BRA FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY
+ FAT32_GET_FOLDER_ENTRY_TYPE__DELETED_ENTRY:
+                  LDA #$E5
+                  BRA FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY
+ FAT32_GET_FOLDER_ENTRY_TYPE__LAST_ENTRY_IN_FOLDER:
+                  LDA #$00
+                  BRA FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY
+ FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY:
+                  RTL
 ;-------------------------------------------------------------------------------
 ;----------- comput the real sector ofset of the curent fat entry --------------
 ;-------------------------------------------------------------------------------

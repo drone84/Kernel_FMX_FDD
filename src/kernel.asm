@@ -214,6 +214,13 @@ JSL IPRINT_HEX
 LDA #$0D
 JSL IPUTC
                 ;-------------------------------
+                JSL FAT32_Open_Creat_Write_File
+                ;-------------------------------
+LDA #$62
+JSL IPRINT_HEX
+LDA #$0D
+JSL IPUTC
+                ;-------------------------------
                 JSL FAT32_Open_Read_Display_File
                 ;-------------------------------
                 ;----- debug -----
@@ -235,7 +242,7 @@ GAME_LOOP:
                 BRA GAME_LOOP
 .include "display.asm"
 
-LDA #$62
+LDA #$63
 JSL IPRINT_HEX
 LDA #$0D
                 JSL FAT_32_test_fat_code ; test if the function to get the next fat entry is working as expected

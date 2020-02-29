@@ -100,8 +100,8 @@ ILOAD_FILE_FAT_32_BOOT_SECTOR_PARSING_OK
                   LDA #$00 ; sellect the first entry
                   PHA
 FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY
-                  JSL IFAT32_GET_ROOT_ENTRY
-                  LDA FAT32_Curent_Folder_entry_value + 11 ; get the flag Byte to test if it a file or a directory
+                  JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
+                  LDA FAT32_Curent_Directory_entry_value + 11 ; get the flag Byte to test if it a file or a directory
                   AND #$10
                   CMP #$10
                   BNE FAT32_ILOAD_FILE_ENTRY ; if equal we read a directory so just read the next one
@@ -129,7 +129,7 @@ FAT32_ILOAD_FILE_CHAR_MATCHING
                   CPX #11 ; FAT12 file or folder size
                   BEQ FAT32_ILOAD_FILE_STRING_MATCHED
                   LDA (6,S),Y ; load the "y" char file name we want to read
-                  CMP FAT32_Curent_Folder_entry_value,X
+                  CMP FAT32_Curent_Directory_entry_value,X
                   BEQ FAT32_ILOAD_FILE_CHAR_MATCHING
                   BRA FAT32_ILOAD_FILE_READ_NEXT_ROOT_ENTRY ;;; FAT32_ILOAD_FILE_STRING_NOT_MATCHED    emoved as we still need to test what type of entry it is befor trying to compare the file name
 FAT32_ILOAD_FILE_NO_FILE_MATCHED
@@ -139,7 +139,7 @@ FAT32_ILOAD_FILE_RETURN_ERROR_temp
                   BRA FAT32_ILOAD_FILE_RETURN_ERROR
 FAT32_ILOAD_FILE_STRING_MATCHED
                   PLA
-                  LDA FAT32_Curent_Folder_entry_value + 26 ; get the first fat entry for the fil from the root directory entry we matched
+                  LDA FAT32_Curent_Directory_entry_value + 26 ; get the first fat entry for the fil from the root directory entry we matched
                   STA FAT32_FAT_Next_Entry
 
 FAT32_ILOAD_FILE_Read_next_sector; read sector function to call there

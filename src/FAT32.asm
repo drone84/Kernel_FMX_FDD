@@ -22,8 +22,12 @@ FAT32_Sector_loaded_in_ram      .dword 0; updated by any function readding Secto
 
 FAT32_Root_Sector_offset        .dword 0; hold the ofset in cluster of the first root dirrectory in the fat
 FAT32_Root_Base_Sector          .dword 0; hold the first sector containing the Root directory data
-FAT32_Curent_Folder_Sector_loaded_in_ram .dword 0  ; store the actual Folder sector loades in ram
-FAT32_Curent_Folder_entry_value  .fill 32,0 ; store the 32 byte of root entry
+FAT32_Curent_Directory_Sector_loaded_in_ram .dword 0  ; store the actual Folder sector loades in ram
+FAT32_Curent_Directory_entry_value  .fill 32,0 ; store the 32 byte of root entry
+;                                         file Name                                     attribut                                    Cluster High                  Cluster Low  size
+FAT32_File_Directory_entry_Template    .text $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,  $00,       $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,     $00,$00,$00,$00 ,$00,$00,     $00,$00,$00,$00; ; store the 32 byte of root entry
+FAT32_Folder_Directory_entry_Template  .text $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,  $10,       $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,     $00,$00,$00,$00 ,$00,$00,     $00,$00,$00,$00; ; store the 32 byte of root entry
+FAT32_FLN_Directory_entry_Template     .text $40, $20,$00,$20,$00,$20,$00,$20,$00,$20,$00, $0F,      $5A, $20,$00,$20,$00,$20,$00,$20,$00,$20,$00,$20,$00,      $00 ,$00,$00,     $20,$00,$20,$00; ; store the 32 byte of root entry
 
 FAT32_FAT_Base_Sector           .dword 0
 FAT32_FAT_Sector_loaded_in_ram  .dword 0  ; store the actual FAT sector loades in ram
@@ -46,11 +50,15 @@ FAT32_Temp_32_bite              .dword 0
 
 FAT32_Sector_to_read            .dword 0
 FAT32_SD_FDD_HDD_Sell           .word 0
+
+
 ;------------------------------------------------------------
 ;file_to_load_fat_32    .text "SDFGVGH TXT"
 ;file_to_load_fat_32    .text "TEXT_T~1TXT",0
 ;file_to_load_fat_32    .text "AMIGA   TXT",0
 file_to_load_fat_32    .text "HALFLIFEBIN",0
+;------------------------------------------------------------
+file_to_write_fat_32   .text "TESTFILETXT",0
 ;------------------------------------------------------------
 folder_name_1          .text "DCIM       ",0
 folder_name_2          .text "100D3100   ",0
@@ -74,21 +82,21 @@ FAT32_init  ; init
               ; than the one we are requesting (at least the first tine the code is called)
               LDA #0
               STA FAT32_Sector_loaded_in_ram
-              STA FAT32_Curent_Folder_Sector_loaded_in_ram
+              STA FAT32_Curent_Directory_Sector_loaded_in_ram
               STA FAT32_FAT_Sector_loaded_in_ram
               LDA #0
               STA FAT32_Sector_loaded_in_ram+2
-              STA FAT32_Curent_Folder_Sector_loaded_in_ram+2
+              STA FAT32_Curent_Directory_Sector_loaded_in_ram+2
               STA FAT32_FAT_Sector_loaded_in_ram+2
 
-              ; souldent be nesserarry as IFAT32_GET_ROOT_ENTRY is doing it but
+              ; souldent be nesserarry as IFAT32_GET_ROOT_DIRECTORY_ENTRY is doing it but
               ; for some raison thats not working
               LDA FAT32_Root_Sector_offset
               STA FAT32_Curent_Folder_start_cluster
               LDA FAT32_Root_Sector_offset+2
               STA FAT32_Curent_Folder_start_cluster+2
 
-              JSL IFAT32_GET_ROOT_ENTRY
+              JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
               RTL
 ;-------------------------------------------------------------------------------
 ;
@@ -97,6 +105,46 @@ FAT32_init  ; init
 ;-------------------------------------------------------------------------------
 
 FAT32_Open_Creat_Write_File
+
+              LDX #0
+              setxl
+              setas
+              LDA #$5A
+ LOOP_FILL_BUFFER:
+              TXA
+              STA @l FAT32_DATA_ADDRESS_BUFFER_512,x ; load the byte nb 3 (bank byte)
+              INX
+              CPX #$200
+              BNE LOOP_FILL_BUFFER
+              setaxl
+              LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+              PHA
+          XBA
+          JSL IPRINT_HEX
+          XBA
+          JSL IPRINT_HEX
+
+              LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+              PHA
+          XBA
+          JSL IPRINT_HEX
+          XBA
+          JSL IPRINT_HEX
+          LDA #$0D
+          JSL IPUTC
+              ;LDA FAT32_Sector_to_read
+              ;LDX FAT32_Sector_to_read+2
+              LDA #5
+              LDX #0
+              JSL IFAT_WRITE_SECTOR
+              LDA #4
+              LDX #0
+              JSL IFAT_WRITE_SECTOR
+              LDA #6
+              LDX #0
+              JSL IFAT_WRITE_SECTOR
+              PLA
+              PLA
               ;-------------------------
               JSL FAT32_DIR_CMD
               LDA #$0D
@@ -107,8 +155,37 @@ FAT32_Open_Creat_Write_File
               LDA #0
               JSL FAT32_Open_Folder
               JSL FAT32_DIR_CMD
-              JSL IFAT32_GET_ROOT_ENTRY
+              ;-------------------------
+              ; point to the root directory
+              JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
               JSL FAT32_DIR_CMD
+              ;-------------------------
+              ; Try to open the file to write
+              JSL FAT32_Open_File
+              CMP #1
+              ;BEQ FAT32_Open_Creat_Write_File__File_Opened_with_success
+              ;-------------------------
+              ; The file to write is not created yes so lets find a free folder
+              ; entry to create the file
+
+              JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
+              JSL FAT32_Print_FAT_STATE
+              JSL FAT32_Find_Free_Folder_Entry
+        PHA
+        XBA
+        JSL IPRINT_HEX
+        XBA
+        JSL IPRINT_HEX
+        LDA #$0D
+        JSL IPUTC
+        PLA
+              CMP #0
+              BEQ FAT32_Open_Creat_Write_File__No_Free_folder_entry
+              JSL FAT32_Write_File_Directory_entry
+ FAT32_Open_Creat_Write_File__No_Free_folder_entry:
+              ; need to alocate a new sector  to the curent folder FAT list
+ FAT32_Open_Creat_Write_File__File_Opened_with_success:
+
               fdffggd BRA fdffggd
               JSL FAT32_Open_File
               CMP #1
@@ -122,7 +199,7 @@ FAT32_Open_Creat_Write_File
 
 FAT32_Open_Read_Display_File
               LDA #0
-              JSL IFAT32_GET_ROOT_ENTRY
+              JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
               LDA #5
               STA FAT32_FAT_Entry
               LDA #0
@@ -235,16 +312,16 @@ FAT32_DIR_CMD
                   BRA FAT32_DIR_CMD_149
  FAT32_DIR_CMD__EXIT_TEMP: BRL FAT32_DIR_CMD__EXIT
  FAT32_DIR_CMD_149:
-                  JSL IFAT32_GET_FOLDER_ENTRY ; JSL IFAT32_GET_ROOT_ENTRY
+                  JSL IFAT32_GET_DIRECTORY_ENTRY ; JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
                   ;;JSL FAT32_PRINT_Root_entry_value_HEX
-                  LDA FAT32_Curent_Folder_entry_value +11
+                  LDA FAT32_Curent_Directory_entry_value +11
                   AND #$00FF
                   CMP #$0F ; test if it's a long name entry
                   BEQ FAT32_DIR_CMD__Read_Next_Folder_Entry
                   AND #$10
                   CMP #$10 ;CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
                   BEQ FAT32_DIR_CMD__print_folder
-                  LDA FAT32_Curent_Folder_entry_value
+                  LDA FAT32_Curent_Directory_entry_value
                   AND #$00FF
                   CMP #$E5 ; test if the entry is deleted
                   BEQ FAT32_DIR_CMD__Read_Next_Folder_Entry
@@ -254,10 +331,10 @@ FAT32_DIR_CMD
  FAT32_DIR_CMD__EXIT_TEMP_2: BRL FAT32_DIR_CMD__EXIT
  FAT32_DIR_CMD_168:
                   LDA #0
-                  ;STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+                  ;STA @l IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry
                   STA FAT32_LONG_FILE_NAME_BUFFER_pointer
                   TXA ; get the folder entry index
-                  JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+                  JSL IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME
 
                   PHA
                   LDA #$2D                  ; Set the default text color to light gray on dark gray
@@ -292,10 +369,10 @@ FAT32_DIR_CMD
 
  FAT32_DIR_CMD__print_folder:
                   LDA #0
-                  ;STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+                  ;STA @l IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry
                   STA FAT32_LONG_FILE_NAME_BUFFER_pointer
                   TXA ; get the folder entry index
-                  JSL IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+                  JSL IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME
                   PHA ; save the FLN result
                   LDA #$8D                  ; Set the default text color to light gray on dark gray
                   JSL SET_COLOUR
@@ -343,12 +420,162 @@ FAT32_DIR_CMD
                   RTL
 
 ;-------------------------------------------------------------------------------
+; Search for a free folder entry (not used 0x00 or deleted 0xE5)
+; In
+; A
+; folder index to start searching from
+;
+; return
+; A
+; xxxx -> folder entry index sellected
+;-1 -> can't find any free folder entry
+;-------------------------------------------------------------------------------
+FAT32_Find_Free_Folder_Entry_From_Index
+                  setaxl
+                  PHX
+                  TAX
+                  BRA FAT32_Find_Free_Folder_Entry__Read_Next_Folder_Entry
+FAT32_Find_Free_Folder_Entry
+                  setaxl
+                  PHX
+                  LDX #0 ; start by readding the first folder entry
+
+ ;----- debug ------
+ PHX
+ PHA
+ LDX #<>TEXT_____DEBUG_START_Find_Free_Folder_Entry
+ LDA #`TEXT_____DEBUG_START_Find_Free_Folder_Entry
+ JSL IPRINT_ABS
+ PLA
+ PLX
+  ;-----------------
+
+ FAT32_Find_Free_Folder_Entry__Read_Next_Folder_Entry:
+                  TXA
+                  CPX #$FFFF ; make sure we are not searching for ever
+                  BEQ FAT32_Find_Free_Folder_Entry__EXIT_TOO_MANY_FOLDER_ENTRY
+                  JSL IFAT32_GET_DIRECTORY_ENTRY
+                  ;JSL FAT32_PRINT_Root_entry_value_HEX
+                  JSL FAT32_GET_FOLDER_ENTRY_TYPE
+                  CMP #$E5 ; deleted folder entry
+                  BEQ FAT32_Find_Free_Folder_Entry__FIND_A_FILE_ENTRY
+                  CMP #$00 ; new empty folder entry
+                  BEQ FAT32_Find_Free_Folder_Entry__FIND_A_FILE_ENTRY
+                  INC X
+                  BRA FAT32_Find_Free_Folder_Entry__Read_Next_Folder_Entry
+ FAT32_Find_Free_Folder_Entry__FIND_A_FILE_ENTRY:
+                  ;-------------------------------------------------------------
+                  TXA
+                  BRA FAT32_Find_Free_Folder_Entry__EXIT
+ FAT32_Find_Free_Folder_Entry__EXIT_TOO_MANY_FOLDER_ENTRY:
+                  LDA #-1
+ FAT32_Find_Free_Folder_Entry__EXIT:
+  ;----- debug ------
+  PHX
+  PHA
+  LDX #<>TEXT_____DEBUG_END_Find_Free_Folder_Entry
+  LDA #`TEXT_____DEBUG_END_Find_Free_Folder_Entry
+  JSL IPRINT_ABS
+  PLA
+  PLX
+  ;-----------------
+                  PLX
+                  RTL
+
+;-------------------------------------------------------------------------------
+; write at the A location a enpty file ramplate woth the file name from
+; file_to_write_fat_32
+; In
+; A :
+; folder index to write the new file into
+;
+; file_to_write_fat_32 :
+; file name
+;
+; return
+; A
+;-------------------------------------------------------------------------------
+
+FAT32_Write_File_Directory_entry
+                  setaxl
+                  PHA
+        JSL FAT32_PRINT_Root_entry_value_HEX
+                  ;-------------------------------------------------------------
+                  ; Weite the blank file directory tamplate
+                  LDA #<>FAT32_File_Directory_entry_Template
+                  TAX
+                  LDA #<>FAT32_Curent_Directory_entry_value
+                  TAY
+                  LDA #31
+                  MVN `FAT32_File_Directory_entry_Template, `FAT32_Curent_Directory_entry_value
+        JSL FAT32_PRINT_Root_entry_value_HEX
+        JSL FAT32_PRINT_Root_entry_value
+                  ;-------------------------------------------------------------
+                  ; Write the file name
+                  LDA #<>file_to_write_fat_32
+                  TAX
+                  LDA #<>FAT32_Curent_Directory_entry_value
+                  TAY
+                  LDA #11
+                  MVN `file_to_write_fat_32, `FAT32_Curent_Directory_entry_value
+        JSL FAT32_PRINT_Root_entry_value_HEX
+        JSL FAT32_PRINT_Root_entry_value
+        JSL FAT32_Print_Directory_Cluster_HEX
+                  ;-------------------------------------------------------------
+                  ; comput the ofset in the curent directory sector loaded
+                  ; in ram to write the 31 back
+                  LDA #<>FAT32_Curent_Directory_entry_value
+                  TAX
+                  PLA
+                  AND #$000F ; get only the 4 first bit as we assune theat the sectore in ram is the one sector to write the data in (loaded by FAT32_Find_Free_Folder_Entry normaly)
+                  ASL
+                  ASL
+                  ASL
+                  ASL
+                  ASL ; now A contain the ofset to write the root entry
+                  CLC
+                  ADC #<>FAT32_FOLDER_ADDRESS_BUFFER_512
+                  TAY
+                  LDA #31
+                  MVN `FAT32_Curent_Directory_entry_value, `FAT32_FOLDER_ADDRESS_BUFFER_512
+        JSL FAT32_Print_Directory_Cluster_HEX
+                  ;-------------------------------------------------------------
+                  ; write back the new data
+                  ;FAT32_FAT_Entry should be the right value due to FAT32_Find_Free_Folder_Entry call
+                  JSL FAT32_COMPUT_PHISICAL_CLUSTER; (in : FAT32_FAT_Entry / Out : FAT32_FAT_Entry_Physical_Address)
+
+                  ; add 2 but that shouden't be there I missed someting due to the root dirrectory being in sat sector 2
+                  LDA #0 ;
+                  STA ADDER_A+2
+                  LDA #$2
+                  STA ADDER_A
+                  LDA FAT32_FAT_Entry_Physical_Address
+                  STA ADDER_B
+                  LDA FAT32_FAT_Entry_Physical_Address+2
+                  STA ADDER_B+2
+                  ; get the final result out of the hardware
+                  LDA ADDER_R;
+                  STA FAT32_FAT_Entry_Physical_Address
+                  LDA ADDER_R+2
+                  STA FAT32_FAT_Entry_Physical_Address+2
+
+
+                  LDA #`FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+                  PHA
+                  LDA #<>FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+                  PHA
+                  LDA FAT32_FAT_Entry_Physical_Address+2
+                  TAX
+                  LDA FAT32_FAT_Entry_Physical_Address
+                  JSL IFAT_WRITE_SECTOR
+                  RTL
+;-------------------------------------------------------------------------------
 ; Search for the file name in the root directory
 ; File name to oppen : file_to_load_fat_32
 ; return
 ; A
 ; 1 -> file open with success
-; 0 -> reach the end of the folder entry withut matching the file name
+; 0 -> reach the end of the folder entry without matching the file name
 ;-1 -> went thrw to many folder entry (more than 65535) so exit
 ;
 ; FOR NOW THE CURENT DIRECTORY IS THE ROOT DIRECTORY
@@ -360,8 +587,8 @@ FAT32_Open_File
  ;----- debug ------
  PHX
  PHA
- LDX #<>TEXT_____DEBUG_START_Oppen
- LDA #`TEXT_____DEBUG_START_Oppen
+ LDX #<>TEXT_____DEBUG_START_Open
+ LDA #`TEXT_____DEBUG_START_Open
  JSL IPRINT_ABS
  PLA
  PLX
@@ -371,7 +598,7 @@ FAT32_Open_File
                   TXA
                   CPX #$FFFF ; make sure we are not searching for ever
                   BEQ FAT32_Open_File__EXIT_TOO_MANY_FOLDER_ENTRY
-                  JSL IFAT32_GET_FOLDER_ENTRY
+                  JSL IFAT32_GET_DIRECTORY_ENTRY
                   INC X
                   JSL FAT32_GET_FOLDER_ENTRY_TYPE
                   CMP #1
@@ -393,9 +620,9 @@ FAT32_Open_File
                   CPX #11 ; FAT12 file or folder size
                   BEQ FAT32_Open_File__STRING_MATCHED
                   setas
-                  ;LDA FAT32_Curent_Folder_entry_value,X for the bebugger
+                  ;LDA FAT32_Curent_Directory_entry_value,X for the bebugger
                   LDA file_to_load_fat_32,X
-                  CMP FAT32_Curent_Folder_entry_value,X
+                  CMP FAT32_Curent_Directory_entry_value,X
                   BEQ FAT32_Open_File__CHAR_MATCHING ; if the file name match  the loop will be executed 11 time
                   PLX
                   setal
@@ -406,9 +633,9 @@ FAT32_Open_File
                   PLX
                   setaxl
                   JSL FAT32_PRINT_Root_entry_value_HEX ; Debug
-                  LDA FAT32_Curent_Folder_entry_value + 26 ;$1S; Low two bytes of first cluster
+                  LDA FAT32_Curent_Directory_entry_value + 26 ;$1S; Low two bytes of first cluster
                   STA FAT32_Start_Of_The_file_Cluster
-                  LDA FAT32_Curent_Folder_entry_value + 20 ;$14 ; High two bytes of first cluster
+                  LDA FAT32_Curent_Directory_entry_value + 20 ;$14 ; High two bytes of first cluster
                   STA FAT32_Start_Of_The_file_Cluster + 2
                   LDA #0 ; FAT32_Curent_File_Cluster = 0 to indicat to the read code to read from the beginning
                   STA FAT32_Curent_File_Cluster
@@ -450,8 +677,8 @@ FAT32_Open_File
   ;----- debug ------
   PHX
   PHA
-  LDX #<>TEXT_____DEBUG_END_Oppen
-  LDA #`TEXT_____DEBUG_END_Oppen
+  LDX #<>TEXT_____DEBUG_END_Open
+  LDA #`TEXT_____DEBUG_END_Open
   JSL IPRINT_ABS
   PLA
   PLX
@@ -476,8 +703,8 @@ FAT32_Open_Folder
  ;----- debug ------
  PHX
  PHA
- LDX #<>TEXT_____DEBUG_START_Oppen
- LDA #`TEXT_____DEBUG_START_Oppen
+ LDX #<>TEXT_____DEBUG_START_Open
+ LDA #`TEXT_____DEBUG_START_Open
  JSL IPRINT_ABS
  PLA
  PLX
@@ -487,7 +714,7 @@ FAT32_Open_Folder
                   TXA
                   CPX #$FFFF ; make sure we are not searching for ever
                   BEQ FAT32_Open_Folder__EXIT_TOO_MANY_FOLDER_ENTRY_1
-                  JSL IFAT32_GET_FOLDER_ENTRY ; JSL IFAT32_GET_ROOT_ENTRY
+                  JSL IFAT32_GET_DIRECTORY_ENTRY ; JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
                   INC X
                   JSL FAT32_GET_FOLDER_ENTRY_TYPE
   .comment
@@ -533,9 +760,9 @@ FAT32_Open_Folder
                   CPX #11 ; FAT12 file or folder size
                   BEQ FAT32_Open_Folder__STRING_MATCHED
                   setas
-                  ;LDA FAT32_Curent_Folder_entry_value,X for the bebugger
+                  ;LDA FAT32_Curent_Directory_entry_value,X for the bebugger
                   LDA folder_name_1,X
-                  CMP FAT32_Curent_Folder_entry_value,X
+                  CMP FAT32_Curent_Directory_entry_value,X
                   BEQ FAT32_Open_Folder__CHAR_MATCHING ; if the file name match  the loop will be executed 11 time
                   PLX
                   setal
@@ -546,9 +773,9 @@ FAT32_Open_Folder
                   PLX
                   setaxl
                   JSL FAT32_PRINT_Root_entry_value_HEX ; Debug
-                  LDA FAT32_Curent_Folder_entry_value + 26 ;$1S; Low two bytes of first cluster
+                  LDA FAT32_Curent_Directory_entry_value + 26 ;$1S; Low two bytes of first cluster
                   STA FAT32_Curent_Folder_start_cluster
-                  LDA FAT32_Curent_Folder_entry_value + 20 ;$14 ; High two bytes of first cluster
+                  LDA FAT32_Curent_Directory_entry_value + 20 ;$14 ; High two bytes of first cluster
                   STA FAT32_Curent_Folder_start_cluster + 2
                   LDA #0 ; FAT32_Curent_File_Cluster = 0 to indicat to the read code to read from the beginning
                   STA FAT32_Curent_File_Cluster
@@ -590,8 +817,8 @@ FAT32_Open_Folder
   ;----- debug ------
   PHX
   PHA
-  LDX #<>TEXT_____DEBUG_END_Oppen
-  LDA #`TEXT_____DEBUG_END_Oppen
+  LDX #<>TEXT_____DEBUG_END_Open
+  LDA #`TEXT_____DEBUG_END_Open
   JSL IPRINT_ABS
   PLA
   PLX
@@ -982,14 +1209,7 @@ IFAT32_COMPUT_ROOT_DIR_POS
                   LDA ADDER_R+2
                   STA FAT32_Root_Base_Sector+2
                   RTL
-;-------------------------------------------------------------------------------
-IFAT32_GET_ROOT_FIRST_ENTRY
-                  setaxl
-                  RTL
-;-------------------------------------------------------------------------------
-IFAT32_GET_ROOT_NEXT_ENTRY
-                  setaxl
-                  RTL
+
 ;-------------------------------------------------------------------------------
 ;
 ; Get the number of reserved sector and ad it to Partition address(32 bits) to
@@ -1017,6 +1237,12 @@ IFAT32_COMPUT_FAT_POS
                   LDA ADDER_R+2
                   STA FAT32_FAT_Base_Sector+2
                   RTL
+
+;-------------------------------------------------------------------------------
+;
+;
+;
+;
 ;-------------------------------------------------------------------------------
 IFAT32_DEC_FAT_Linked_Entry
                   PHA
@@ -1037,7 +1263,7 @@ IFAT32_DEC_FAT_Linked_Entry
 
 ;-------------------------------------------------------------------------------
 ;
-; FAT32_Curent_Folder_entry_value contain the long name file to get the data from
+; FAT32_Curent_Directory_entry_value contain the long name file to get the data from
 ;
 ;
 ;-------------------------------------------------------------------------------
@@ -1047,43 +1273,43 @@ IFAT32_GET_LONG_NAME_STRING
                   PHA
                   LDA FAT32_LONG_FILE_NAME_BUFFER_pointer
                   TAX
-                  LDA FAT32_Curent_Folder_entry_value+1
+                  LDA FAT32_Curent_Directory_entry_value+1
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+3
+                  LDA FAT32_Curent_Directory_entry_value+3
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+5
+                  LDA FAT32_Curent_Directory_entry_value+5
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+7
+                  LDA FAT32_Curent_Directory_entry_value+7
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+9
+                  LDA FAT32_Curent_Directory_entry_value+9
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+14
+                  LDA FAT32_Curent_Directory_entry_value+14
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+16
+                  LDA FAT32_Curent_Directory_entry_value+16
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+18
+                  LDA FAT32_Curent_Directory_entry_value+18
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+20
+                  LDA FAT32_Curent_Directory_entry_value+20
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+22
+                  LDA FAT32_Curent_Directory_entry_value+22
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+24
+                  LDA FAT32_Curent_Directory_entry_value+24
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+28
+                  LDA FAT32_Curent_Directory_entry_value+28
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
-                  LDA FAT32_Curent_Folder_entry_value+30
+                  LDA FAT32_Curent_Directory_entry_value+30
                   STA FAT32_LONG_FILE_NAME_BUFFER_256,x
                   INX
                   TXA
@@ -1099,16 +1325,16 @@ IFAT32_GET_LONG_NAME_STRING
 ;
 ;-------------------------------------------------------------------------------
 FAT32_Temp_16_bite              .word 0
-FAT32_Curent_Folder_entry_value_back_up     .fill 32,0 ; store the 32 byte of root entry
-IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry .word 0
+FAT32_Curent_Directory_entry_value_back_up     .fill 32,0 ; store the 32 byte of root entry
+IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry .word 0
 
-IFAT32_GET_FOLDER_ENTRY_LONG_NAME
+IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME
                   setaxl
                   PHX
                   PHA ; Save the root entry index we want get the long for
                   ; reset the buffer pointer to write the new LFN
                   LDA #0
-                  ;STA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+                  ;STA @l IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry
                   STA FAT32_LONG_FILE_NAME_BUFFER_pointer
                   PLA
                   PHA
@@ -1121,76 +1347,76 @@ IFAT32_GET_FOLDER_ENTRY_LONG_NAME
                   INC A
                   STA FAT32_Temp_16_bite
                   setas
-                  setdbr `FAT32_Curent_Folder_entry_value
+                  setdbr `FAT32_Curent_Directory_entry_value
                   setal
-                  LDA #<>FAT32_Curent_Folder_entry_value
+                  LDA #<>FAT32_Curent_Directory_entry_value
                   TAX
-                  LDA #<>FAT32_Curent_Folder_entry_value_back_up
+                  LDA #<>FAT32_Curent_Directory_entry_value_back_up
                   TAY
                   LDA #31
-                  MVN `FAT32_Curent_Folder_entry_value, `FAT32_Curent_Folder_entry_value_back_up
+                  MVN `FAT32_Curent_Directory_entry_value, `FAT32_Curent_Directory_entry_value_back_up
                   PlY
                   PLX
                   PLA
 
                   CMP #0
-                  BNE IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY ; scan the previous folder entry to get the long name string
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__NO_MORE_ENTRY_TO_READ:
+                  BNE IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY ; scan the previous folder entry to get the long name string
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__NO_MORE_ENTRY_TO_READ:
                   LDA #-1
-                  BRL IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY:
+                  BRL IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__EXIT
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY:
                   DEC A; read the previous entry
                   CMP #$FFFF
-                  BEQ IFAT32_GET_FOLDER_ENTRY_LONG_NAME__NO_MORE_ENTRY_TO_READ
+                  BEQ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__NO_MORE_ENTRY_TO_READ
                   ;--------------------- Back up the curent folder entry --------------------------
  .comment
  PHA
  PHX
  PHY
- LDA @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+ LDA @l IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry
  CMP #0
- BEQ IFAT32_GET_FOLDER_ENTRY_LONG_NAME__BACKUP_ALREADDY_DONE
+ BEQ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__BACKUP_ALREADDY_DONE
  setas
- setdbr `FAT32_Curent_Folder_entry_value
+ setdbr `FAT32_Curent_Directory_entry_value
  setal
- LDA #<>FAT32_Curent_Folder_entry_value
+ LDA #<>FAT32_Curent_Directory_entry_value
  TAX
- LDA #<>FAT32_Curent_Folder_entry_value_back_up
+ LDA #<>FAT32_Curent_Directory_entry_value_back_up
  TAY
  LDA #31
- MVN `FAT32_Curent_Folder_entry_value, `FAT32_Curent_Folder_entry_value_back_up
+ MVN `FAT32_Curent_Directory_entry_value, `FAT32_Curent_Directory_entry_value_back_up
  LDA #1 ; active the flag to restore the folder entry prior to the function call
- STA  @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__BACKUP_ALREADDY_DONE:
+ STA  @l IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__BACKUP_ALREADDY_DONE:
  PlY
  PLX
  PLA
  .endc
                   ;--------------------------------------------------------------------------------
                   PHA ; save thwe curent folder entry
-                  JSL IFAT32_GET_FOLDER_ENTRY
+                  JSL IFAT32_GET_DIRECTORY_ENTRY
                   ;;JSL FAT32_PRINT_Root_entry_value
-                  LDA FAT32_Curent_Folder_entry_value +11 ; test the dirrectory entry type
+                  LDA FAT32_Curent_Directory_entry_value +11 ; test the dirrectory entry type
                   AND #$00FF
                   CMP #$0F ; test if it's a long name entry
-                  BNE IFAT32_GET_FOLDER_ENTRY_LONG_NAME__ERROR_IN_LONG_NAME_ORDER ; all the long name sould be aone after the otherone
-                  BRA IFAT32_GET_FOLDER_ENTRY_LONG_NAME__TEST_FOR_FIRST_LONG_NAME_ENTRY
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__ERROR_IN_LONG_NAME_ORDER:
+                  BNE IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__ERROR_IN_LONG_NAME_ORDER ; all the long name sould be aone after the otherone
+                  BRA IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__TEST_FOR_FIRST_LONG_NAME_ENTRY
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__ERROR_IN_LONG_NAME_ORDER:
                   PLA ; get the foler index back
                   LDA #-2
-                  BRL IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__TEST_FOR_FIRST_LONG_NAME_ENTRY:
+                  BRL IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__EXIT
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__TEST_FOR_FIRST_LONG_NAME_ENTRY:
                   JSL IFAT32_GET_LONG_NAME_STRING
-                  LDA FAT32_Curent_Folder_entry_value
+                  LDA FAT32_Curent_Directory_entry_value
                   AND #$0040
                   CMP #$40
-                  BNE IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY_1
-                  BRA IFAT32_GET_FOLDER_ENTRY_LONG_NAME__END_READDING_LOOP
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY_1:
+                  BNE IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY_1
+                  BRA IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__END_READDING_LOOP
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY_1:
                   PLA ; get the foler index back
-                  BRL IFAT32_GET_FOLDER_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY
+                  BRL IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__READ_THE_PREVIOUS_ENTRY
                   ;--------------------- end the long name -----------------------
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__END_READDING_LOOP:
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__END_READDING_LOOP:
                   LDA FAT32_LONG_FILE_NAME_BUFFER_pointer
                   TAX
                   PLA ; get the foler index back
@@ -1212,24 +1438,24 @@ IFAT32_GET_FOLDER_ENTRY_LONG_NAME
  PLA
  .endc
                   LDA #1
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT:
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__EXIT:
                   ;--------------------- Restore the curent folder entry--------------------------
  .comment
  PHA
  PHX
  PHY
- LDA  @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+ LDA  @l IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry
  CMP #0
- BEQ IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT_NO_RESTOR
- LDA #<>FAT32_Curent_Folder_entry_value_back_up
+ BEQ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__EXIT_NO_RESTOR
+ LDA #<>FAT32_Curent_Directory_entry_value_back_up
  TAX
- LDA #<>FAT32_Curent_Folder_entry_value
+ LDA #<>FAT32_Curent_Directory_entry_value
  TAY
  LDA #31
- MVN `FAT32_Curent_Folder_entry_value_back_up, `FAT32_Curent_Folder_entry_value
+ MVN `FAT32_Curent_Directory_entry_value_back_up, `FAT32_Curent_Directory_entry_value
  LDA #0 ; active the flag to restore the folder entry prior to the function call
- STA  @l IFAT32_GET_FOLDER_ENTRY_LONG_NAME_Need_to_restor_folder_entry
- IFAT32_GET_FOLDER_ENTRY_LONG_NAME__EXIT_NO_RESTOR:
+ STA  @l IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME_Need_to_restor_folder_entry
+ IFAT32_GET_DIRECTORY_ENTRY_LONG_NAME__EXIT_NO_RESTOR:
  PLY
  PLX
  PLA
@@ -1238,14 +1464,14 @@ IFAT32_GET_FOLDER_ENTRY_LONG_NAME
                   PHX
                   PHY
                   setas
-                  setdbr `FAT32_Curent_Folder_entry_value
+                  setdbr `FAT32_Curent_Directory_entry_value
                   setal
-                  LDA #<>FAT32_Curent_Folder_entry_value_back_up
+                  LDA #<>FAT32_Curent_Directory_entry_value_back_up
                   TAX
-                  LDA #<>FAT32_Curent_Folder_entry_value
+                  LDA #<>FAT32_Curent_Directory_entry_value
                   TAY
                   LDA #31
-                  MVN `FAT32_Curent_Folder_entry_value_back_up, `FAT32_Curent_Folder_entry_value
+                  MVN `FAT32_Curent_Directory_entry_value_back_up, `FAT32_Curent_Directory_entry_value
                   PlY
                   PLX
                   PLA
@@ -1258,10 +1484,10 @@ IFAT32_GET_FOLDER_ENTRY_LONG_NAME
 ; REG A (16 bit) contain the (root/normal) directory entry to read
 ;
 ; 2 Entry possible for this function
-; IFAT32_GET_ROOT_ENTRY
-; IFAT32_GET_FOLDER_ENTRY
+; IFAT32_GET_ROOT_DIRECTORY_ENTRY
+; IFAT32_GET_DIRECTORY_ENTRY
 ;-------------------------------------------------------------------------------
-IFAT32_GET_ROOT_ENTRY
+IFAT32_GET_ROOT_DIRECTORY_ENTRY
                   setaxl
                   PHA
                   ; Set the curent folder cluster index to the ROOT FOLDER sector
@@ -1273,19 +1499,19 @@ IFAT32_GET_ROOT_ENTRY
                   STA FAT32_Curent_Folder_start_cluster+2
                   PLA
                   ;-------------------------------------------------------------
- IFAT32_GET_FOLDER_ENTRY
+IFAT32_GET_DIRECTORY_ENTRY
                   ;-------------------------------------------------------------
                   setaxl
                   PHX
                   PHA ; Save the root entry index we want to read
                   LDX #0 ; compute in witch sector the desired root entry is, 16 entry per sector so we just need to divid the sector size by 16
- IFAT32_GET_FOLDER_ENTRY__16_DIV:
+ IFAT32_GET_DIRECTORY_ENTRY__16_DIV:
                   LSR
                   INC X
                   CPX #4 ; divide by 16
-                  BNE IFAT32_GET_FOLDER_ENTRY__16_DIV
+                  BNE IFAT32_GET_DIRECTORY_ENTRY__16_DIV
                   CMP #0
-                  BEQ IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR ; the entry is in the first folder cluster
+                  BEQ IFAT32_GET_ROOT_DIRECTORY_ENTRY__LOAD_CURENT_BASE_SECTOR ; the entry is in the first folder cluster
                   ;-------------------------------------------------------------
                   ; the entry is bigger than 16, so we need to search for the entry cluster linked to the folder
                   STA FAT32_FAT_Linked_Entry ; store the number of sector from the base sector we need to read
@@ -1299,20 +1525,20 @@ IFAT32_GET_ROOT_ENTRY
                   ;-------------------- Test for fat validity ------------------
                   LDA FAT32_FAT_Next_Entry
                   CMP #0
-                  BMI IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_temp_1
-                  BRA IFAT32_GET_ROOT_ENTRY__LOAD_SECTOR ; the entry is not null so keep going
- IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_temp_1:
+                  BMI IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED_temp_1
+                  BRA IFAT32_GET_ROOT_DIRECTORY_ENTRY__LOAD_SECTOR ; the entry is not null so keep going
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED_temp_1:
                   LDA FAT32_FAT_Next_Entry+2
                   CMP #0
-                  BMI IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED
-                  BRA IFAT32_GET_ROOT_ENTRY__LOAD_SECTOR ; the entry is not null so keep going
+                  BMI IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED
+                  BRA IFAT32_GET_ROOT_DIRECTORY_ENTRY__LOAD_SECTOR ; the entry is not null so keep going
                   ;-------------------------------------------------------------
- IFAT32_GET_ROOT_ENTRY__LOAD_CURENT_BASE_SECTOR: ; set the cluster we want to read from the disc
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY__LOAD_CURENT_BASE_SECTOR: ; set the cluster we want to read from the disc
                   LDA FAT32_Curent_Folder_start_cluster
                   STA FAT32_FAT_Next_Entry
                   LDA FAT32_Curent_Folder_start_cluster+2
                   STA FAT32_FAT_Next_Entry+2
- IFAT32_GET_ROOT_ENTRY__LOAD_SECTOR:
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY__LOAD_SECTOR:
                   ;-------------------------------------------------------------
                   ;------- From here we have the sector to read from the FAT point of vue -----
                   ;-------------------------------------------------------------
@@ -1341,29 +1567,29 @@ IFAT32_GET_ROOT_ENTRY
                   ;---------------------------------------
                   ; test if the sector is alreaddy loaddes in RAM
                   LDA ADDER_R
-                  CMP FAT32_Curent_Folder_Sector_loaded_in_ram
-                  BNE IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
+                  CMP FAT32_Curent_Directory_Sector_loaded_in_ram
+                  BNE IFAT32_GET_ROOT_DIRECTORY_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
                   LDA ADDER_R+2
-                  CMP FAT32_Curent_Folder_Sector_loaded_in_ram+2
-                  BNE IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
+                  CMP FAT32_Curent_Directory_Sector_loaded_in_ram+2
+                  BNE IFAT32_GET_ROOT_DIRECTORY_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR
                   BEQ FAT32_FDD_SECTOR_ALREADDY_LOADDED_IN_RAM
 
- BRA IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_NEXT
- IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED: BRL IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_1
- IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_NEXT
+ BRA IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED_NEXT
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED: BRL IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED_1
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED_NEXT
 
- IFAT32_GET_ROOT_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR:
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY__NEED_TO_LOAD_A_NEW_SECTOR:
                   LDA ADDER_R+2
-                  STA FAT32_Curent_Folder_Sector_loaded_in_ram+2 ; save the new sector to load
+                  STA FAT32_Curent_Directory_Sector_loaded_in_ram+2 ; save the new sector to load
                   LDA ADDER_R
-                  STA FAT32_Curent_Folder_Sector_loaded_in_ram
+                  STA FAT32_Curent_Directory_Sector_loaded_in_ram
                   LDA #`FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
                   PHA
                   LDA #<>FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   PHA
-                  LDA FAT32_Curent_Folder_Sector_loaded_in_ram+2 ; Get the ROOT directory sector to read
+                  LDA FAT32_Curent_Directory_Sector_loaded_in_ram+2 ; Get the ROOT directory sector to read
                   TAX
-                  LDA FAT32_Curent_Folder_Sector_loaded_in_ram
+                  LDA FAT32_Curent_Directory_Sector_loaded_in_ram
                   JSL IFAT_READ_SECTOR
                   PLA
                   PLA
@@ -1380,14 +1606,14 @@ IFAT32_GET_ROOT_ENTRY
                   CLC
                   ADC #<>FAT32_FOLDER_ADDRESS_BUFFER_512
                   TAX
-                  LDA #<>FAT32_Curent_Folder_entry_value
+                  LDA #<>FAT32_Curent_Directory_entry_value
                   TAY
                   LDA #31
-                  MVN `FAT32_FOLDER_ADDRESS_BUFFER_512, `FAT32_Curent_Folder_entry_value
-                  BRA IFAT32_GET_ROOT_ENTRY___EXIT_OK
- IFAT32_GET_ROOT_ENTRY__ERROR_RETURNED_1:
+                  MVN `FAT32_FOLDER_ADDRESS_BUFFER_512, `FAT32_Curent_Directory_entry_value
+                  BRA IFAT32_GET_ROOT_DIRECTORY_ENTRY___EXIT_OK
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY__ERROR_RETURNED_1:
                   PLX
- IFAT32_GET_ROOT_ENTRY___EXIT_OK
+ IFAT32_GET_ROOT_DIRECTORY_ENTRY___EXIT_OK
                   PLX
                   RTL
 ;-------------------------------------------------------------------------------
@@ -1395,7 +1621,7 @@ IFAT32_GET_ROOT_ENTRY
 ; Get in FAT32_FAT_Entry the FAT entry where to get the next One
 ; return the next fat entry to read  in FAT32_FAT_Next_Entry
 ;
-; JSL IFAT32_GET_ROOT_ENTRY
+; JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
 ; LDA #5
 ; STA FAT32_FAT_Entry
 ; LDA #0
@@ -1492,7 +1718,7 @@ FAT32_IFAT_GET_FAT_ENTRY
                   CMP FAT32_FAT_Sector_loaded_in_ram
                   BNE FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
                   LDA ADDER_R+2
-                  CMP FAT32_Curent_Folder_Sector_loaded_in_ram+2
+                  CMP FAT32_Curent_Directory_Sector_loaded_in_ram+2
                   BNE FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR
                   BEQ FAT32_IFAT_GET_FAT_ENTRY___SECTOR_ALREADDY_LOADDED_IN_RAM
  FAT32_IFAT_GET_FAT_ENTRY___NEED_TO_LOAD_A_NEW_SECTOR:
@@ -1672,6 +1898,40 @@ IFAT_READ_SECTOR
                 ;JSL IFDD_READ ; not inplemented as it's not working and use fat 12 instead of 32
                 RTL
 
+;----------------------------------------------------------------------------------------------------------
+;
+; sellect the right device to write to depending on FAT32_SD_FDD_HDD_SELL
+;
+; call procedure
+;
+; LDA #`FAT32_DATA_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
+; PHA
+; LDA #<>FAT32_DATA_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
+; PHA
+; LDA FAT32_Sector_to_read
+; LDX FAT32_Sector_to_read+2
+; JSL IFAT_WRITE_SECTOR
+;----------------------------------------------------------------------------------------------------------
+IFAT_WRITE_SECTOR
+                PHA
+                LDA FAT32_SD_FDD_HDD_SELL
+                CMP FAT32_HDD
+                BEQ IFAT_WRITE_SECTOR__HDD
+                CMP FAT32_HDD
+                BEQ IFAT_WRITE_SECTOR__FDD
+ IFAT_WRITE_SECTOR_SD:; will search on the SD card as default one
+                PLA ; get the sector to read back
+                JSL ISD_WRITE
+                RTL
+ IFAT_WRITE_SECTOR__HDD:
+                PLA ; get the sector to read back
+                ;JSL IHDD_WRITE
+                RTL
+ IFAT_WRITE_SECTOR__FDD:
+                PLA ; get the sector to read back
+                ;JSL IFDD_WRITE ; not inplemented as it's not working and use fat 12 instead of 32
+                RTL
+
 
 ;----------------------------------------------------------------------------------------------------------
 ;
@@ -1687,7 +1947,6 @@ IFAT_READ_SECTOR
 ; LDA FAT32_Sector_to_read
 ; JSL IHDD_READ
 ;----------------------------------------------------------------------------------------------------------
-
 IHDD_READ       setaxl
                 PHA ; save the sector to read
                 LDA 8,S
@@ -1722,7 +1981,6 @@ IHDD_READ       setaxl
 ;----------------------------------------------------------------------------------------------------------
 ;
 ;----------------------------------------------------------------------------------------------------------
-
 ISD_INIT        setaxl
                 LDA #SDC_TRANS_INIT_SD
                 STA SDC_TRANS_TYPE_REG;
@@ -1741,8 +1999,6 @@ ISD_INIT        setaxl
 ;----------------------------------------------------------------------------------------------------------
 ;
 ;----------------------------------------------------------------------------------------------------------
-
-; sector index :  A
 ISD_READ        ;PHP
                 setaxl
                 ASL ;get the 512 byte ofset from the sector index
@@ -1836,9 +2092,9 @@ ISD_READ        ;PHP
                 CMP #0
                 BNE ISD_READ__INIT_RETURN
  ISD_READ_GET_BYTE_COUNT:
-                LDA SDC_RX_FIFO_DATA_CNT_HI ; get the number of byte in the fifo
+                ;LDA SDC_RX_FIFO_DATA_CNT_HI ; get the number of byte in the fifo
                 ;JSL IPRINT_HEX
-                LDA SDC_RX_FIFO_DATA_CNT_LO ; get the number of byte in the fifo
+                ;LDA SDC_RX_FIFO_DATA_CNT_LO ; get the number of byte in the fifo
                 ;JSL IPRINT_HEX
                 ;LDA #$0D
                 ;JSL IPUTC
@@ -1853,6 +2109,8 @@ ISD_READ        ;PHP
                 LDA 7,S
                 STA @l ISD_READ_+ 1
                 ;JSL IPRINT_HEX ; print the sector
+                ;LDA #$0D
+                ;JSL IPUTC
 
                 LDX #0
  ISD_READ__READ_LOOP_BYTE:
@@ -1872,6 +2130,145 @@ ISD_READ        ;PHP
                 ;JSL IPUTC
                 ;LDA #'-'
                 ;JSL IPUTC
+                setaxl
+                RTL
+
+;----------------------------------------------------------------------------------------------------------
+;
+;----------------------------------------------------------------------------------------------------------
+ISD_WRITE       ;PHP
+                setaxl
+                ASL ;get the 512 byte ofset from the sector index
+                BCC ISD_WRITE__NO_OVERFLOW
+                PHA
+                TXA
+                ASL
+                CLC
+                ADC #1
+                TAX
+                PLA
+                BRA ISD_WRITE__OVERFLOW_DONE
+ ISD_WRITE__NO_OVERFLOW:
+                PHA
+                TXA
+                ASL
+                TAX
+                PLA
+ ISD_WRITE__OVERFLOW_DONE:
+                PHA
+                PHX
+  .comment
+  PHA
+  PHX
+  BRA _TEST_TEXT_1920
+  _text_1920 .text "---- cluser address to write X:A    ",0
+  _TEST_TEXT_1920:
+  LDX #<>_text_1920
+  LDA #`_text_1920
+  JSL IPUTS_ABS
+  PLA ; get Content of X MSB
+  PHA
+  XBA
+  JSL IPRINT_HEX
+  XBA
+  JSL IPRINT_HEX
+  PLA
+  PLX
+  PHX
+  PHA
+  TXA
+  XBA
+  JSL IPRINT_HEX
+  XBA
+  JSL IPRINT_HEX
+  LDA #$0D
+  JSL IPUTC
+  PLX
+  PLA
+  .endc
+                ;---------------------------------------------------------------
+                ;------------------  Clear the TX buffer  ----------------------
+                ;---------------------------------------------------------------
+                setas
+                LDA #1
+                STA SDC_TX_FIFO_CTRL_REG
+                ;---------------------------------------------------------------
+                ;--------------  write the byte in the buffer  -----------------
+                ;---------------------------------------------------------------
+                LDA 13,S
+                STA @l ISD_WRITE_+ 3
+                ;JSL IPRINT_HEX ; print the sector
+                LDA 12,S
+                STA @l ISD_WRITE_+ 2
+                ;JSL IPRINT_HEX ; print the sector
+                LDA 11,S
+                STA @l ISD_WRITE_+ 1
+                ;JSL IPRINT_HEX ; print the sector
+                ;PHA
+                ;LDA #$0D
+                ;JSL IPUTC
+                ;PLA
+                LDX #0
+ ISD_WRITE__WRITE_LOOP_BYTE:
+ ISD_WRITE_     LDA @l FAT32_DATA_ADDRESS_BUFFER_512,x
+                ;JSL IPRINT_HEX ; print the sector
+                STA SDC_TX_FIFO_DATA_REG
+                INX
+                CPX #$200
+                BNE ISD_WRITE__WRITE_LOOP_BYTE
+
+                ;---------------------------------------------------------------
+                ;---------------------  write the address  ---------------------
+                ;---------------------------------------------------------------
+                setal
+                PLX
+                PLA
+                ;ibfloop bra  ibfloop
+                setas
+                STA @l SDC_SD_ADDR_15_8_REG
+                XBA ; get the other part of the 16 byte A register
+                STA @l SDC_SD_ADDR_23_16_REG
+                TXA
+                AND #$0F
+                STA @l SDC_SD_ADDR_31_24_REG
+                LDA #0
+                STA @l SDC_SD_ADDR_7_0_REG ; all the time 0 as we are readding 512 byte block
+
+                ;---------------------------------------------------------------
+                ;----------------  Set the controller in TX mode  --------------
+                ;---------------------------------------------------------------
+                LDA #SDC_TRANS_WRITE_BLK
+                STA SDC_TRANS_TYPE_REG;
+                LDA #SDC_TRANS_START
+                STA SDC_TRANS_CONTROL_REG;
+                ;---------------------------------------------------------------
+                ;-------  Wait for the controller to write all the Byte  -------
+                ;---------------------------------------------------------------
+ ISD_WRITE_TEST_SD_INIT_FLAG:
+                LDA SDC_TRANS_STATUS_REG  ; read the bussy state flag : 1 busy / 0 finished
+                AND #SDC_TRANS_BUSY
+                CMP #SDC_TRANS_BUSY
+                BEQ ISD_WRITE_TEST_SD_INIT_FLAG
+
+                LDA SDC_TRANS_ERROR_REG ; read the error status
+                AND #30 ; get the TX error bits
+                ;---------------------------------------------------------------
+                ;----------------------  Test for error  -----------------------
+                ;---------------------------------------------------------------
+                CMP #0
+                BNE ISD_WRITE__ERROR_RETURN
+                LDA #1
+                BRA ISD_WRITE__OK_RETURN
+ ISD_WRITE__ERROR_RETURN:
+                LDA #-1
+ ISD_WRITE__OK_RETURN:
+                ;---------------------------------------------------------------
+                ;------------------  Clear the TX buffer  ----------------------
+                ;---------------------------------------------------------------
+                PHA
+                LDA #1
+                STA SDC_TX_FIFO_CTRL_REG
+                PLA
                 setaxl
                 RTL
 

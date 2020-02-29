@@ -1,7 +1,7 @@
 ;
 FAT32_DATA_ADDRESS_BUFFER_512 = $10000         ; RAM address where to store the sector of file data
 FAT32_FAT_ADDRESS_BUFFER_512 = $10200          ; RAM address where to store the sector of the fat
-FAT32_FOLDER_ADDRESS_BUFFER_512 = $10400       ; RAM address where to store the sector of the folder data
+FAT32_FOLDER_ADDRESS_BUFFER_512 = $10400       ; RAM address where to store the sector of the dirrectory data
 FAT32_LONG_FILE_NAME_BUFFER_256 = $10600       ; RAM address where to store the long file name
 FAT32_LONG_FILE_NAME_BUFFER_pointer = $10700
 

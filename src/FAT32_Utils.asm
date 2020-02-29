@@ -16,7 +16,7 @@
 ; $E5 -> deleted entry, can be used for new file
 ;-------------------------------------------------------------------------------
 FAT32_GET_FOLDER_ENTRY_TYPE
-                  LDA FAT32_Curent_Folder_entry_value +11
+                  LDA FAT32_Curent_Directory_entry_value +11
                   AND #$00FF
                   CMP #$0F ; test if it's a long name entry
                   BEQ FAT32_GET_FOLDER_ENTRY_TYPE__FLN
@@ -25,7 +25,7 @@ FAT32_GET_FOLDER_ENTRY_TYPE
                   AND #$10
                   CMP #$10 ;CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
                   BEQ FAT32_GET_FOLDER_ENTRY_TYPE__Folder
-                  LDA FAT32_Curent_Folder_entry_value
+                  LDA FAT32_Curent_Directory_entry_value
                   AND #$00FF
                   CMP #$E5 ; test if the entry is deleted
                   BEQ FAT32_GET_FOLDER_ENTRY_TYPE__DELETED_ENTRY
@@ -121,7 +121,7 @@ FAT32_COMPUT_PHISICAL_CLUSTER_NEXT
                   RTL
 ;-------------------------------------------------------------------------------
 ;
-; Test if the content of FAT32_FAT_Next_Entry is a usable sector o r not
+; Test if the content of FAT32_FAT_Next_Entry is a usable sector or not
 ;
 ; return value :
 ;  0  =>  sector contain valid data
@@ -147,17 +147,17 @@ FAT32_Test_Fat_Entry_Validity_Next
                   BMI FAT32_Test_Fat_Entry_Validity_Next___NEXT_CLUSTER_RESERVED_OR_BAD
                   LDA #-1 ; end of the file
                   BRA FAT32_Test_Fat_Entry_Validity_Next_ERROR_EXIT
-FAT32_Test_Fat_Entry_Validity_Next___NEXT_CLUSTER_RESERVED_OR_BAD
+ FAT32_Test_Fat_Entry_Validity_Next___NEXT_CLUSTER_RESERVED_OR_BAD
                   CMP #7
                   BNE FAT32_Test_Fat_Entry_Validity_Next___NEXT_CLUSTER_RESERVED
                   LDA #-2 ; Bad sector
                   BRA FAT32_Test_Fat_Entry_Validity_Next_ERROR_EXIT
-FAT32_Test_Fat_Entry_Validity_Next___NEXT_CLUSTER_RESERVED
+ FAT32_Test_Fat_Entry_Validity_Next___NEXT_CLUSTER_RESERVED
                   LDA #-3 ; reserved sector
                   BRA FAT32_Test_Fat_Entry_Validity_Next_ERROR_EXIT
                   ;------------------------------------------------------
                   ; if  jump here, the cluster is at lest not reserved or bad
-FAT32_Test_Fat_Entry_Validity_Next___TEST_NULL_VALUE
+ FAT32_Test_Fat_Entry_Validity_Next___TEST_NULL_VALUE
                   LDA FAT32_FAT_Next_Entry ; test for EOC (End Of Cluster)
                   CMP #0
                   BNE FAT32_Test_Fat_Entry_Validity_Next___EXIT
@@ -166,15 +166,15 @@ FAT32_Test_Fat_Entry_Validity_Next___TEST_NULL_VALUE
                   BNE FAT32_Test_Fat_Entry_Validity_Next___EXIT
                   LDA #-4 ; empty sector
                   BRA FAT32_Test_Fat_Entry_Validity_Next_ERROR_EXIT
-FAT32_Test_Fat_Entry_Validity_Next___EXIT:
+ FAT32_Test_Fat_Entry_Validity_Next___EXIT:
                   LDA #1
-FAT32_Test_Fat_Entry_Validity_Next_ERROR_EXIT:
+ FAT32_Test_Fat_Entry_Validity_Next_ERROR_EXIT:
                   ;PHA
                   RTL
 ;-------------------------------------------------------------
 ;-------------------------------------------------------------------------------
 ;
-; Test if the content of FAT32_FAT_Next_Entry is a usable sector o r not
+; Test if the content of FAT32_FAT_Entry is a usable sector or not
 ;
 ; return value :
 ;  0  =>  sector contain valid data
@@ -223,41 +223,41 @@ FAT32_Test_Fat_Entry_Validity
                   LDA #1
                   FAT32_Test_Fat_Entry_Validity_ERROR_EXIT:
                   ;PLA
-.comment
-PHX
-PHA
-BRA _TEST_TEXT_8
-_text_8 .text "---- Entry validity ",0
-_TEST_TEXT_8:
-LDX #<>_text_8
-LDA #`_text_8
-JSL IPUTS_ABS
-LDA FAT32_FAT_Entry +2 ; test for EOC (End Of Cluster)
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_FAT_Entry ; test for EOC (End Of Cluster)
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$00
-JSL IPUTC
-PLA
-PHA
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-.endc
+ .comment
+ PHX
+ PHA
+ BRA _TEST_TEXT_8
+ _text_8 .text "---- Entry validity ",0
+ _TEST_TEXT_8:
+ LDX #<>_text_8
+ LDA #`_text_8
+ JSL IPUTS_ABS
+ LDA FAT32_FAT_Entry +2 ; test for EOC (End Of Cluster)
+ XBA
+ JSL IPRINT_HEX
+ XBA
+ JSL IPRINT_HEX
+ LDA FAT32_FAT_Entry ; test for EOC (End Of Cluster)
+ XBA
+ JSL IPRINT_HEX
+ XBA
+ JSL IPRINT_HEX
+ LDA #$00
+ JSL IPUTC
+ PLA
+ PHA
+ XBA
+ JSL IPRINT_HEX
+ XBA
+ JSL IPRINT_HEX
+ LDA #$0D
+ JSL IPUTC
+ PLA
+ PLX
+ .endc
                   RTL
 ;--------------------------------------------------------------------------------
-;-- Copy the data in the FAT32 buffer at address FAT32_Data_Destination_buffer --
+;- Copy the data from the FAT32 buffer at address FAT32_Data_Destination_buffer
 ;--------------------------------------------------------------------------------
 FAT32_Data_Destination_buffer .dword 0
 
@@ -275,8 +275,8 @@ FAT32_Copy_Cluster_at_Address
                   LDA #$0200 ; 512 Byte
 
 
-;FAT32_Copy_Cluster_at_Address_MVN: MVN `FAT32_DATA_ADDRESS_BUFFER_512,$B0
-;FAT32_Copy_Cluster_at_Address_MVN: MVN `FAT32_DATA_ADDRESS_BUFFER_512,`FAT32_Data_Destination_buffer
+ ;FAT32_Copy_Cluster_at_Address_MVN: MVN `FAT32_DATA_ADDRESS_BUFFER_512,$B0
+ ;FAT32_Copy_Cluster_at_Address_MVN: MVN `FAT32_DATA_ADDRESS_BUFFER_512,`FAT32_Data_Destination_buffer
                   ; inc the buffer adres by 512
                   setas
                   LDA @lFAT32_Data_Destination_buffer+2
@@ -289,56 +289,56 @@ FAT32_Copy_Cluster_at_Address
                   STA @l FAT32_Copy_Cluster_at_Address_MVN+ 1
                   ;JSL IPRINT_HEX ; print the sector
                   setal
-.comment
-PHX
-PHA
-PHY
-BRA _TEST_TEXT_228
-_text_228 .text "---- cpy cluster address editing ",0
-_TEST_TEXT_228:
-LDX #<>_text_228
-LDA #`_text_228
-JSL IPUTS_ABS
-LDA #$00
-JSL IPUTC
-LDA FAT32_Data_Destination_buffer +2 ; test for EOC (End Of Cluster) MSB 24
-JSL IPRINT_HEX
-LDA FAT32_Data_Destination_buffer +1 ; test for EOC (End Of Cluster)
-JSL IPRINT_HEX
-LDA FAT32_Data_Destination_buffer +0 ; test for EOC (End Of Cluster) LSB 24
-JSL IPRINT_HEX
-LDA #$00
-JSL IPUTC
-LDA FAT32_Copy_Cluster_at_Address_MVN ; test for EOC (End Of Cluster)
-JSL IPRINT_HEX
-LDA #$00
-JSL IPUTC
-LDA FAT32_Copy_Cluster_at_Address_MVN +3 ; test for EOC (End Of Cluster)
-JSL IPRINT_HEX
-LDA FAT32_Copy_Cluster_at_Address_MVN +2 ; test for EOC (End Of Cluster)
-JSL IPRINT_HEX
-LDA FAT32_Copy_Cluster_at_Address_MVN +1 ; test for EOC (End Of Cluster)
-JSL IPRINT_HEX
-LDA #$00
-JSL IPUTC
-LDA FAT32_Data_Destination_buffer+2 ; test for EOC (End Of Cluster)
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_Data_Destination_buffer ; test for EOC (End Of Cluster)
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$0D
-JSL IPUTC
-PLY
-PLA
-PLX
-.endc
+ .comment
+ PHX
+ PHA
+ PHY
+ BRA _TEST_TEXT_228
+ _text_228 .text "---- cpy cluster address editing ",0
+ _TEST_TEXT_228:
+ LDX #<>_text_228
+ LDA #`_text_228
+ JSL IPUTS_ABS
+ LDA #$00
+ JSL IPUTC
+ LDA FAT32_Data_Destination_buffer +2 ; test for EOC (End Of Cluster) MSB 24
+ JSL IPRINT_HEX
+ LDA FAT32_Data_Destination_buffer +1 ; test for EOC (End Of Cluster)
+ JSL IPRINT_HEX
+ LDA FAT32_Data_Destination_buffer +0 ; test for EOC (End Of Cluster) LSB 24
+ JSL IPRINT_HEX
+ LDA #$00
+ JSL IPUTC
+ LDA FAT32_Copy_Cluster_at_Address_MVN ; test for EOC (End Of Cluster)
+ JSL IPRINT_HEX
+ LDA #$00
+ JSL IPUTC
+ LDA FAT32_Copy_Cluster_at_Address_MVN +3 ; test for EOC (End Of Cluster)
+ JSL IPRINT_HEX
+ LDA FAT32_Copy_Cluster_at_Address_MVN +2 ; test for EOC (End Of Cluster)
+ JSL IPRINT_HEX
+ LDA FAT32_Copy_Cluster_at_Address_MVN +1 ; test for EOC (End Of Cluster)
+ JSL IPRINT_HEX
+ LDA #$00
+ JSL IPUTC
+ LDA FAT32_Data_Destination_buffer+2 ; test for EOC (End Of Cluster)
+ XBA
+ JSL IPRINT_HEX
+ XBA
+ JSL IPRINT_HEX
+ LDA FAT32_Data_Destination_buffer ; test for EOC (End Of Cluster)
+ XBA
+ JSL IPRINT_HEX
+ XBA
+ JSL IPRINT_HEX
+ LDA #$0D
+ JSL IPUTC
+ PLY
+ PLA
+ PLX
+ .endc
                   LDX #0
-FAT32_Copy_Cluster_at_Address__READ_LOOP_BYTE:
+ FAT32_Copy_Cluster_at_Address__READ_LOOP_BYTE:
                   LDA @l FAT32_DATA_ADDRESS_BUFFER_512,x
   FAT32_Copy_Cluster_at_Address_MVN STA @l FAT32_Data_Destination_buffer,x
                   ;JSL IPRINT_HEX
@@ -357,31 +357,31 @@ FAT32_Copy_Cluster_at_Address__READ_LOOP_BYTE:
                   CLC
                   ADC FAT32_Data_Destination_buffer+2
                   STA FAT32_Data_Destination_buffer+2
-FAT32_Copy_Cluster_at_Address__No_over_flow_adresse
-.comment
-PHX
-PHA
-BRA _TEST_TEXT_229
-_text_229 .text "---- cpy cluster inc address ",0
-_TEST_TEXT_229:
-LDX #<>_text_229
-LDA #`_text_229
-JSL IPUTS_ABS
-LDA FAT32_Data_Destination_buffer+2 ; test for EOC (End Of Cluster)
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA FAT32_Data_Destination_buffer ; test for EOC (End Of Cluster)
-XBA
-JSL IPRINT_HEX
-XBA
-JSL IPRINT_HEX
-LDA #$0D
-JSL IPUTC
-PLA
-PLX
-.endc
+ FAT32_Copy_Cluster_at_Address__No_over_flow_adresse
+ .comment
+ PHX
+ PHA
+ BRA _TEST_TEXT_229
+ _text_229 .text "---- cpy cluster inc address ",0
+ _TEST_TEXT_229:
+ LDX #<>_text_229
+ LDA #`_text_229
+ JSL IPUTS_ABS
+ LDA FAT32_Data_Destination_buffer+2 ; test for EOC (End Of Cluster)
+ XBA
+ JSL IPRINT_HEX
+ XBA
+ JSL IPRINT_HEX
+ LDA FAT32_Data_Destination_buffer ; test for EOC (End Of Cluster)
+ XBA
+ JSL IPRINT_HEX
+ XBA
+ JSL IPRINT_HEX
+ LDA #$0D
+ JSL IPUTC
+ PLA
+ PLX
+ .endc
                   setaxl
                   PLA
                   PLY

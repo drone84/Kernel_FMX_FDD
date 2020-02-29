@@ -44,7 +44,50 @@ SKIP_CR:
               BMI FAT32_Print_Cluster_Byte
               RTL
 ;-------------------------------------------------------------------------------
-Wait_loop:
+FAT32_Print_Directory_Cluster_HEX
+              LDA #$0D
+              JSL IPUTC
+              LDY #0
+              LDX #0
+FAT32_Print_Directory_Clusterr_HEX_Byte
+              LDA FAT32_FOLDER_ADDRESS_BUFFER_512,X
+              JSL IPRINT_HEX
+              LDA #$20
+              JSL IPUTC
+              INX
+              INY
+              CPY #$10
+              BNE SKIP_CR_DIRRECTORY_HEX
+              LDA #$0D
+              JSL IPUTC
+              LDY #0
+SKIP_CR_DIRRECTORY_HEX:
+              CPX #512
+              BMI FAT32_Print_Directory_Clusterr_HEX_Byte
+              RTL
+
+;-------------------------------------------------------------------------------
+FAT32_Print_Directory_Cluster
+              LDA #$0D
+              JSL IPUTC
+              LDY #0
+              LDX #0
+FAT32_Print_Directory_Cluster__Byte
+              LDA FAT32_FOLDER_ADDRESS_BUFFER_512,X
+              JSL IPUTC
+              INX
+              INY
+              CPY #$40
+              BNE SKIP_CR_DIRRECTORY
+              LDA #$0D
+              JSL IPUTC
+              LDY #0
+SKIP_CR_DIRRECTORY:
+              CPX #512
+              BMI FAT32_Print_Directory_Cluster__Byte
+              RTL
+;-------------------------------------------------------------------------------
+Wait_loop
               PHX
               LDX #1000
               JSL ILOOP_MS
@@ -54,29 +97,29 @@ Wait_loop:
 FAT32_Print_File_Name
                   PHX
                   PHA
-                  LDA FAT32_Curent_Folder_entry_value
+                  LDA FAT32_Curent_Directory_entry_value
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +1
+                  LDA FAT32_Curent_Directory_entry_value +1
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +2
+                  LDA FAT32_Curent_Directory_entry_value +2
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +3
+                  LDA FAT32_Curent_Directory_entry_value +3
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +4
+                  LDA FAT32_Curent_Directory_entry_value +4
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +5
+                  LDA FAT32_Curent_Directory_entry_value +5
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +6
+                  LDA FAT32_Curent_Directory_entry_value +6
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +7
+                  LDA FAT32_Curent_Directory_entry_value +7
                   JSL IPUTC
                   LDA #'.'
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +8
+                  LDA FAT32_Curent_Directory_entry_value +8
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +9
+                  LDA FAT32_Curent_Directory_entry_value +9
                   JSL IPUTC
-                  LDA FAT32_Curent_Folder_entry_value +10
+                  LDA FAT32_Curent_Directory_entry_value +10
                   JSL IPUTC
                   ;LDA #$0D
                   ;JSL IPUTC
@@ -92,7 +135,7 @@ FAT32_Print_Folder_Name
                   PHX
                   LDX #0
 FAT32_Print_Folder_Name__Print_char:
-                  LDA FAT32_Curent_Folder_entry_value,x
+                  LDA FAT32_Curent_Directory_entry_value,x
                   JSL IPUTC
                   INX
                   CPX #$B
@@ -110,7 +153,7 @@ FAT32_PRINT_Root_entry_value
                   PHA
                   LDX #0
                   FAT32_PRINT_Root_entry_value_loop_1:
-                  LDA @l FAT32_Curent_Folder_entry_value,x
+                  LDA @l FAT32_Curent_Directory_entry_value,x
                   JSL IPRINT_HEX
                   INX
                   CPX #32
@@ -119,7 +162,7 @@ FAT32_PRINT_Root_entry_value
                   JSL IPUTC
                   LDX #0
                   FAT32_PRINT_Root_entry_value_loop_2:
-                  LDA @l FAT32_Curent_Folder_entry_value,x
+                  LDA @l FAT32_Curent_Directory_entry_value,x
                   JSL IPUTC
                   INX
                   CPX #32
@@ -137,7 +180,7 @@ FAT32_PRINT_Root_entry_value_HEX
                   PHA
                   LDX #0
                   FAT32_PRINT_Root_entry_value_HEX_loop_1:
-                  LDA @l FAT32_Curent_Folder_entry_value,x
+                  LDA @l FAT32_Curent_Directory_entry_value,x
                   JSL IPRINT_HEX
                   INX
                   CPX #32
@@ -338,7 +381,7 @@ FAT32_Print_FAT_STATE
                 LDA #`TEXT_FAT32___Volume_Label
                 JSL IPUTS_ABS       ; print the first line
                 LDX #0
-PRINT_FAT32_Volume_Label:
+ PRINT_FAT32_Volume_Label:
                 LDA @l FAT32_Volume_Label,x
                 JSL IPUTC
                 INX
@@ -391,15 +434,15 @@ PRINT_FAT32_Volume_Label:
                 JSL IPRINT_HEX
                 XBA
                 JSL IPRINT_HEX
-                LDX #<>TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
-                LDA #`TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram
+                LDX #<>TEXT_FAT32___Curent_Directory_Sector_loaded_in_ram
+                LDA #`TEXT_FAT32___Curent_Directory_Sector_loaded_in_ram
                 JSL IPUTS_ABS       ; print the first line
-                LDA FAT32_Curent_Folder_Sector_loaded_in_ram+2
+                LDA FAT32_Curent_Directory_Sector_loaded_in_ram+2
                 XBA
                 JSL IPRINT_HEX
                 XBA
                 JSL IPRINT_HEX
-                LDA FAT32_Curent_Folder_Sector_loaded_in_ram
+                LDA FAT32_Curent_Directory_Sector_loaded_in_ram
                 XBA
                 JSL IPRINT_HEX
                 XBA
@@ -410,8 +453,8 @@ PRINT_FAT32_Volume_Label:
                 LDA #$0D
                 JSL IPUTC
                 LDX #0
-PRINT_FAT32_Root_entry_value:
-                LDA @l FAT32_Curent_Folder_entry_value,x
+ PRINT_FAT32_Root_entry_value:
+                LDA @l FAT32_Curent_Directory_entry_value,x
                 JSL IPRINT_HEX
                 INX
                 CPX #32
@@ -419,8 +462,8 @@ PRINT_FAT32_Root_entry_value:
                 LDA #$0D
                 JSL IPUTC
                 LDX #0
-PRINT_FAT32_Root_entry_value_ASCII:
-                LDA @l FAT32_Curent_Folder_entry_value,x
+ PRINT_FAT32_Root_entry_value_ASCII:
+                LDA @l FAT32_Curent_Directory_entry_value,x
                 JSL IPUTC
                 INX
                 CPX #32
@@ -620,7 +663,7 @@ TEXT_FAT32___File_System_Type                     .text   $0D, "FAT32 File Syste
 TEXT_FAT32___Sector_loaded_in_ram                 .text   $0D, "FAT32 Sector loaded in ram         ",0
 TEXT_FAT32___Root_Sector_offset                   .text   $0D, "FAT32 Root Sector offset           ",0
 TEXT_FAT32___Root_Base_Sector                     .text   $0D, "FAT32 Root Base Sector             ",0
-TEXT_FAT32___Curent_Folder_Sector_loaded_in_ram   .text   $0D, "FAT32 Folder Sector loaded in ram  ",0
+TEXT_FAT32___Curent_Directory_Sector_loaded_in_ram .text  $0D, "FAT32 Dir Sector loaded in ram     ",0
 TEXT_FAT32___Curent_Folder_entry_value            .text   $0D, "FAT32 Folder entry value           ",0
 TEXT_FAT32___FAT_Base_Sector                      .text   $0D, "FAT32 FAT Base Sector              ",0
 TEXT_FAT32___FAT_Sector_loaded_in_ram             .text   $0D, "FAT32 FAT Sector loaded in ram     ",0
@@ -653,9 +696,11 @@ TEXT_____DEBUG_____________              .text   $0D, "*********** FOLDER IN ***
 TEXT_____DEBUG____________EX             .text   $0D, "----------- FOLDER OUT ------------",$0D,0
 TEXT_____DEBUG_START_DIR                 .text   $0D, "__________ START DIR CMD __________",$0D,0
 TEXT_____DEBUG_END_DIR                   .text   $0D, "___________ END DIR CMD ___________",$0D,0
-TEXT_____DEBUG_START_Oppen               .text   $0D, "_________ START Oppen CMD _________",$0D,0
-TEXT_____DEBUG_END_Oppen                 .text   $0D, "__________ END Oppen CMD __________",$0D,0
+TEXT_____DEBUG_START_Open                .text   $0D, "__________ START Open CMD _________",$0D,0
+TEXT_____DEBUG_END_Open                  .text   $0D, "___________ END Open CMD __________",$0D,0
 TEXT_____DEBUG_START_Read                .text   $0D, "__________ START Read CMD _________",$0D,0
 TEXT_____DEBUG_END_Read                  .text   $0D, "___________ END Read CMD __________",$0D,0
 TEXT_____DEBUG_START_Write               .text   $0D, "__________ START Write CMD ________",$0D,0
 TEXT_____DEBUG_END_Write                 .text   $0D, "___________ END Write CMD _________",$0D,0
+TEXT_____DEBUG_START_Find_Free_Folder_Entry      .text   $0D, "___ START Find Free Folder Entry __",$0D,0
+TEXT_____DEBUG_END_Find_Free_Folder_Entry        .text   $0D, "____ END Find Free Folder Entry ___",$0D,0

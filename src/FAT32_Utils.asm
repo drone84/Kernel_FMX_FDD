@@ -16,6 +16,12 @@
 ; $E5 -> deleted entry, can be used for new file
 ;-------------------------------------------------------------------------------
 FAT32_GET_FOLDER_ENTRY_TYPE
+                  LDA FAT32_Curent_Directory_entry_value
+                  AND #$00FF
+                  CMP #$E5 ; test if the entry is deleted
+                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__DELETED_ENTRY
+                  CMP #$00 ; test if we reached the last entry in the folder
+                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__LAST_ENTRY_IN_FOLDER
                   LDA FAT32_Curent_Directory_entry_value +11
                   AND #$00FF
                   CMP #$0F ; test if it's a long name entry
@@ -25,12 +31,6 @@ FAT32_GET_FOLDER_ENTRY_TYPE
                   AND #$10
                   CMP #$10 ;CMP #$20 ; if different from 0x20 its nor a file name entry (need to confirm that)
                   BEQ FAT32_GET_FOLDER_ENTRY_TYPE__Folder
-                  LDA FAT32_Curent_Directory_entry_value
-                  AND #$00FF
-                  CMP #$E5 ; test if the entry is deleted
-                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__DELETED_ENTRY
-                  CMP #$00 ; test if we reached the last entry in the folder
-                  BEQ FAT32_GET_FOLDER_ENTRY_TYPE__LAST_ENTRY_IN_FOLDER
                   LDA #$01
                   BRA FAT32_GET_FOLDER_ENTRY_TYPE__FILE_ENTRY
  FAT32_GET_FOLDER_ENTRY_TYPE__FLN:

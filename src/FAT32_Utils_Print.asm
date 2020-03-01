@@ -704,3 +704,5 @@ TEXT_____DEBUG_START_Write               .text   $0D, "__________ START Write CM
 TEXT_____DEBUG_END_Write                 .text   $0D, "___________ END Write CMD _________",$0D,0
 TEXT_____DEBUG_START_Find_Free_Folder_Entry      .text   $0D, "___ START Find Free Folder Entry __",$0D,0
 TEXT_____DEBUG_END_Find_Free_Folder_Entry        .text   $0D, "____ END Find Free Folder Entry ___",$0D,0
+TEXT_____DEBUG_START_Write_File_Directory_entry  .text   $0D, "_ START Write File Directory Entry ",$0D,0
+TEXT_____DEBUG_END_Write_File_Directory_entry    .text   $0D, "__ END Write File Directory Entry _",$0D,0

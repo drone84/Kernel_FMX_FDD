@@ -165,11 +165,10 @@ FAT32_Open_Creat_Write_File
               CMP #1
               ;BEQ FAT32_Open_Creat_Write_File__File_Opened_with_success
               ;-------------------------
-              ; The file to write is not created yes so lets find a free folder
+              ; The file to write is not created yet so lets find a free folder
               ; entry to create the file
-
-              JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
-              JSL FAT32_Print_FAT_STATE
+              ;JSL IFAT32_GET_ROOT_DIRECTORY_ENTRY
+              ;JSL FAT32_Print_FAT_STATE
               JSL FAT32_Find_Free_Folder_Entry
         PHA
         XBA
@@ -455,7 +454,7 @@ FAT32_Find_Free_Folder_Entry
                   CPX #$FFFF ; make sure we are not searching for ever
                   BEQ FAT32_Find_Free_Folder_Entry__EXIT_TOO_MANY_FOLDER_ENTRY
                   JSL IFAT32_GET_DIRECTORY_ENTRY
-                  ;JSL FAT32_PRINT_Root_entry_value_HEX
+                  ;JSL FAT32_PRINT_Root_entry_value ;_HEX
                   JSL FAT32_GET_FOLDER_ENTRY_TYPE
                   CMP #$E5 ; deleted folder entry
                   BEQ FAT32_Find_Free_Folder_Entry__FIND_A_FILE_ENTRY
@@ -498,8 +497,17 @@ FAT32_Find_Free_Folder_Entry
 
 FAT32_Write_File_Directory_entry
                   setaxl
+;----- debug ------
+PHX
+PHA
+LDX #<>TEXT_____DEBUG_START_Write_File_Directory_entry
+LDA #`TEXT_____DEBUG_START_Write_File_Directory_entry
+JSL IPRINT_ABS
+PLA
+PLX
+;-----------------
                   PHA
-        JSL FAT32_PRINT_Root_entry_value_HEX
+        ;JSL FAT32_PRINT_Root_entry_value_HEX
                   ;-------------------------------------------------------------
                   ; Weite the blank file directory tamplate
                   LDA #<>FAT32_File_Directory_entry_Template
@@ -508,8 +516,8 @@ FAT32_Write_File_Directory_entry
                   TAY
                   LDA #31
                   MVN `FAT32_File_Directory_entry_Template, `FAT32_Curent_Directory_entry_value
-        JSL FAT32_PRINT_Root_entry_value_HEX
-        JSL FAT32_PRINT_Root_entry_value
+        ;JSL FAT32_PRINT_Root_entry_value_HEX
+        ;JSL FAT32_PRINT_Root_entry_value
                   ;-------------------------------------------------------------
                   ; Write the file name
                   LDA #<>file_to_write_fat_32
@@ -518,9 +526,9 @@ FAT32_Write_File_Directory_entry
                   TAY
                   LDA #11
                   MVN `file_to_write_fat_32, `FAT32_Curent_Directory_entry_value
-        JSL FAT32_PRINT_Root_entry_value_HEX
-        JSL FAT32_PRINT_Root_entry_value
-        JSL FAT32_Print_Directory_Cluster_HEX
+        ;JSL FAT32_PRINT_Root_entry_value_HEX
+        ;JSL FAT32_PRINT_Root_entry_value
+        ;JSL FAT32_Print_Directory_Cluster_HEX
                   ;-------------------------------------------------------------
                   ; comput the ofset in the curent directory sector loaded
                   ; in ram to write the 31 back
@@ -538,36 +546,26 @@ FAT32_Write_File_Directory_entry
                   TAY
                   LDA #31
                   MVN `FAT32_Curent_Directory_entry_value, `FAT32_FOLDER_ADDRESS_BUFFER_512
-        JSL FAT32_Print_Directory_Cluster_HEX
+        ;JSL FAT32_Print_Directory_Cluster_HEX
                   ;-------------------------------------------------------------
                   ; write back the new data
-                  ;FAT32_FAT_Entry should be the right value due to FAT32_Find_Free_Folder_Entry call
-                  JSL FAT32_COMPUT_PHISICAL_CLUSTER; (in : FAT32_FAT_Entry / Out : FAT32_FAT_Entry_Physical_Address)
-
-                  ; add 2 but that shouden't be there I missed someting due to the root dirrectory being in sat sector 2
-                  LDA #0 ;
-                  STA ADDER_A+2
-                  LDA #$2
-                  STA ADDER_A
-                  LDA FAT32_FAT_Entry_Physical_Address
-                  STA ADDER_B
-                  LDA FAT32_FAT_Entry_Physical_Address+2
-                  STA ADDER_B+2
-                  ; get the final result out of the hardware
-                  LDA ADDER_R;
-                  STA FAT32_FAT_Entry_Physical_Address
-                  LDA ADDER_R+2
-                  STA FAT32_FAT_Entry_Physical_Address+2
-
-
                   LDA #`FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the byte nb 3 (bank byte)
                   PHA
                   LDA #<>FAT32_FOLDER_ADDRESS_BUFFER_512 ; load the low world part of the buffer address
                   PHA
-                  LDA FAT32_FAT_Entry_Physical_Address+2
+                  LDA FAT32_Curent_Directory_Sector_loaded_in_ram+2
                   TAX
-                  LDA FAT32_FAT_Entry_Physical_Address
+                  LDA FAT32_Curent_Directory_Sector_loaded_in_ram
                   JSL IFAT_WRITE_SECTOR
+;----- debug ------
+PHX
+PHA
+LDX #<>TEXT_____DEBUG_END_Write_File_Directory_entry
+LDA #`TEXT_____DEBUG_END_Write_File_Directory_entry
+JSL IPRINT_ABS
+PLA
+PLX
+;-----------------
                   RTL
 ;-------------------------------------------------------------------------------
 ; Search for the file name in the root directory

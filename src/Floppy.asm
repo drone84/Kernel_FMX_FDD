@@ -1,45 +1,269 @@
 .cpu "65816"
 .include "Floppy_def.asm"
 
-FLOPPY_CMD_BUFFER = $1A000 ; 10 Byte buffer for the command to be send to the FDC and the the data recieved as a result of the command
-* = $1A00A
-ILOOP           NOP
-                NOP
-                NOP
-                NOP
-                NOP
-                NOP
-                NOP
-                NOP
-                NOP
-                NOP
-                RTL
+FAT12_ADDRESS_BUFFER_512 = $19800 ; RAM address where to store the sector read by the floppy READ_DATA function
+FLOPPY_CMD_BUFFER = $19C00 ; 10 Byte buffer for the command to be send to the FDC and the the data recieved as a result of the command
 
-ILOOP_1         JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                JSL ILOOP
-                RTL
+*= $19800
+*= $19a0A
+;-------------------------------------------------------------------------------
+;-------------------------------------------------------------------------------
+;-------------------------------------------------------------------------------
+;-------------------------------------------------------------------------------
+minus_line       .text "-----------------------------------------------",$0A,$0D,0
+;---------------------------------------------------------------
+FDD_Test
+                ; Floppy test code START
+                setdbr `minus_line
+                LDX #<>minus_line
+                JSL UART_PUTS
+                JSL IFDD_PRINT_REG  ; read the FDD register value
+                setaxl
+                JSL IFDD_INIT_AT
+                JSL IFDD_PRINT_REG  ; read the FDD register value
+seek_loop
+                LDA 0
+                PHA
+                setas
+                setdbr`$AFA200
+                LDX #0
+                LDA #0
+  ERAZE_SCREEN_1  STA $AFA000 ,X
+                INX
+                CPX #$2000
+                BNE ERAZE_SCREEN_1
+                setdbr`$AFA200
+                LDX #0
+seek_loop_2_     LDA #0
+ERAZE_SCREEN_2  STA $AFA200 ,X
+                INX
+                CPX #$2000
+                BNE ERAZE_SCREEN_2
 
-ILOOP_1MS       JSL ILOOP_1
-                RTL
+                ;--------
+                 LDA #0                      ; Floppy driver to work with and side
+                 LDX #1                      ; MFM:1/FM:0
+                 JSL IFDD_READ_ID
+                 JSL IFDD_PRINT_FDD_MS_REG  ; read the FDD register value
+                 JSL IFDD_SENS_INTERRUPT_STATUS
+                 JSL IFDD_PRINT_FDD_MS_REG  ; read the FDD register value
 
-ILOOP_MS        CPX #0
-                BEQ LOOP_MS_END
-                JSL ILOOP_1MS
-                DEX
-                BRA ILOOP_MS
-LOOP_MS_END     RTL
+                 BRA seek_loop_2
+                ;--------
+                LDA #$1                     ; ND ("1":non-DMA mode / "0":DMA mode)
+                PHA
+                LDA #$0                     ; HLT (Head Load Time)
+                PHA
+                LDA #$0                     ; HUT (Head Unload Time)
+                PHA
+                LDA #$0                     ; SRT (Step Rate Time)
+                PHA
+                ;;JSL IFDD_SPECIFY
+                PLA
+                PLA
+                PLA
+                PLA
+                ;JSL IFDD_PRINT_FDD_MS_REG  ; read the FDD register value
+                setas
+                LDA #0                      ; Floppy driver to work with and side
+                LDX #1                      ; MFM:1/FM:0
+                JSL IFDD_READ_ID
+                JSL IFDD_SENS_INTERRUPT_STATUS
+                ;
+                ; ; LDA #0            ; Sellect the floppy disc drive 0
+                ; ; JSL IFDD_RECALIBRATE
+                ; ; ;JSL IFDD_PRINT_FDD_MS_REG  ; read the FDD register value
+                ; ; JSL IFDD_SENS_INTERRUPT_STATUS
+                ; ; ;JSL IFDD_PRINT_FDD_MS_REG  ; read the FDD register value
+                setas
+                LDA #$0                    ; R (Sector Adress)
+                PHA
+                LDA #$0                    ; H (Head Address)
+                PHA
+                LDA #$0                    ; C (Cylender Adress)
+                PHA
+                LDA #$AA                    ; D (Byte filler)
+                PHA
+                LDA #$54                    ; GPL (Gap3)
+                PHA
+                LDA #$9                    ; SC (Sector Per Cylender)
+                PHA
+                LDA #$2                    ; N (Byte per sector)
+                PHA
+                LDA #$0                    ; HDS/DS1-DS0 (Head DRIVE1-Drive0)
+                PHA
+                LDA #$1                    ; MFM
+                PHA
+                LDA #$FF
+                JSL IFDD_FORMAT_TRACK
+                PLA
+                PLA
+                PLA
+                PLA
+                PLA
+                PLA
+                PLA
+                PLA
+                PLA
+                setaxl
+                LDX #5000
+                JSL ILOOP_MS
+
+                setas
+                LDA 0
+                LDX #1                      ; MFM:1/FM:0
+                JSL IFDD_READ_ID
+                LDX #2000
+                JSL ILOOP_MS
+                ;JSL IFDD_PRINT_REG
+                ;LDX #2000
+                ;JSL ILOOP_MS
+                ;;JSL IFDD_SENS_INTERRUPT_STATUS
+                ;LDX #$00
+                ;JSL IFDD_READ_FDD
+                ;JSL IFDD_SENS_INTERRUPT_STATUS
+                ;LDX #2000
+                ;JSL ILOOP_MS
+                ; LDA #1, S            ; read the next sector
+                ; INC A
+                ; STA #1, S
+                ; JSL IFDD_PRINT_REG
+                ;BRA fdd_loop_forever
+
+seek_loop_2
+
+
+                setas
+                LDA #0
+                LDX #10
+                JSL IFDD_SEEKRELATIF_UP ;JSL IFDD_SEEK
+                LDX #20000
+                JSL ILOOP_MS
+                setas
+                LDA #0
+                LDX #20
+                JSL IFDD_SEEKRELATIF_UP ;JSL IFDD_SEEK
+                LDX #20000
+                JSL ILOOP_MS
+                setas
+                LDA #0
+                LDX #20
+                JSL IFDD_SEEKRELATIF_DOWN ;JSL IFDD_SEEK
+                LDX #20000
+                JSL ILOOP_MS
+                setas
+                LDA #0
+                LDX #5
+                JSL IFDD_SEEKRELATIF_UP ;JSL IFDD_SEEK
+                LDX #20000
+                JSL ILOOP_MS
+                setas
+                LDA #0
+                LDX #10
+                JSL IFDD_SEEKRELATIF_DOWN ;JSL IFDD_SEEK
+                LDX #20000
+                JSL ILOOP_MS
+                setas
+                LDA #0
+                LDX #5
+                JSL IFDD_SEEKRELATIF_DOWN ;JSL IFDD_SEEK
+                LDX #20000
+                JSL ILOOP_MS
+                JSL IFDD_SENS_INTERRUPT_STATUS
+                setas
+                LDA 0
+                LDX #1                      ; MFM:1/FM:0
+                ;;;;;JSL IFDD_READ_ID
+                ; setas
+                ; JSL IFDD_SENS_INTERRUPT_STATUS
+                ; LDX #20000
+                ; JSL ILOOP_MS
+                LDA #0            ; Sellect the floppy disc drive 0
+                ;JSL IFDD_RECALIBRATE
+                LDX #20000
+                JSL ILOOP_MS
+                ;JSL IFDD_SENS_INTERRUPT_STATUS
+
+
+
+
+                ; JSL IFDD_SENS_INTERRUPT_STATUS
+                JSL IFDD_MOTOR_0_OFF
+                LDX #20000
+                JSL ILOOP_MS
+                JSL IFDD_MOTOR_0_ON
+                LDX #20000
+                JSL ILOOP_MS
+                BRL seek_loop_2
+                ;BRL seek_loop_2
+
+
+                JSL IFDD_PRINT_REG  ; read the FDD register value
+                setaxl
+                LDX #20000
+                JSL ILOOP_MS
+                JSL IFDD_PRINT_REG  ; read the FDD register value
+                setaxl
+                LDX #500
+                JSL ILOOP_MS
+                JSL IFDD_PRINT_REG  ; read the FDD register value
+                setaxl
+                LDX #20000
+                JSL ILOOP_MS
+                setas
+                LDA #0
+                LDX #15
+                JSL IFDD_SEEK
+                JSL IFDD_PRINT_REG  ; read the FDD register value
+                setaxl
+                LDX #5000
+                JSL ILOOP_MS
+                ;JSL IFDD_PRINT_REG  ; read the FDD register value
+                ;setaxl
+                ;LDX #500
+                ;JSL ILOOP_MS
+                ;JSL IFDD_PRINT_REG  ; read the FDD register value
+                ;--------
+                ;code needed because the BRA seek_loop at the en of the code block was too far
+                ;BRA seek_loop
+                BRA next_instruction
+seek_loop_step1
+                ;BRA seek_loop
+next_instruction
+                ;--------
+                setdbr `minus_line
+                LDX #<>minus_line
+                JSL UART_PUTS
+                LDX #<>minus_line
+                JSL UART_PUTS
+                setaxl
+                LDX #500
+                JSL ILOOP_MS
+                setas
+                LDA #0
+                JSL IFDD_GET_DRIVE_STATUS
+                setas
+                setdbr `FLOPPY_CMD_BUFFER
+                LDA FLOPPY_CMD_BUFFER
+                JSL UART_PUTHEX
+                LDA #$A
+                JSL UART_PUTC
+                LDA #$D
+                JSL UART_PUTC
+
+                setdbr `minus_line
+                LDX #<>minus_line
+                JSL UART_PUTS
+                JSL IFDD_MOTOR_0_OFF
+                BRA seek_loop_step1
+                RTL
+                ;---------------
+
 ;-------------------------------------------------------------------------------
 ;-------------------------------------------------------------------------------
 ;-------------------------------------------------------------------------------
 ;-------------------------------------------------------------------------------
+
 IFDD_MOTOR_0_ON   setas
                 setdbr `FDD_DIGITAL_OUTPUT  ; Set Data Bank Register
                 LDA #FDD_ENABLE_MOTOR_0
@@ -297,7 +521,7 @@ IFDD_READ       setaxl
                 ASL A
                 ASL A
 
-                ADC #<>data_floppy
+                ;;;;;ADC #<>data_floppy
                 TAX
 
                 ;LDX #<>data_floppy
@@ -307,7 +531,7 @@ IFDD_READ       setaxl
                 STA FFD_MVN_INSTRUCTION_ADDRESS + 2 ; rewrite the second parameter of the instruction in RAM
                 setaxl
                 LDA #511
-FFD_MVN_INSTRUCTION_ADDRESS  MVN `FAT12_ADDRESS_BUFFER_512,`data_floppy
+FFD_MVN_INSTRUCTION_ADDRESS  ;;;;;;MVN `FAT12_ADDRESS_BUFFER_512,`data_floppy
                 PLA
                 RTL
 ;-------------------------------------------------------------------------------
@@ -331,12 +555,12 @@ IFDD_READ_ORI   setaxl
                 ASL A
                 ASL A
 
-                ADC #<>data_floppy
+                ;;;;;ADC #<>data_floppy
                 TAX
                 LDA #511
                 ;LDX #<>data_floppy
                 LDY #<>FAT12_ADDRESS_BUFFER_512
-                MVN `FAT12_ADDRESS_BUFFER_512,`data_floppy
+                ;;;;;;MVN `FAT12_ADDRESS_BUFFER_512,`data_floppy
                 PLA
                 RTL
 IFDD_WRITE      BRK
@@ -1570,4 +1794,4 @@ Text_FDD_TAPE_DRIVER      .text "FDD_TAPE_DRIVER    0x",0
 Text_FDD_MAIN_STATUE      .text "FDD_MAIN_STATUE    0x",0
 Text_FDD_DIGITAL_INPUT    .text "FDD_DIGITAL_INPUT  0x",0
 *= $150000
-.include "FDD_row_TEXT_HEX.asm"
+;;.include "FDD_row_TEXT_HEX.asm"

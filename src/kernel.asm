@@ -42,6 +42,7 @@ TARGET_RAM = 2                ; The code is being assembled for RAM
 .include "uart.asm"           ; The code to handle the UART
 .include "joystick.asm"       ; Code for the joysticks and gamepads
 .include "FAT32.asm"          ; code to read write file
+.include "Floppy.asm"
 
 * = $390400
 
@@ -188,6 +189,18 @@ greet           setdbr `greet_msg       ;Set data bank to ROM
                 ;JSL IPRINT_HEX
                 ;JSL FOENIX_SD_INIT_READ
                 ;-------------------------------
+
+
+
+                ;---------------------------------------------------------------
+                ;---------------------------------------------------------------
+                ;---------------------------------------------------------------
+                JSL FDD_Test
+test_end_loop_FDD:   BRA test_end_loop_FDD
+
+                ;---------------------------------------------------------------
+                ;---------------------------------------------------------------
+                ;---------------------------------------------------------------
                 LDA FAT32_SD
                 STA FAT32_SD_FDD_HDD_Sell ; sellect the SD card as storage
                 ;-------------------------------
